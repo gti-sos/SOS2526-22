@@ -8,10 +8,11 @@ const datos = [
 ];
 
 // Elegir la región que quieres analizar
-const regionElegida = "North";
+const countryElegido = "China";
 
 // Filtrar por región
-const datosFiltrados = datos.filter(item => item.region === regionElegida);
+const datosFiltrados = datos.filter(item => item.country === countryElegido);
+
 
 // Extraer valores numéricos
 const valores = datosFiltrados.map(item => item.average_temperature_c);
@@ -19,5 +20,6 @@ const valores = datosFiltrados.map(item => item.average_temperature_c);
 // Calcular media
 const media = valores.reduce((acc, val) => acc + val, 0) / valores.length;
 
-console.log(`La media de average_temperature_c para la región ${regionElegida} es: ${media}`);
+console.log(`La media de average_temperature_c para el country ${countryElegido} es: ${media}`);
+
 
