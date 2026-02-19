@@ -20,14 +20,9 @@ let region = "asia";
 // Primero filtramos para tener el subconjunto
 let filtrados = datos.filter(n => n.country === region);
 
+// Aplicamos iteradores para obtener la media
 let suma = filtrados
     .map(n => n.halon)           // Extraemos solo los valores numéricos
+    .reduce((acum, n) => acum + n, 0) / (filtrados.length || 1); // Sumamos y dividimos por el total
 
-    console.log("valoes suma"+suma);
-// Calculamos la media: $media = \frac{suma}{cantidad}$
-let media = filtrados.length > 0 ? suma / filtrados.length : 0;
-
-// 13.c Resultado por consola
-console.log("-----------------------------------------");
-console.log(`Media de consumo de HCFC en ${region}: ${media}`);
-console.log("-----------------------------------------");
+console.log("Media de consumo de halon en " + region + ": " + suma);
