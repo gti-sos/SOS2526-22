@@ -1,7 +1,11 @@
 {
   "name": "sos2526-22",
   "version": "1.0.0",
+<<<<<<< HEAD
   "description": "- **Team**\r   - Celia Leal Salvago (https://github.com/Celia-Leal)\r   - Elena Martínez Moreno (https://github.com/elemarmor)\r   - Julio Morales Vela (https://github.com/Juliomv02)\r - **Project description**: Our sources of information are aimed at analyzing the relationship that exists between the consumption of substances that deplete the ozone layer, the impact of climate change on agriculture and CO2 emissions in the agri-food sector.\r - **Repository**: [gti-sos/SOS2526-22](https://github.com/gti-sos/SOS2526-22)",
+=======
+  "description": "",
+>>>>>>> 3982d77 (Corregidos valores de temperatura y cálculo de media)
   "main": "index-CLS.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -13,6 +17,10 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+<<<<<<< HEAD
+=======
+  "type": "commonjs",
+>>>>>>> 3982d77 (Corregidos valores de temperatura y cálculo de media)
   "bugs": {
     "url": "https://github.com/gti-sos/SOS2526-22/issues"
   },
