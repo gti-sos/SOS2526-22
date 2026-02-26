@@ -19,7 +19,11 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
+<<<<<<< HEAD
     "cool-ascii-faces": "^1.3.4",
+=======
+    "body-parser": "^2.2.2",
+>>>>>>> bd84c62 (api)
     "express": "^5.2.1"
   }
 }
