@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 let cool= require ("cool-ascii-faces"); 
 
 let express = require('express');
@@ -14,7 +14,7 @@ app.get('/cool', (req, res) => {
 app.listen(3000, () => {
   console.log('Server is running on http://localhost:3000')
 })
-=======
+
 let express = require('express');
 
 let bodyParser= require('body-parser')
@@ -23,7 +23,7 @@ let BASE_URL_API = "/api/v1";
 
 let PORT = process.env.PORT || 3000;
 
-const app = express();
+
 
 app.use("/", express.static("./static"));
 app.use(bodyParser.json());
@@ -57,4 +57,4 @@ app.post(BASE_URL_API + "/contacts", (req, res) => {
 app.listen(PORT , () => {
     console.log(`Server is running on ${PORT}`);
 });
->>>>>>> bd84c62 (api)
+
