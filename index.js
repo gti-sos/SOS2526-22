@@ -4,6 +4,10 @@ let BASE_URL_API = "/api/v1";
 let PORT = process.env.PORT || 3000;
 const app = express();
 
+//Individual CELIA
+let globalAgricultureData  = [];
+
+
 app.use("/", express.static("./static"));
 app.use(bodyParser.json());
 
@@ -73,3 +77,104 @@ app.get("/samples/CLS", (req, res) => {
     const media = calcularMedia(countryElegido);
     res.send(`La media de average_temperature_c para ${countryElegido} es: ${media}`);
 });
+
+
+
+/////////INDIVIDUAL CELIA 
+
+app.get(`${BASE_URL_API}/global-agriculture-climate-impacts/loadInitialData`, (req, res) => {
+    if (globalAgricultureData.length === 0) {
+        globalAgricultureData.push(
+            { country: "Spain", year: 2020, crop_type: "Wheat", average_temperature_c: 20, total_precipitation_mm: 500 },
+            { country: "France", year: 2020, crop_type: "Corn", average_temperature_c: 19, total_precipitation_mm: 450 },
+            { country: "Germany", year: 2020, crop_type: "Barley", average_temperature_c: 17, total_precipitation_mm: 480 },
+            { country: "Italy", year: 2020, crop_type: "Soy", average_temperature_c: 21, total_precipitation_mm: 470 },
+            { country: "Portugal", year: 2020, crop_type: "Rice", average_temperature_c: 22, total_precipitation_mm: 460 },
+            { country: "Greece", year: 2020, crop_type: "Olive", average_temperature_c: 25, total_precipitation_mm: 430 },
+            { country: "Norway", year: 2020, crop_type: "Barley", average_temperature_c: 10, total_precipitation_mm: 300 },
+            { country: "Sweden", year: 2020, crop_type: "Wheat", average_temperature_c: 11, total_precipitation_mm: 310 },
+            { country: "Finland", year: 2020, crop_type: "Corn", average_temperature_c: 8, total_precipitation_mm: 290 },
+            { country: "Poland", year: 2020, crop_type: "Soy", average_temperature_c: 16, total_precipitation_mm: 320 }
+        );
+    }
+    res.status(200).json(globalAgricultureData);
+});
+
+// GET todos los datos
+app.get(`${BASE_URL_API}/global-agriculture-climate-impacts`, (req, res) => {
+    res.status(200).json(globalAgricultureData);
+});
+
+// GET dato específico por país
+app.get(`${BASE_URL_API}/global-agriculture-climate-impacts/:country`, (req, res) => {
+    const country = req.params.country;
+    const result = globalAgricultureData.filter(item => item.country.toLowerCase() === country.toLowerCase());
+    if (result.length === 0) {
+        res.status(404).json({ error: "No se encontró el país" });
+    } else {
+        res.status(200).json(result);
+    }
+});
+
+// POST para agregar un dato
+app.post(`${BASE_URL_API}/global-agriculture-climate-impacts`, (req, res) => {
+    const newData = req.body;
+
+    // Convertimos a números
+    newData.year = Number(newData.year);
+    newData.average_temperature_c = Number(newData.average_temperature_c);
+    newData.total_precipitation_mm = Number(newData.total_precipitation_mm);
+
+    if (
+        !newData.country || newData.country === "" ||
+        !newData.year || isNaN(newData.year) ||
+        !newData.crop_type || newData.crop_type === "" ||
+        newData.average_temperature_c === undefined || isNaN(newData.average_temperature_c) ||
+        newData.total_precipitation_mm === undefined || isNaN(newData.total_precipitation_mm)
+    ) {
+        return res.status(400).json({ error: "Faltan campos obligatorios" });
+    }
+
+    const exists = globalAgricultureData.some(item => item.country.toLowerCase() === newData.country.toLowerCase() && item.year === newData.year);
+    if (exists) {
+        return res.status(409).json({ error: "El dato ya existe" });
+    }
+
+    globalAgricultureData.push(newData);
+    res.status(201).json(newData);
+});
+
+// PUT para actualizar
+app.put(`${BASE_URL_API}/global-agriculture-climate-impacts/:country/:year`, (req, res) => {
+    const country = req.params.country;
+    const year = parseInt(req.params.year);
+    const updatedData = req.body;
+
+    const index = globalAgricultureData.findIndex(item => item.country.toLowerCase() === country.toLowerCase() && item.year === year);
+    if (index === -1) {
+        return res.status(404).json({ error: "Dato no encontrado" });
+    }
+
+    globalAgricultureData[index] = { ...globalAgricultureData[index], ...updatedData };
+    res.status(200).json(globalAgricultureData[index]);
+});
+
+// DELETE específico
+app.delete(`${BASE_URL_API}/global-agriculture-climate-impacts/:country/:year`, (req, res) => {
+    const country = req.params.country;
+    const year = parseInt(req.params.year);
+    const index = globalAgricultureData.findIndex(item => item.country.toLowerCase() === country.toLowerCase() && item.year === year);
+    if (index === -1) {
+        return res.status(404).json({ error: "Dato no encontrado" });
+    }
+
+    globalAgricultureData.splice(index, 1);
+    res.status(200).json({ message: "Dato eliminado" });
+});
+
+// DELETE todos los datos
+app.delete(`${BASE_URL_API}/global-agriculture-climate-impacts`, (req, res) => {
+    globalAgricultureData = [];
+    res.status(200).json({ message: "Todos los datos eliminados" });
+});
+
