@@ -32,7 +32,6 @@ app.post(BASE_URL_API + "/contacts", (req, res) => {
 
 
 
-
 app.listen(PORT , () => {
     console.log(`Server is running on ${PORT}`);
 });
