@@ -1,32 +1,15 @@
-
-let cool= require ("cool-ascii-faces"); 
-
 let express = require('express');
-
-const app = express();
-
-app.get('/cool', (req, res) => {
-  res.send(`<html><body><h1> 
-     ${cool()} 
-     </h1></body></html>`);
-})
-
-app.listen(3000, () => {
-  console.log('Server is running on http://localhost:3000')
-})
-
-let express = require('express');
-
-let bodyParser= require('body-parser')
 
 let BASE_URL_API = "/api/v1";
 
-let PORT = process.env.PORT || 3000;
+const app = express();
+
 
 
 
 app.use("/", express.static("./static"));
-app.use(bodyParser.json());
+
+
 
 
 let contacts = [
@@ -50,6 +33,29 @@ app.post(BASE_URL_API + "/contacts", (req, res) => {
     res.sendStatus(201,"CREATED");
     
 });
+
+
+
+
+
+
+app.listen(3000, () => {
+  console.log('Server is running on http://localhost:3000')
+})
+
+
+
+
+
+
+let PORT = process.env.PORT || 3000;
+
+
+
+
+
+
+
 
 
 
