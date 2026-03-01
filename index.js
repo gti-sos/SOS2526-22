@@ -235,7 +235,7 @@ let datosElena = [];
 app.get(BASE_URL_API + "/ozone-depleting-substance-consumptions/loadInitialData", (req, res) => {
     if (datosElena.length === 0) {
         datosElena = [...initialDataElena]; 
-        res.status(201).send(datosElena);
+        res.status(200).json(datosElena);
     } 
 });
 
