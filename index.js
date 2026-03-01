@@ -229,6 +229,9 @@ app.get("/samples/EMM", (req, res) => {
 
 
 //apartado 10.	Debe tener desplegado en Render una API REST funcional ofreciendo su fuente de datos
-app.get(BASE_URL_API + "/ozone-depleting-substance-consumptions", (req, res) => {
-    res.json(datosElena); 
+
+
+app.get(BASE_URL_API+ "/ozone-depleting-substance-consumptions", (req,res)=>{
+    res.send(JSON.stringify(datosElena, null, 2)); // lo que hay dentro del () es para serializar el objeto a JSON, es decir convertirlo a un formato que se pueda enviar a través de la red
+
 });
