@@ -225,13 +225,16 @@ let initialDataElena = [
     { country: "singapore", code: "sgp", year: 1997, methyl_chloroform: 0, methyl_bromide: 43, hcfc: 1431, carbon_tetrachloride: 0, halon: 0, cfc: -1789 }
 ];
 
-const calcularMediaElena = (listaDatos,nombreRegion) => {
+const calcularMediaElena = (listaDatos, nombreRegion) => {
     let filtrados = listaDatos.filter(n => n.country.toLowerCase() === nombreRegion.toLowerCase());
-    if (filtrados.length === 0) return 0;
+    
+    if (filtrados.length === 0) return 0; // Si no hay datos, devuelve 0 sin fallar
 
-    return filtrados
+    let suma = filtrados
         .map(n => n.halon)  
-        .reduce((acum, n) => acum + n, 0) / (filtrados.length || 1);
+        .reduce((acum, n) => acum + n, 0);
+        
+    return suma / filtrados.length;
 };
 
 
