@@ -295,7 +295,7 @@ app.get(BASE_URL_API + "/ozone-depleting-substance-consumptions/:country/:year",
     }
 });
 
-// 1. PUT a un recurso concreto 
+// PUT a un recurso concreto 
 app.put(`${BASE_URL_API}/ozone-depleting-substance-consumptions/:country/:year`, (req, res) => {
     const { country, year } = req.params;
     const updatedData = req.body;
@@ -310,11 +310,34 @@ app.put(`${BASE_URL_API}/ozone-depleting-substance-consumptions/:country/:year`,
         return res.status(404).json({ error: "Dato no encontrado para actualizar" });
     }
 
-
-    if (updatedData.country !== country || parseInt(updatedData.year) !== intYear) {
-        return res.status(400).json({ error: "Bad Request: Los identificadores no coinciden" });
-    }
-
     datosElena[index] = { ...datosElena[index], ...updatedData };
-    res.status(200).json(datosElena[index]); // 200 OK
+    res.status(200).json(datosElena[index]); // 
+});
+
+
+// DELETE a la lista completa 
+app.delete(`${BASE_URL_API}/ozone-depleting-substance-consumptions`, (req, res) => {
+    datosElena = []; // Vaciamos el array
+    res.status(200).json({ message: "Todos los datos han sido eliminados correctamente" });
+});
+
+// DELETE a un recurso concreto 
+app.delete(`${BASE_URL_API}/ozone-depleting-substance-consumptions/:country/:year`, (req, res) => {
+    const { country, year } = req.params;
+    const intYear = parseInt(year);
+
+    // Buscamos si el recurso existe antes de intentar borrarlo
+    const index = datosElena.findIndex(item => 
+        item.country.toLowerCase() === country.toLowerCase() && 
+        item.year === intYear
+    );
+
+    if (index === -1) {
+        // 404 Not Found si intentamos borrar algo que no existe
+        res.status(404).json({ error: "No se encontró el recurso para borrar" });
+    } else {
+        // Eliminamos el elemento del array
+        datosElena.splice(index, 1);
+        res.status(200).json({ message: "Recurso eliminado con éxito" });
+    }
 });
