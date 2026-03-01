@@ -276,3 +276,21 @@ app.post(BASE_URL_API + "/ozone-depleting-substance-consumptions", (req, res) =>
         res.status(201).send("CREATED"); 
     }
 });
+
+
+// GET a un recurso concreto 
+app.get(BASE_URL_API + "/ozone-depleting-substance-consumptions/:country/:year", (req, res) => {
+    const country = req.params.country;
+    const year = parseInt(req.params.year); 
+
+    const recurso = datosElena.find(item => 
+        item.country.toLowerCase() === country.toLowerCase() && 
+        item.year === year
+    );
+
+    if (!recurso) {
+        res.status(404).json({ error: "Recurso no encontrado (país o año incorrectos)" });
+    } else {
+        res.status(200).json(recurso);
+    }
+});
