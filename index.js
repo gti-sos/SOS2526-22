@@ -63,7 +63,7 @@ app.listen(PORT , () => {
 
 
 //// Algoritmo de index-CLS.js
-const datos = [
+const datosCelia = [
   { year: 2001, country: "India", region: "West Bengal", crop_type: "Corn", average_temperature_c: 155, total_precipitation_mm: 44706 },
   { year: 2024, country: "China", region: "North", crop_type: "Corn", average_temperature_c: 323, total_precipitation_mm: 291357 },
   { year: 2001, country: "France", region: "Ile-de-France", crop_type: "Wheat", average_temperature_c: 2111, total_precipitation_mm: 130174 },
@@ -81,8 +81,8 @@ const datos = [
   { year: 2022, country: "Brazil", region: "Minas Gerais", crop_type: "Coffee", average_temperature_c: 21.8, total_precipitation_mm: 1350.4 }
 ];
 
-function calcularMedia(countryElegido) {
-    const datosFiltrados = datos.filter(item => item.country === countryElegido);
+function calcularMediaCelia(countryElegido) {
+    const datosFiltrados = datosCelia.filter(item => item.country === countryElegido);
     if (datosFiltrados.length === 0) return 0;
 
     const valores = datosFiltrados.map(item => item.average_temperature_c);
@@ -94,7 +94,7 @@ function calcularMedia(countryElegido) {
 //  Ruta para individual CELIA 
 app.get("/samples/CLS", (req, res) => {
     const countryElegido = "China"; // puedes cambiar a tu país
-    const media = calcularMedia(countryElegido);
+    const media = calcularMediaCelia(countryElegido);
     res.send(`La media de average_temperature_c para ${countryElegido} es: ${media}`);
 });
 
@@ -225,8 +225,10 @@ let initialDataElena = [
     { country: "singapore", code: "sgp", year: 1997, methyl_chloroform: 0, methyl_bromide: 43, hcfc: 1431, carbon_tetrachloride: 0, halon: 0, cfc: -1789 }
 ];
 
-const calcularMediaElena = (nombreRegion) => {
-    let filtrados = initialDataElena.filter(n => n.country === nombreRegion);
+const calcularMediaElena = (listaDatos,nombreRegion) => {
+    let filtrados = listaDatos.filter(n => n.country.toLowerCase() === nombreRegion.toLowerCase());
+    if (datosFiltrados.length === 0) return 0;
+
     return filtrados
         .map(n => n.halon)  
         .reduce((acum, n) => acum + n, 0) / (filtrados.length || 1);
@@ -236,6 +238,7 @@ app.get("/samples/EMM", (req, res) => {
     const media = calcularMediaElena(initialDataElena, "asia");    
     res.send(`Media de consumo de halon en asia: ${media}`);
 });
+
 
 
 
