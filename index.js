@@ -6,7 +6,10 @@ const app = express();
 let cool= require ("cool-ascii-faces"); 
 
 
-
+// Para acceder al render del grupo 
+app.get("/", (req, res) => {
+    res.send("SOS2526-22 API funcionando correctamente ");
+});
 
 //Ruta dinámica /cool
 app.get('/cool', (req, res) => {
@@ -214,9 +217,8 @@ let initialDataElena = [
     { country: "singapore", code: "sgp", year: 1997, methyl_chloroform: 0, methyl_bromide: 43, hcfc: 1431, carbon_tetrachloride: 0, halon: 0, cfc: -1789 }
 ];
 
-const calcularMediaElena = (listaDatos, nombreRegion) => {
-    let filtrados = listaDatos.filter(n => n.country === nombreRegion);
-    
+const calcularMediaElena = (nombreRegion) => {
+    let filtrados = initialDataElena.filter(n => n.country === nombreRegion);
     return filtrados
         .map(n => n.halon)  
         .reduce((acum, n) => acum + n, 0) / (filtrados.length || 1);
@@ -236,7 +238,9 @@ app.get(BASE_URL_API + "/ozone-depleting-substance-consumptions/loadInitialData"
     if (datosElena.length === 0) {
         datosElena = [...initialDataElena]; 
         res.status(200).json(datosElena);
-    } 
+    } else {
+        res.status(400).send("Bad Request: El array ya tiene datos"); //
+    }
 });
 
 
