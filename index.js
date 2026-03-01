@@ -279,6 +279,8 @@ app.post(BASE_URL_API + "/ozone-depleting-substance-consumptions", (req, res) =>
 
 
 // GET a un recurso concreto 
+
+
 app.get(BASE_URL_API + "/ozone-depleting-substance-consumptions/:country/:year", (req, res) => {
     const country = req.params.country;
     const year = parseInt(req.params.year); 
@@ -289,8 +291,10 @@ app.get(BASE_URL_API + "/ozone-depleting-substance-consumptions/:country/:year",
     );
 
     if (!recurso) {
-        res.status(404).json({ error: "Recurso no encontrado (país o año incorrectos)" });
+        // Código 404 del cuadro verde
+        res.status(404).json({ error: "No se encontró el recurso solicitado" });
     } else {
+        // Código 200 OK si lo encontramos
         res.status(200).json(recurso);
     }
 });
