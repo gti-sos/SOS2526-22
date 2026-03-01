@@ -227,12 +227,14 @@ let initialDataElena = [
 
 const calcularMediaElena = (listaDatos,nombreRegion) => {
     let filtrados = listaDatos.filter(n => n.country.toLowerCase() === nombreRegion.toLowerCase());
-    if (datosFiltrados.length === 0) return 0;
+    if (filtrados.length === 0) return 0;
 
     return filtrados
         .map(n => n.halon)  
         .reduce((acum, n) => acum + n, 0) / (filtrados.length || 1);
 };
+
+
 
 app.get("/samples/EMM", (req, res) => {
     const media = calcularMediaElena(initialDataElena, "asia");    
