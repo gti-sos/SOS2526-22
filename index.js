@@ -200,7 +200,7 @@ app.delete(`${BASE_URL_API}/global-agriculture-climate-impacts`, (req, res) => {
 //INDIVIDUAL ELENA 
 
 //apartado 8. Replicar el algoritmo del archivo llamado “index-YYY.js” 
-let datosElena = [
+let initialDataElena = [
     { country: "bangladesh", code: "bgd", year: 1994, methyl_chloroform: 4, methyl_bromide: 0, hcfc: 38, carbon_tetrachloride: 71, halon: 35, cfc: 1806 },
     { country: "mexico", code: "mex", year: 2010, methyl_chloroform: 0, methyl_bromide: 6679, hcfc: 11717, carbon_tetrachloride: 1, halon: 0, cfc: -2408 },
     { country: "asia", code: "", year: 2015, methyl_chloroform: 0, methyl_bromide: 0, hcfc: 2142218, carbon_tetrachloride: 0, halon: 0, cfc: -2296 },
@@ -223,15 +223,26 @@ const calcularMediaElena = (listaDatos, nombreRegion) => {
 };
 
 app.get("/samples/EMM", (req, res) => {
-    const media = calcularMediaElena(datosElena, "asia");    
+    const media = calcularMediaElena(initialDataElena, "asia");    
     res.send(`Media de consumo de halon en asia: ${media}`);
 });
 
 
+
+
+//apartado 12: Carga de datos iniciales
+let datosElena = [];
+app.get(BASE_URL_API + "/ozone-depleting-substance-consumptions/loadInitialData", (req, res) => {
+    if (datosElena.length === 0) {
+        datosElena = [...initialDataElena]; 
+        res.status(201).send("Datos cargados correctamente");
+    } else {
+        res.status(400).send("El array ya tiene datos");
+    }
+});
+
+
 //apartado 10.	Debe tener desplegado en Render una API REST funcional ofreciendo su fuente de datos
-
-
 app.get(BASE_URL_API+ "/ozone-depleting-substance-consumptions", (req,res)=>{
-    res.send(JSON.stringify(datosElena, null, 2)); // lo que hay dentro del () es para serializar el objeto a JSON, es decir convertirlo a un formato que se pueda enviar a través de la red
-
+res.status(200).json(datosElena);
 });
