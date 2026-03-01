@@ -199,6 +199,7 @@ app.delete(`${BASE_URL_API}/global-agriculture-climate-impacts`, (req, res) => {
 
 //INDIVIDUAL ELENA 
 
+//apartado 8. Replicar el algoritmo del archivo llamado “index-YYY.js” 
 let datosElena = [
     { country: "bangladesh", code: "bgd", year: 1994, methyl_chloroform: 4, methyl_bromide: 0, hcfc: 38, carbon_tetrachloride: 71, halon: 35, cfc: 1806 },
     { country: "mexico", code: "mex", year: 2010, methyl_chloroform: 0, methyl_bromide: 6679, hcfc: 11717, carbon_tetrachloride: 1, halon: 0, cfc: -2408 },
@@ -224,4 +225,10 @@ const calcularMediaElena = (listaDatos, nombreRegion) => {
 app.get("/samples/EMM", (req, res) => {
     const media = calcularMediaElena(datosElena, "asia");    
     res.send(`Media de consumo de halon en asia: ${media}`);
+});
+
+
+//apartado 10.	Debe tener desplegado en Render una API REST funcional ofreciendo su fuente de datos
+app.get(BASE_URL_API + "/ozone-depleting-substance-consumptions", (req, res) => {
+    res.json(datosElena); 
 });
