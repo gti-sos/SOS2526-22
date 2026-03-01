@@ -260,15 +260,21 @@ res.status(200).json(datosElena);
 //apartado 13.	La API debe cumplir con las buenas prácticas definidas en los laboratorios
 
 // POST para crear un nuevo recurso
-app.post(`${BASE_URL_API}/ozone-depleting-substance-consumptions`, (req, res) => {
-    const newData = req.body;
-    if (!newData || !newData.country || !newData.year) {
-        return res.status(400).json({ error: "Faltan campos obligatorios" });
-    }
-    const exists = datosElena.some(item => item.country.toLowerCase() === newData.country.toLowerCase() && item.year === parseInt(newData.year));
+app.post(BASE_URL_API + "/ozone-depleting-substance-consumptions", (req, res) => {
+    let newData = req.body; 
+
+    // 1. Validamos que el recurso no exista ya
+    // Comprobamos por país y año, que es nuestro identificador natural
+    const exists = datosElena.some(item => 
+        item.country.toLowerCase() === newData.country.toLowerCase() && 
+        item.year === parseInt(newData.year)
+    );
+
     if (exists) {
-        return res.status(409).json({ error: "El recurso ya existe (Conflict)" });
+        res.status(409).send("CONFLICT: El recurso ya existe para ese país y año."); 
+    } else {
+        datosElena.push(newData);
+        
+        res.status(201).send("CREATED"); 
     }
-    datosElena.push(newData);
-    res.status(201).json(newData);
 });
