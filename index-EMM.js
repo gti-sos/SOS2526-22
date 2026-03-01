@@ -26,3 +26,4 @@ let suma = filtrados
     .reduce((acum, n) => acum + n, 0) / (filtrados.length || 1); // Sumamos y dividimos por el total
 
 console.log("Media de consumo de halon en " + region + ": " + suma);
+
