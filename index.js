@@ -18,9 +18,7 @@ app.get('/cool', (req, res) => {
      </h1></body></html>`);
 })
 
-app.listen(PORT, () => {
-  console.log('Server is running on ${PORT}')
-})
+
 
 
 
@@ -28,7 +26,7 @@ app.listen(PORT, () => {
 let globalAgricultureData  = [];
 
 
-app.use("/", express.static("./static"));
+app.use("/about", express.static("./public/about.html"));
 app.use(bodyParser.json());
 
 
