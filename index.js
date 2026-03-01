@@ -279,8 +279,6 @@ app.post(BASE_URL_API + "/ozone-depleting-substance-consumptions", (req, res) =>
 
 
 // GET a un recurso concreto 
-
-
 app.get(BASE_URL_API + "/ozone-depleting-substance-consumptions/:country/:year", (req, res) => {
     const country = req.params.country;
     const year = parseInt(req.params.year); 
@@ -291,10 +289,32 @@ app.get(BASE_URL_API + "/ozone-depleting-substance-consumptions/:country/:year",
     );
 
     if (!recurso) {
-        // Código 404 del cuadro verde
         res.status(404).json({ error: "No se encontró el recurso solicitado" });
     } else {
-        // Código 200 OK si lo encontramos
         res.status(200).json(recurso);
     }
+});
+
+// 1. PUT a un recurso concreto 
+app.put(`${BASE_URL_API}/ozone-depleting-substance-consumptions/:country/:year`, (req, res) => {
+    const { country, year } = req.params;
+    const updatedData = req.body;
+    const intYear = parseInt(year);
+
+    const index = datosElena.findIndex(item => 
+        item.country.toLowerCase() === country.toLowerCase() && 
+        item.year === intYear
+    );
+
+    if (index === -1) {
+        return res.status(404).json({ error: "Dato no encontrado para actualizar" });
+    }
+
+
+    if (updatedData.country !== country || parseInt(updatedData.year) !== intYear) {
+        return res.status(400).json({ error: "Bad Request: Los identificadores no coinciden" });
+    }
+
+    datosElena[index] = { ...datosElena[index], ...updatedData };
+    res.status(200).json(datosElena[index]); // 200 OK
 });
