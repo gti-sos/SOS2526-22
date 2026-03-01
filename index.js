@@ -239,7 +239,6 @@ app.get("/samples/EMM", (req, res) => {
 
 
 
-
 //apartado 12: Carga de datos iniciales
 let datosElena = [];
 app.get(BASE_URL_API + "/ozone-depleting-substance-consumptions/loadInitialData", (req, res) => {
@@ -255,4 +254,21 @@ app.get(BASE_URL_API + "/ozone-depleting-substance-consumptions/loadInitialData"
 //apartado 10.	Debe tener desplegado en Render una API REST funcional ofreciendo su fuente de datos
 app.get(BASE_URL_API+ "/ozone-depleting-substance-consumptions", (req,res)=>{
 res.status(200).json(datosElena);
+});
+
+
+//apartado 13.	La API debe cumplir con las buenas prácticas definidas en los laboratorios
+
+// POST para crear un nuevo recurso
+app.post(`${BASE_URL_API}/ozone-depleting-substance-consumptions`, (req, res) => {
+    const newData = req.body;
+    if (!newData || !newData.country || !newData.year) {
+        return res.status(400).json({ error: "Faltan campos obligatorios" });
+    }
+    const exists = datosElena.some(item => item.country.toLowerCase() === newData.country.toLowerCase() && item.year === parseInt(newData.year));
+    if (exists) {
+        return res.status(409).json({ error: "El recurso ya existe (Conflict)" });
+    }
+    datosElena.push(newData);
+    res.status(201).json(newData);
 });
