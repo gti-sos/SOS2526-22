@@ -24,7 +24,7 @@ app.listen(3000, () => {
 
 
 
-//Individual CELIA
+////Individual CELIA, DATOS CELIA 
 let globalAgricultureData  = [];
 
 
@@ -62,7 +62,7 @@ app.listen(PORT , () => {
 
 
 
-// 🔹 Algoritmo de index-CLS.js
+//// Algoritmo de index-CLS.js
 const datos = [
   { year: 2001, country: "India", region: "West Bengal", crop_type: "Corn", average_temperature_c: 155, total_precipitation_mm: 44706 },
   { year: 2024, country: "China", region: "North", crop_type: "Corn", average_temperature_c: 323, total_precipitation_mm: 291357 },
@@ -91,7 +91,7 @@ function calcularMedia(countryElegido) {
 }
 
 
-// 🔹 Ruta para tu ejercicio
+//  Ruta para individual CELIA 
 app.get("/samples/CLS", (req, res) => {
     const countryElegido = "China"; // puedes cambiar a tu país
     const media = calcularMedia(countryElegido);
@@ -100,7 +100,7 @@ app.get("/samples/CLS", (req, res) => {
 
 
 
-/////////INDIVIDUAL CELIA 
+/////////INDIVIDUAL CELIA //////
 
 app.get(`${BASE_URL_API}/global-agriculture-climate-impacts/loadInitialData`, (req, res) => {
     if (globalAgricultureData.length === 0) {
@@ -200,7 +200,15 @@ app.delete(`${BASE_URL_API}/global-agriculture-climate-impacts`, (req, res) => {
 
 
 
-//INDIVIDUAL ELENA 
+
+
+
+
+
+
+
+
+/////INDIVIDUAL ELENA 
 
 //apartado 8. Replicar el algoritmo del archivo llamado “index-YYY.js” 
 let initialDataElena = [
