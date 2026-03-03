@@ -18,9 +18,7 @@ app.get('/cool', (req, res) => {
      </h1></body></html>`);
 })
 
-app.listen(3000, () => {
-  console.log('Server is running on http://localhost:3000')
-})
+
 
 
 
@@ -121,20 +119,99 @@ app.get(`${BASE_URL_API}/global-agriculture-climate-impacts/loadInitialData`, (r
 });
 
 // GET todos los datos
-app.get(`${BASE_URL_API}/global-agriculture-climate-impacts`, (req, res) => {
-    res.status(200).json(globalAgricultureData);
-});
+//app.get(`${BASE_URL_API}/global-agriculture-climate-impacts`, (req, res) => {
+  //  res.status(200).json(globalAgricultureData);
+//});
 
 // GET dato específico por país
-app.get(`${BASE_URL_API}/global-agriculture-climate-impacts/:country`, (req, res) => {
-    const country = req.params.country;
-    const result = globalAgricultureData.filter(item => item.country.toLowerCase() === country.toLowerCase());
-    if (result.length === 0) {
-        res.status(404).json({ error: "No se encontró el país" });
-    } else {
-        res.status(200).json(result);
+//app.get(`${BASE_URL_API}/global-agriculture-climate-impacts/:country`, (req, res) => {
+  //  const country = req.params.country;
+    //const result = globalAgricultureData.filter(item => item.country.toLowerCase() === country.toLowerCase());
+    //if (result.length === 0) {
+      //  res.status(404).json({ error: "No se encontró el país" });
+    //} else {
+     //   res.status(200).json(result);
+    //}
+//});
+
+
+app.get("/api/v1/global-agriculture-climate-impacts", (req, res) => {
+
+    const { country, year, from, to } = req.query;
+
+    let results = globalAgricultureData;
+
+    // Filtro por país
+    if (country) {
+        results = results.filter(d =>
+            d.country.toLowerCase() === country.toLowerCase()
+        );
     }
+
+    // Filtro por año exacto
+    if (year) {
+        results = results.filter(d =>
+            d.year === parseInt(year)
+        );
+    }
+
+    // Filtro por rango
+    if (from) {
+        results = results.filter(d =>
+            d.year >= parseInt(from)
+        );
+    }
+
+    if (to) {
+        results = results.filter(d =>
+            d.year <= parseInt(to)
+        );
+    }
+
+    res.status(200).json(results);
 });
+
+
+// GET ESPECÍFICO (OBJETO)
+app.get(`${BASE_URL_API}/global-agriculture-climate-impacts/:country/:year`, (req, res) => {
+
+    const country = req.params.country;
+    const year = Number(req.params.year);
+
+    const result = globalAgricultureData.find(item =>
+        item.country.toLowerCase() === country.toLowerCase() &&
+        item.year === year
+    );
+
+    if (!result) {
+        return res.status(404).json({ error: "Dato no encontrado" });
+    }
+
+    res.status(200).json(result);
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // POST para agregar un dato
 app.post(`${BASE_URL_API}/global-agriculture-climate-impacts`, (req, res) => {
@@ -163,6 +240,10 @@ app.post(`${BASE_URL_API}/global-agriculture-climate-impacts`, (req, res) => {
     globalAgricultureData.push(newData);
     res.status(201).json(newData);
 });
+
+
+
+
 
 // PUT para actualizar
 app.put(`${BASE_URL_API}/global-agriculture-climate-impacts/:country/:year`, (req, res) => {
