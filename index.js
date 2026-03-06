@@ -244,16 +244,30 @@ app.post(`${BASE_URL_API}/global-agriculture-climate-impacts`, (req, res) => {
 
 // PUT para actualizar
 app.put(`${BASE_URL_API}/global-agriculture-climate-impacts/:country/:year`, (req, res) => {
+
     const country = req.params.country;
     const year = parseInt(req.params.year);
     const updatedData = req.body;
 
-    const index = globalAgricultureData.findIndex(item => item.country.toLowerCase() === country.toLowerCase() && item.year === year);
+    if (updatedData.country && updatedData.country.toLowerCase() !== country.toLowerCase()) {
+        return res.status(400).json({ error: "Country no coincide con la URL" });
+    }
+
+    if (updatedData.year && parseInt(updatedData.year) !== year) {
+        return res.status(400).json({ error: "Year no coincide con la URL" });
+    }
+
+    const index = globalAgricultureData.findIndex(item =>
+        item.country.toLowerCase() === country.toLowerCase() &&
+        item.year === year
+    );
+
     if (index === -1) {
         return res.status(404).json({ error: "Dato no encontrado" });
     }
 
     globalAgricultureData[index] = { ...globalAgricultureData[index], ...updatedData };
+
     res.status(200).json(globalAgricultureData[index]);
 });
 
@@ -275,6 +289,32 @@ app.delete(`${BASE_URL_API}/global-agriculture-climate-impacts`, (req, res) => {
     globalAgricultureData = [];
     res.status(200).json({ message: "Todos los datos eliminados" });
 });
+
+
+
+
+
+
+
+
+app.all(`${BASE_URL_API}/global-agriculture-climate-impacts`, (req,res,next)=>{
+    const allowed = ["GET","POST","DELETE"];
+    if(!allowed.includes(req.method)){
+        return res.status(405).json({error:"Method Not Allowed"});
+    }
+    next();
+});
+
+
+app.all(`${BASE_URL_API}/global-agriculture-climate-impacts/:country/:year`, (req,res,next)=>{
+    const allowed = ["GET","PUT","DELETE"];
+    if(!allowed.includes(req.method)){
+        return res.status(405).json({error:"Method Not Allowed"});
+    }
+    next();
+});
+
+
 
 
 
