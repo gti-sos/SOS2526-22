@@ -671,23 +671,23 @@ app.delete(`${BASE_URL_API}/ozone-depleting-substance-consumptions`, (req, res) 
 
 
 
-app.all(`${BASE_URL_API}/ozone-depleting-substance-consumptions`, (req,res,next)=>{
-    const allowed = ["GET","POST","DELETE"];
-    if(!allowed.includes(req.method)){
-        return res.status(405).json({error:"Method Not Allowed"});
+// Control de métodos no permitidos para la ruta base
+app.all(`${BASE_URL_API}/ozone-depleting-substance-consumptions`, (req, res, next) => {
+    const allowed = ["GET", "POST", "DELETE"];
+    if (!allowed.includes(req.method)) {
+        return res.status(405).json({ error: "Method Not Allowed (No se permite PUT sobre la lista)" });
     }
     next();
 });
 
-
-app.all(`${BASE_URL_API}/ozone-depleting-substance-consumptions/:country/:year`, (req,res,next)=>{
-    const allowed = ["GET","PUT","DELETE"];
-    if(!allowed.includes(req.method)){
-        return res.status(405).json({error:"Method Not Allowed"});
+// Control de métodos no permitidos para recursos concretos
+app.all(`${BASE_URL_API}/ozone-depleting-substance-consumptions/:country/:year`, (req, res, next) => {
+    const allowed = ["GET", "PUT", "DELETE"];
+    if (!allowed.includes(req.method)) {
+        return res.status(405).json({ error: "Method Not Allowed (No se permite POST sobre un recurso concreto)" });
     }
     next();
 });
-
 //INDIVIDUAL JULIO
 
 const datosJulio = [
