@@ -595,7 +595,7 @@ app.get(JMV_API_URL + "/loadInitialData", (req, res) => {
         agriFoodEmissions = [...datosJulio]; 
         res.status(200).json(agriFoodEmissions);
     } else {
-        res.status(400).send("BAD REQUEST: El array ya tiene datos.");
+        res.status(409).send("BAD REQUEST: El array ya tiene datos.");
     }
 });
 
@@ -603,8 +603,21 @@ app.get(JMV_API_URL, (req, res) => {
     res.status(200).json(agriFoodEmissions);
 });
 
+// POST a la lista (Punto 11.b.i.2 y 3 - Errores 409 y 400)
 app.post(JMV_API_URL, (req, res) => {
-    let newData = req.body;
+    const newData = req.body;
+
+    // 1. Validación (Punto 11.b.i.3): ¿Faltan campos o no son números?
+    if (!newData.country || !newData.year || 
+        newData.savanna_fire === undefined || newData.forest_fire === undefined ||
+        newData.crop_residues === undefined || newData.rice_cultivation === undefined ||
+        newData.drained_organic === undefined || newData.pesticides_manufacturing === undefined ||
+        newData.food_transport === undefined) {
+        
+        return res.status(400).send("BAD REQUEST: Faltan campos obligatorios o el formato es incorrecto.");
+    }
+
+    // 2. Comprobar duplicados (Punto 11.b.i.2): Error 409
     const exists = agriFoodEmissions.some(item => 
         item.country.toLowerCase() === newData.country.toLowerCase() && 
         item.year === parseInt(newData.year)
@@ -616,6 +629,13 @@ app.post(JMV_API_URL, (req, res) => {
         agriFoodEmissions.push(newData);
         res.status(201).send("CREATED"); 
     }
+});
+
+// POST individual no permitido
+app.post(JMV_API_URL + "/:country/:year", (req, res) => {
+    res.status(405).json({
+        error: "Method Not Allowed: No se permite POST sobre un recurso concreto."
+    });
 });
 
 app.get(JMV_API_URL + "/:country/:year", (req, res) => {
@@ -634,15 +654,25 @@ app.get(JMV_API_URL + "/:country/:year", (req, res) => {
 
 app.put(JMV_API_URL + "/:country/:year", (req, res) => {
     const { country, year } = req.params;
+    const updatedData = req.body;
+    const intYear = parseInt(year);
+
+    // Comprobamos si el ID de la URL coincide con el ID del cuerpo (JSON)
+    if (updatedData.country && updatedData.country.toLowerCase() !== country.toLowerCase() ||
+        updatedData.year && parseInt(updatedData.year) !== intYear) {
+        
+        return res.status(400).send("BAD REQUEST: El ID del recurso no coincide con el del cuerpo.");
+    }
+
     const index = agriFoodEmissions.findIndex(item => 
         item.country.toLowerCase() === country.toLowerCase() && 
-        item.year === parseInt(year)
+        item.year === intYear
     );
 
     if (index === -1) {
         res.status(404).json({ error: "No se encontró el dato para actualizar" });
     } else {
-        agriFoodEmissions[index] = { ...agriFoodEmissions[index], ...req.body };
+        agriFoodEmissions[index] = { ...agriFoodEmissions[index], ...updatedData };
         res.status(200).json(agriFoodEmissions[index]);
     }
 });
