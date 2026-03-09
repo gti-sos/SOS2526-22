@@ -578,7 +578,7 @@ app.get(JMV_API_URL + "/loadInitialData", (req, res) => {
         agriFoodEmissions = [...datosJulio]; 
         res.status(200).json(agriFoodEmissions);
     } else {
-        res.status(400).send("BAD REQUEST: El array ya tiene datos.");
+        res.status(409).send("BAD REQUEST: El array ya tiene datos.");
     }
 });
 
