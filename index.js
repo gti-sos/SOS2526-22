@@ -601,6 +601,13 @@ app.post(JMV_API_URL, (req, res) => {
     }
 });
 
+// POST individual no permitido
+app.post(JMV_API_URL + "/:country/:year", (req, res) => {
+    res.status(405).json({
+        error: "Method Not Allowed: No se permite POST sobre un recurso concreto."
+    });
+});
+
 app.get(JMV_API_URL + "/:country/:year", (req, res) => {
     const { country, year } = req.params;
     const recurso = agriFoodEmissions.find(item => 
