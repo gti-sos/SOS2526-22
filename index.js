@@ -670,6 +670,24 @@ app.delete(`${BASE_URL_API}/ozone-depleting-substance-consumptions`, (req, res) 
 });
 
 
+
+app.all(`${BASE_URL_API}/ozone-depleting-substance-consumptions`, (req,res,next)=>{
+    const allowed = ["GET","POST","DELETE"];
+    if(!allowed.includes(req.method)){
+        return res.status(405).json({error:"Method Not Allowed"});
+    }
+    next();
+});
+
+
+app.all(`${BASE_URL_API}/ozone-depleting-substance-consumptions/:country/:year`, (req,res,next)=>{
+    const allowed = ["GET","PUT","DELETE"];
+    if(!allowed.includes(req.method)){
+        return res.status(405).json({error:"Method Not Allowed"});
+    }
+    next();
+});
+
 //INDIVIDUAL JULIO
 
 const datosJulio = [
