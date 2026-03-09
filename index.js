@@ -624,15 +624,25 @@ app.get(JMV_API_URL + "/:country/:year", (req, res) => {
 
 app.put(JMV_API_URL + "/:country/:year", (req, res) => {
     const { country, year } = req.params;
+    const updatedData = req.body;
+    const intYear = parseInt(year);
+
+    // Comprobamos si el ID de la URL coincide con el ID del cuerpo (JSON)
+    if (updatedData.country && updatedData.country.toLowerCase() !== country.toLowerCase() ||
+        updatedData.year && parseInt(updatedData.year) !== intYear) {
+        
+        return res.status(400).send("BAD REQUEST: El ID del recurso no coincide con el del cuerpo.");
+    }
+
     const index = agriFoodEmissions.findIndex(item => 
         item.country.toLowerCase() === country.toLowerCase() && 
-        item.year === parseInt(year)
+        item.year === intYear
     );
 
     if (index === -1) {
         res.status(404).json({ error: "No se encontró el dato para actualizar" });
     } else {
-        agriFoodEmissions[index] = { ...agriFoodEmissions[index], ...req.body };
+        agriFoodEmissions[index] = { ...agriFoodEmissions[index], ...updatedData };
         res.status(200).json(agriFoodEmissions[index]);
     }
 });
