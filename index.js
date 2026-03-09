@@ -382,197 +382,6 @@ res.status(200).json(datosElena);
 
 
 //apartado 13.	La API debe cumplir con las buenas prácticas definidas en los laboratorios
-
-
-// // POST para agregar un dato
-// app.post(`${BASE_URL_API}/ozone-depleting-substance-consumptions`, (req, res) => {
-//     const newData = req.body;
-
-//     // Convertimos a números
-//     newData.year = Number(newData.year);
-//     newData.methyl_chloroform = Number(newData.methyl_chloroform);
-//     newData.methyl_bromide= Number(newData.methyl_bromide);
-//     newData.hcfc = Number(newData.hcfc);
-//     newData.carbon_tetrachloride= Number(newData.carbon_tetrachloride);
-//     newData.halon = Number(newData.halon);
-//     newData.cfc= Number(newData.cfc);
-
-//     if (
-//         !newData.country || newData.country === "" ||
-//         !newData.year || isNaN(newData.year) ||
-//         !newData.code || newData.code === "" ||
-//         newData.methyl_chloroform === undefined || isNaN(newData.methyl_chloroform) ||
-//         newData.methyl_bromide === undefined || isNaN(newData.methyl_bromide)||
-//         newData.hcfc === undefined || isNaN(newData.hcfc) ||
-//         newData.carbon_tetrachloride === undefined || isNaN(newData.carbon_tetrachloride||
-//         newData.halon === undefined || isNaN(newData.halon) ||
-//         newData.cfc === undefined || isNaN(newData.cfc))
-//     ) {
-//         return res.status(400).json({ error: "Faltan campos obligatorios" });
-//     }
-
-//     const exists = datosElena.some(item => item.country.toLowerCase() === newData.country.toLowerCase() && item.year === newData.year);
-//     if (exists) {
-//         return res.status(409).json({ error: "El dato ya existe" });
-//     }
-
-//     datosElena.push(newData);
-//     res.status(201).json(newData);
-// });
-
-
-// // GET a un recurso concreto 
-// app.get(BASE_URL_API + "/ozone-depleting-substance-consumptions/:country/:year", (req, res) => {
-//     const country = req.params.country;
-//     const year = parseInt(req.params.year); 
-
-//     const recurso = datosElena.find(item => 
-//         item.country.toLowerCase() === country.toLowerCase() && 
-//         item.year === year
-//     );
-
-//     if (!recurso) {
-//         res.status(404).json({ error: "No se encontró el recurso solicitado" });
-//     } else {
-//         res.status(200).json(recurso);
-//     }
-// });
-
-// // PUT a un recurso concreto 
-// // PUT para actualizar un registro existente (país y año)
-// app.put(`${BASE_URL_API}/ozone-depleting-substance-consumptions/:country/:year`, (req, res) => {
-//     const countryParam = req.params.country;
-//     const yearParam = parseInt(req.params.year);
-//     const updatedData = req.body;
-
-//     // Validar que si en el cuerpo se incluye "country", coincida con el de la URL
-//     if (updatedData.country && updatedData.country.toLowerCase() !== countryParam.toLowerCase()) {
-//         return res.status(400).json({ error: "El país del cuerpo no coincide con el de la URL" });
-//     }
-
-//     // Validar que si en el cuerpo se incluye "year", coincida con el de la URL
-//     if (updatedData.year && parseInt(updatedData.year) !== yearParam) {
-//         return res.status(400).json({ error: "El año del cuerpo no coincide con el de la URL" });
-//     }
-
-//     // Buscar el índice del elemento que coincida con país y año
-//     const index = datosElena.findIndex(item =>
-//         item.country.toLowerCase() === countryParam.toLowerCase() &&
-//         item.year === yearParam
-//     );
-
-//     if (index === -1) {
-//         return res.status(404).json({ error: "Registro no encontrado para ese país y año" });
-//     }
-
-//     // Actualizar el objeto existente con los nuevos campos (sin perder los no enviados)
-//     datosElena[index] = { ...datosElena[index], ...updatedData };
-//     res.status(200).json(datosElena[index]);
-// });
-
-
-// // DELETE a la lista completa 
-// app.delete(`${BASE_URL_API}/ozone-depleting-substance-consumptions`, (req, res) => {
-//     datosElena = []; // Vaciamos el array
-//     res.status(200).json({ message: "Todos los datos han sido eliminados correctamente" });
-// });
-
-// // DELETE a un recurso concreto 
-// app.delete(`${BASE_URL_API}/ozone-depleting-substance-consumptions/:country/:year`, (req, res) => {
-//     const { country, year } = req.params;
-//     const intYear = parseInt(year);
-
-//     // Buscamos si el recurso existe antes de intentar borrarlo
-//     const index = datosElena.findIndex(item => 
-//         item.country.toLowerCase() === country.toLowerCase() && 
-//         item.year === intYear
-//     );
-
-//     if (index === -1) {
-//         // 404 Not Found si intentamos borrar algo que no existe
-//         res.status(404).json({ error: "No se encontró el recurso para borrar" });
-//     } else {
-//         // Eliminamos el elemento del array
-//         datosElena.splice(index, 1);
-//         res.status(200).json({ message: "Recurso eliminado con éxito" });
-//     }
-// });
-
-
-// app.get("/api/v1/ozone-depleting-substance-consumptions", (req, res) => {
-
-//     const { country, year, from, to } = req.query;
-
-//     let results = datosElena;
-
-//     // Filtro por país
-//     if (country) {
-//         results = results.filter(d =>
-//             d.country.toLowerCase() === country.toLowerCase()
-//         );
-//     }
-
-//     // Filtro por año exacto
-//     if (year) {
-//         results = results.filter(d =>
-//             d.year === parseInt(year)
-//         );
-//     }
-
-//     // Filtro por rango
-//     if (from) {
-//         results = results.filter(d =>
-//             d.year >= parseInt(from)
-//         );
-//     }
-
-//     if (to) {
-//         results = results.filter(d =>
-//             d.year <= parseInt(to)
-//         );
-//     }
-
-//     res.status(200).json(results);
-// });
-
-
-// // GET ESPECÍFICO (OBJETO)
-// app.get(`${BASE_URL_API}/ozone-depleting-substance-consumptions/:country/:year`, (req, res) => {
-
-//     const country = req.params.country;
-//     const year = Number(req.params.year);
-
-//     const result = datosElena.find(item =>
-//         item.country.toLowerCase() === country.toLowerCase() &&
-//         item.year === year
-//     );
-
-//     if (!result) {
-//         return res.status(404).json({ error: "Dato no encontrado" });
-//     }
-
-//     res.status(200).json(result);
-// });
-
-
-
-// app.all(`${BASE_URL_API}/ozone-depleting-substance-consumptions`, (req,res,next)=>{
-//     const allowed = ["GET","POST","DELETE"];
-//     if(!allowed.includes(req.method)){
-//         return res.status(405).json({error:"Method Not Allowed"});
-//     }
-//     next();
-// });
-
-
-// app.all(`${BASE_URL_API}/ozone-depleting-substance-consumptions/:country/:year`, (req,res,next)=>{
-//     const allowed = ["GET","PUT","DELETE"];
-//     if(!allowed.includes(req.method)){
-//         return res.status(405).json({error:"Method Not Allowed"});
-//     }
-//     next();
-// });
-
 // POST para agregar un nuevo dato
 app.post(`${BASE_URL_API}/ozone-depleting-substance-consumptions`, (req, res) => {
     const newData = req.body;
@@ -587,7 +396,6 @@ app.post(`${BASE_URL_API}/ozone-depleting-substance-consumptions`, (req, res) =>
         return res.status(400).json({ error: "Faltan campos obligatorios o el formato es incorrecto" });
     }
 
-    // Convertir a tipos correctos
     newData.year = parseInt(newData.year);
     newData.methyl_chloroform = Number(newData.methyl_chloroform);
     newData.methyl_bromide = Number(newData.methyl_bromide);
@@ -596,7 +404,7 @@ app.post(`${BASE_URL_API}/ozone-depleting-substance-consumptions`, (req, res) =>
     newData.halon = Number(newData.halon);
     newData.cfc = Number(newData.cfc);
 
-    // Comprobar si el recurso ya existe (llave primaria: country + year)
+    // Comprobar si el recurso ya existe 
     const exists = datosElena.some(item => 
         item.country.toLowerCase() === newData.country.toLowerCase() && 
         item.year === newData.year
@@ -629,7 +437,6 @@ app.put(`${BASE_URL_API}/ozone-depleting-substance-consumptions/:country/:year`,
     const { country, year } = req.params;
     const updatedData = req.body;
 
-    // Validar que los datos del cuerpo coinciden con la URL
     if (updatedData.country.toLowerCase() !== country.toLowerCase() || parseInt(updatedData.year) !== parseInt(year)) {
         return res.status(400).json({ error: "El país o el año no coinciden con la URL" });
     }
@@ -688,6 +495,8 @@ app.all(`${BASE_URL_API}/ozone-depleting-substance-consumptions/:country/:year`,
     }
     next();
 });
+
+
 //INDIVIDUAL JULIO
 
 const datosJulio = [
