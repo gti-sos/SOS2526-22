@@ -400,7 +400,7 @@ app.post(`${BASE_URL_API}/ozone-depleting-substance-consumptions`, (req, res) =>
     if (
         !newData.country || newData.country === "" ||
         !newData.year || isNaN(newData.year) ||
-        !newData.code || isNaN(newData.code) ||
+        !newData.code || newData.code === "" ||
         newData.methyl_chloroform === undefined || isNaN(newData.methyl_chloroform) ||
         newData.methyl_bromide === undefined || isNaN(newData.methyl_bromide)||
         newData.hcfc === undefined || isNaN(newData.hcfc) ||
