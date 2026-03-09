@@ -468,6 +468,84 @@ app.delete(`${BASE_URL_API}/ozone-depleting-substance-consumptions/:country/:yea
     }
 });
 
+
+app.get("/api/v1/ozone-depleting-substance-consumptions", (req, res) => {
+
+    const { country, year, from, to } = req.query;
+
+    let results = datosElena;
+
+    // Filtro por país
+    if (country) {
+        results = results.filter(d =>
+            d.country.toLowerCase() === country.toLowerCase()
+        );
+    }
+
+    // Filtro por año exacto
+    if (year) {
+        results = results.filter(d =>
+            d.year === parseInt(year)
+        );
+    }
+
+    // Filtro por rango
+    if (from) {
+        results = results.filter(d =>
+            d.year >= parseInt(from)
+        );
+    }
+
+    if (to) {
+        results = results.filter(d =>
+            d.year <= parseInt(to)
+        );
+    }
+
+    res.status(200).json(results);
+});
+
+
+// GET ESPECÍFICO (OBJETO)
+app.get(`${BASE_URL_API}/ozone-depleting-substance-consumptions/:country/:year`, (req, res) => {
+
+    const country = req.params.country;
+    const year = Number(req.params.year);
+
+    const result = datosElena.find(item =>
+        item.country.toLowerCase() === country.toLowerCase() &&
+        item.year === year
+    );
+
+    if (!result) {
+        return res.status(404).json({ error: "Dato no encontrado" });
+    }
+
+    res.status(200).json(result);
+});
+
+
+
+app.all(`${BASE_URL_API}/ozone-depleting-substance-consumptions`, (req,res,next)=>{
+    const allowed = ["GET","POST","DELETE"];
+    if(!allowed.includes(req.method)){
+        return res.status(405).json({error:"Method Not Allowed"});
+    }
+    next();
+});
+
+
+app.all(`${BASE_URL_API}/ozone-depleting-substance-consumptions/:country/:year`, (req,res,next)=>{
+    const allowed = ["GET","PUT","DELETE"];
+    if(!allowed.includes(req.method)){
+        return res.status(405).json({error:"Method Not Allowed"});
+    }
+    next();
+});
+
+
+
+
 //INDIVIDUAL JULIO
 
 const datosJulio = [
