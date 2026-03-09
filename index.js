@@ -439,22 +439,35 @@ app.get(BASE_URL_API + "/ozone-depleting-substance-consumptions/:country/:year",
 });
 
 // PUT a un recurso concreto 
+// PUT para actualizar un registro existente (país y año)
 app.put(`${BASE_URL_API}/ozone-depleting-substance-consumptions/:country/:year`, (req, res) => {
-    const { country, year } = req.params;
+    const countryParam = req.params.country;
+    const yearParam = parseInt(req.params.year);
     const updatedData = req.body;
-    const intYear = parseInt(year);
 
-    const index = datosElena.findIndex(item => 
-        item.country.toLowerCase() === country.toLowerCase() && 
-        item.year === intYear
+    // Validar que si en el cuerpo se incluye "country", coincida con el de la URL
+    if (updatedData.country && updatedData.country.toLowerCase() !== countryParam.toLowerCase()) {
+        return res.status(400).json({ error: "El país del cuerpo no coincide con el de la URL" });
+    }
+
+    // Validar que si en el cuerpo se incluye "year", coincida con el de la URL
+    if (updatedData.year && parseInt(updatedData.year) !== yearParam) {
+        return res.status(400).json({ error: "El año del cuerpo no coincide con el de la URL" });
+    }
+
+    // Buscar el índice del elemento que coincida con país y año
+    const index = datosElena.findIndex(item =>
+        item.country.toLowerCase() === countryParam.toLowerCase() &&
+        item.year === yearParam
     );
 
     if (index === -1) {
-        return res.status(404).json({ error: "Dato no encontrado para actualizar" });
+        return res.status(404).json({ error: "Registro no encontrado para ese país y año" });
     }
 
+    // Actualizar el objeto existente con los nuevos campos (sin perder los no enviados)
     datosElena[index] = { ...datosElena[index], ...updatedData };
-    res.status(200).json(datosElena[index]); // 
+    res.status(200).json(datosElena[index]);
 });
 
 
