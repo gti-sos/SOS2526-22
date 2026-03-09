@@ -383,24 +383,41 @@ res.status(200).json(datosElena);
 
 //apartado 13.	La API debe cumplir con las buenas prácticas definidas en los laboratorios
 
-// POST para crear un nuevo recurso
-app.post(BASE_URL_API + "/ozone-depleting-substance-consumptions", (req, res) => {
-    let newData = req.body; 
 
-    // 1. Validamos que el recurso no exista ya
-    // Comprobamos por país y año, que es nuestro identificador natural
-    const exists = datosElena.some(item => 
-        item.country.toLowerCase() === newData.country.toLowerCase() && 
-        item.year === parseInt(newData.year)
-    );
+// POST para agregar un dato
+app.post(`${BASE_URL_API}/ozone-depleting-substance-consumptions`, (req, res) => {
+    const newData = req.body;
 
-    if (exists) {
-        res.status(409).send("CONFLICT: El recurso ya existe para ese país y año."); 
-    } else {
-        datosElena.push(newData);
-        
-        res.status(201).send("CREATED"); 
+    // Convertimos a números
+    newData.year = Number(newData.year);
+    newData.methyl_chloroform = Number(newData.methyl_chloroform);
+    newData.methyl_bromide= Number(newData.methyl_bromide);
+    newData.hcfc = Number(newData.hcfc);
+    newData.carbon_tetrachloride= Number(newData.carbon_tetrachloride);
+    newData.halon = Number(newData.halon);
+    newData.cfc= Number(newData.cfc);
+
+    if (
+        !newData.country || newData.country === "" ||
+        !newData.year || isNaN(newData.year) ||
+        !newData.crop_type || newData.crop_type === "" ||
+        newData.methyl_chloroform === undefined || isNaN(newData.methyl_chloroform) ||
+        newData.methyl_bromide === undefined || isNaN(newData.methyl_bromide)||
+        newData.hcfc === undefined || isNaN(newData.hcfc) ||
+        newData.carbon_tetrachloride === undefined || isNaN(newData.carbon_tetrachloride||
+        newData.halon === undefined || isNaN(newData.halon) ||
+        newData.cfc === undefined || isNaN(newData.cfc))
+    ) {
+        return res.status(400).json({ error: "Faltan campos obligatorios" });
     }
+
+    const exists = datosElena.some(item => item.country.toLowerCase() === newData.country.toLowerCase() && item.year === newData.year);
+    if (exists) {
+        return res.status(409).json({ error: "El dato ya existe" });
+    }
+
+    datosElena.push(newData);
+    res.status(201).json(newData);
 });
 
 
