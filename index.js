@@ -586,8 +586,21 @@ app.get(JMV_API_URL, (req, res) => {
     res.status(200).json(agriFoodEmissions);
 });
 
+// POST a la lista (Punto 11.b.i.2 y 3 - Errores 409 y 400)
 app.post(JMV_API_URL, (req, res) => {
-    let newData = req.body;
+    const newData = req.body;
+
+    // 1. Validación (Punto 11.b.i.3): ¿Faltan campos o no son números?
+    if (!newData.country || !newData.year || 
+        newData.savanna_fire === undefined || newData.forest_fire === undefined ||
+        newData.crop_residues === undefined || newData.rice_cultivation === undefined ||
+        newData.drained_organic === undefined || newData.pesticides_manufacturing === undefined ||
+        newData.food_transport === undefined) {
+        
+        return res.status(400).send("BAD REQUEST: Faltan campos obligatorios o el formato es incorrecto.");
+    }
+
+    // 2. Comprobar duplicados (Punto 11.b.i.2): Error 409
     const exists = agriFoodEmissions.some(item => 
         item.country.toLowerCase() === newData.country.toLowerCase() && 
         item.year === parseInt(newData.year)
