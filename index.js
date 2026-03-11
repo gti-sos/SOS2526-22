@@ -6,7 +6,7 @@ import { dirname } from "path";
 
 // Importar backends individuales
 import { loadBackEnd as loadCLS } from "./src/back/indexCLS.js";
-// import { loadBackEnd as loadEMM } from "./src/back/indexEMM.js";
+import { loadBackEnd as loadEMM } from "./src/back/indexEMM.js";
 // import { loadBackEnd as loadJMV } from "./src/back/indexJMV.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -28,7 +28,7 @@ app.get("/about", (req, res) => {
 // Cargar backends
 // CELIA = CLS
 loadCLS(app);
-// loadEMM(app);
+loadEMM(app);
 // loadJMV(app);
 
 // Ruta de prueba inicial
