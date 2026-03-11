@@ -26,41 +26,24 @@ export function loadBackEnd(app) {
     ];
 
 
-    //Carga de datos iniciales
-    let datosElena = [];
-    app.get(BASE_URL_API + "/ozone-depleting-substance-consumptions/loadInitialData", (req, res) => {
-        if (datosElena.length === 0) {
-            datosElena = [...initialDataElena]; 
-            res.status(200).json(datosElena);
-        } 
-    });
+// Carga de datos iniciales
+let datosElena = [];
+app.get(BASE_URL_API + "/ozone-depleting-substance-consumptions/loadInitialData", (req, res) => {
+    if (datosElena.length === 0) {
+        datosElena = [...initialDataElena]; 
+        res.status(200).json(datosElena);
+    } else {
+        // Si ya hay datos, simplemente devolvemos la lista actual 
+        // o un mensaje indicando que ya está inicializada.
+        res.status(200).json(datosElena); 
+    }
+});
 
     app.get(BASE_URL_API+ "/ozone-depleting-substance-consumptions", (req,res)=>{
     res.status(200).json(datosElena);
     });
 
-            // GET de un campo concreto de todos los recursos
-    // GET a una propiedad específica de todos los recursos
-app.get(BASE_URL_API + "/ozone-depleting-substance-consumptions/:field", (req, res) => {
-    const field = req.params.field;
 
-    // Verificamos si los datos están vacíos
-    if (datosElena.length === 0) {
-        return res.status(404).json({ error: "No data available. Load initial data first." });
-    }
-
-    // Verificamos si el campo existe en el primer objeto del array
-    if (!datosElena[0].hasOwnProperty(field)) {
-        return res.status(400).json({ error: `Field '${field}' does not exist in the dataset.` });
-    }
-
-    // Extraemos solo los valores de esa columna (usando Set para evitar duplicados si lo deseas)
-    const result = datosElena.map(item => item[field]);
-    
-    // Si prefieres que no haya repetidos, usa: [...new Set(datosElena.map(item => item[field]))]
-
-    res.status(200).json(result);
-});
 
     // GET de un recurso específico
     app.get(`${BASE_URL_API}/ozone-depleting-substance-consumptions/:country/:year`, (req, res) => {
