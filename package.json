@@ -14,10 +14,14 @@
   "author": "Elena Martínez, Celia Leal, Julio Morales",
   "type": "module",
   "main": "index.js",
-  "scripts": {
+"scripts": {
     "start": "node index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+    "test": "npm run test-CLS && npm run test-EMM && npm run test-JMV",
+    "test-CLS-local": "newman run postman/CLS-collection.json -e postman/CLS-local.json",
+     "test-CLS-render": "newman run postman/CLS-collection.json -e postman/CLS-render.json",
+    "test-EMM": "newman run postman/EMM-collection.json -e postman/EMM-environment.json",
+    "test-JMV": "newman run postman/JMV-collection.json -e postman/JMV-environment.json"
+},
   "dependencies": {
 
     "cool-ascii-faces": "^1.3.4",
