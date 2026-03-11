@@ -8,29 +8,6 @@
   },
   "item": [
     {
-      "name": "200 ok delete todo",
-      "request": {
-        "method": "DELETE",
-        "header": [],
-        "body": {
-          "mode": "raw",
-          "raw": ""
-        },
-        "url": {
-          "raw": "{{base_url}}/api/v1/ozone-depleting-substance-consumptions",
-          "host": [
-            "{{base_url}}"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "ozone-depleting-substance-consumptions"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
       "name": "loadInitial Data 200 Ok",
       "request": {
         "method": "GET",
@@ -70,7 +47,34 @@
       "response": []
     },
     {
-      "name": "filtro 200 OK",
+      "name": "GET a un campo concreto",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"country\": \"prueba\",\r\n    \"code\": \"jpn\",\r\n    \"year\": 2013,\r\n    \"methyl_chloroform\": 0,\r\n    \"methyl_bromide\": 7,\r\n    \"hcfc\": 20569,\r\n    \"carbon_tetrachloride\": 145,\r\n    \"halon\": 0,\r\n    \"cfc\": -1813\r\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/ozone-depleting-substance-consumptions/year",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "ozone-depleting-substance-consumptions",
+            "year"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "200 OK GET a un pais y año",
       "request": {
         "method": "GET",
         "header": [],
@@ -85,6 +89,36 @@
             "ozone-depleting-substance-consumptions",
             "japan",
             "2013"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "filtro rango de tiempo",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/ozone-depleting-substance-consumptions/filters?from=2012&to=2013",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "ozone-depleting-substance-consumptions",
+            "filters"
+          ],
+          "query": [
+            {
+              "key": "from",
+              "value": "2012"
+            },
+            {
+              "key": "to",
+              "value": "2013"
+            }
           ]
         }
       },
@@ -132,6 +166,40 @@
         "body": {
           "mode": "raw",
           "raw": "{\r\n    \"country\": \"prueba\",\r\n    \"code\": \"jpn\",\r\n    \"year\": 2015,\r\n    \"methyl_chloroform\": 0,\r\n    \"methyl_bromide\": 7,\r\n    \"hcfc\": 20569,\r\n    \"carbon_tetrachloride\": 145,\r\n     \"halon\": 0,\r\n    \"cfc\": -1813\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/ozone-depleting-substance-consumptions",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "ozone-depleting-substance-consumptions"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "400 Faltan campos",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"code\": \"jpn\",\r\n    \"year\": 2015,\r\n    \"methyl_chloroform\": 0,\r\n    \"methyl_bromide\": 7,\r\n    \"hcfc\": 20569,\r\n    \"carbon_tetrachloride\": 145,\r\n    \"halon\": 0,\r\n    \"cfc\": -1813\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -313,6 +381,29 @@
             "ozone-depleting-substance-consumptions",
             "prueba",
             "2015"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "200 ok delete todo",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": ""
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/ozone-depleting-substance-consumptions",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "ozone-depleting-substance-consumptions"
           ]
         }
       },
