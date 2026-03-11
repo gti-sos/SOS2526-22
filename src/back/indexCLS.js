@@ -20,7 +20,7 @@ export function loadBackEnd(app) {
 
   // Redirigir a la documentación de Postman
   app.get(`${BASE_URL_API}/global-agriculture-climate-impacts/docs`, (req, res) => {
-    res.redirect("https://documenter.getpostman.com/view/52404852/2sBXiertz6");
+    res.redirect("https://documenter.getpostman.com/view/52404852/2sBXiesEcp");
   });
 
   // Cargar datos iniciales
