@@ -17,10 +17,10 @@
   "scripts": {
     "start": "node index.js",
     "test": "npm run test-CLS-local && npm run test-CLS-render && npm run test-EMM-local && npm run test-EMM-render",
-    "test-CLS-local": "newman run postman/CLS-collection.json -e postman/CLS-local.json --bail",
-    "test-CLS-render": "newman run postman/CLS-collection.json -e postman/CLS-render.json --bail",
-    "test-EMM-local": "newman run postman/EMM-collection.json -e postman/EMM-local.json --bail",
-    "test-EMM-render": "newman run postman/EMM-collection.json -e postman/EMM-render.json --bail"
+    "test-CLS-local": "newman run test/api/CLS-collection.json -e test/api/CLS-local.json --bail",
+    "test-CLS-render": "newman run test/api/CLS-collection.json -e test/api/CLS-render.json --bail",
+    "test-EMM-local": "newman run test/api/EMM-collection.json -e test/api/EMM-local.json --bail",
+    "test-EMM-render": "newman run test/api/EMM-collection.json -e test/api/EMM-render.json --bail"
   },
   "dependencies": {
     "body-parser": "^2.2.2",
