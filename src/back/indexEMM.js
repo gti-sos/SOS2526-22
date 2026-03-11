@@ -1,6 +1,3 @@
-
-
-
 /////INDIVIDUAL ELENA 
 
 app.get("/api/v1/ozone-depleting-substance-consumptions/docs", (req, res) => {
