@@ -56,15 +56,60 @@ export function loadBackEnd(app) {
     });
 
     // GET de la lista completa 
-    app.get(BASE_URL_API + "/ozone-depleting-substance-consumptions", (req, res) => {
+    // app.get(BASE_URL_API + "/ozone-depleting-substance-consumptions", (req, res) => {
         
-        db.find({}, (err, docs) => {
-            let jsonData = JSON.stringify(docs.map((c) => {
-                delete c._id; 
-                return c;
-            }), null, 2);
+    //     db.find({}, (err, docs) => {
+    //         let jsonData = JSON.stringify(docs.map((c) => {
+    //             delete c._id; 
+    //             return c;
+    //         }), null, 2);
 
-            res.status(200).send(jsonData);
+    //         res.status(200).send(jsonData);
+    //     });
+    // });
+    // GET de la lista completa con paginación por páginas y grupos de elementos
+    app.get(BASE_URL_API + "/ozone-depleting-substance-consumptions", (req, res) => {
+        // 1. Recogemos tus parámetros: items (cuántos ver) y page (qué grupo ver)
+        const page = parseInt(req.query.page);
+        const items = parseInt(req.query.items);
+
+        // Si NO hay parámetros, devolvemos la lista completa como siempre
+        if (isNaN(page) || isNaN(items)) {
+            return db.find({}, (err, docs) => {
+                const resultado = docs.map(({ _id, ...rest }) => rest);
+                res.status(200).json(resultado);
+            });
+        }
+
+        // 2. Lógica interna: Si quiero la página 2 con 3 items, 
+        // internamente la DB debe ignorar los 3 primeros para mostrarme los 3 siguientes.
+        const pageNum = Math.max(1, page);
+        const limitNum = Math.max(1, items);
+        const skipNum = (pageNum - 1) * limitNum;
+
+        // 3. Contamos el total para que sepas cuántas páginas existen en total
+        db.count({}, (err, totalCount) => {
+            if (err) return res.status(500).json({ error: "Error en la base de datos" });
+
+            // 4. Pedimos a la DB el bloque exacto de datos
+            db.find({})
+                .skip(skipNum)
+                .limit(limitNum)
+                .exec((err, data) => {
+                    if (err) return res.status(500).json({ error: "Error al acceder a los datos" });
+
+                    // Limpiamos los datos de _id
+                    const resultado = data.map(({ _id, ...rest }) => rest);
+
+                    // 5. Respuesta final: Los datos que pediste y la información de la página
+                    res.status(200).json({
+                        data: resultado,
+                        total_items: totalCount,
+                        pagina_actual: pageNum,
+                        items_por_pagina: limitNum,
+                        total_paginas: Math.ceil(totalCount / limitNum)
+                    });
+                });
         });
     });
 
