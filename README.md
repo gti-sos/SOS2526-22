@@ -8,4 +8,7 @@
 - **Repository**: [gti-sos/SOS2526-22](https://github.com/gti-sos/SOS2526-22)
 - **URL**: [SOS2526-22](https://sos2526-22.onrender.com/)
 - **APIs**:
-    - -	http://sos2526-22.onrender.com/api/v1/ozone-depleting-substance-consumptions/docs (developed by Nombre Elena Martínez Moreno)
+    - http://sos2526-22.onrender.com/api/v1/ozone-depleting-substance-consumptions/docs (developed by Nombre Elena Martínez Moreno)
+    - http://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts/docs (developed by Nombre Celia Leal Salvago)
+    - http://sos2526-22.onrender.com/api/v1/co2-emission-gap-among-countries-clustering-&-pca/docs (developed by Nombre Julio Morales Vela)
+
