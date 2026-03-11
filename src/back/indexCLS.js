@@ -1,6 +1,13 @@
 
 
 ////Individual CELIA, DATOS CELIA 
+
+
+app.get("/api/v1/global-agriculture-climate-impacts/docs", (req, res) => {
+    res.redirect("https://documenter.getpostman.com/view/52404852/2sBXiertz6"); 
+});
+
+
 let globalAgricultureData  = [];
 
 
