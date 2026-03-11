@@ -328,6 +328,10 @@ app.all(`${BASE_URL_API}/global-agriculture-climate-impacts/:country/:year`, (re
 
 /////INDIVIDUAL ELENA 
 
+app.get("/api/v1/contacts/docs", (req, res) => {
+    res.redirect("https://documenter.getpostman.com/view/52404851/2sBXiertqM");
+});
+
 //apartado 8. Replicar el algoritmo del archivo llamado “index-YYY.js” 
 let initialDataElena = [
     { country: "bangladesh", code: "bgd", year: 1994, methyl_chloroform: 4, methyl_bromide: 0, hcfc: 38, carbon_tetrachloride: 71, halon: 35, cfc: 1806 },
