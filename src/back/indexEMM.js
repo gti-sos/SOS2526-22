@@ -1,15 +1,16 @@
 /////INDIVIDUAL ELENA 
-
+import dataStore from 'nedb';
+const BASE_URL_API = "/api/v1";
+ let db = new dataStore();
 
 export function loadBackEnd(app) {
 
-    const BASE_URL_API = "/api/v1";
 
     app.get("/api/v1/ozone-depleting-substance-consumptions/docs", (req, res) => {
         res.redirect("https://documenter.getpostman.com/view/52404851/2sBXiertqM"); 
     });
 
-    //apartado 8. Replicar el algoritmo del archivo llamado “index-YYY.js” 
+    
     let initialDataElena = [
         { country: "bangladesh", code: "bgd", year: 1994, methyl_chloroform: 4, methyl_bromide: 0, hcfc: 38, carbon_tetrachloride: 71, halon: 35, cfc: 1806 },
         { country: "mexico", code: "mex", year: 2010, methyl_chloroform: 0, methyl_bromide: 6679, hcfc: 11717, carbon_tetrachloride: 1, halon: 0, cfc: -2408 },
@@ -37,6 +38,79 @@ export function loadBackEnd(app) {
     app.get(BASE_URL_API+ "/ozone-depleting-substance-consumptions", (req,res)=>{
     res.status(200).json(datosElena);
     });
+
+            // GET de un campo concreto de todos los recursos
+    // GET a una propiedad específica de todos los recursos
+app.get(BASE_URL_API + "/ozone-depleting-substance-consumptions/:field", (req, res) => {
+    const field = req.params.field;
+
+    // Verificamos si los datos están vacíos
+    if (datosElena.length === 0) {
+        return res.status(404).json({ error: "No data available. Load initial data first." });
+    }
+
+    // Verificamos si el campo existe en el primer objeto del array
+    if (!datosElena[0].hasOwnProperty(field)) {
+        return res.status(400).json({ error: `Field '${field}' does not exist in the dataset.` });
+    }
+
+    // Extraemos solo los valores de esa columna (usando Set para evitar duplicados si lo deseas)
+    const result = datosElena.map(item => item[field]);
+    
+    // Si prefieres que no haya repetidos, usa: [...new Set(datosElena.map(item => item[field]))]
+
+    res.status(200).json(result);
+});
+
+    // GET de un recurso específico
+    app.get(`${BASE_URL_API}/ozone-depleting-substance-consumptions/:country/:year`, (req, res) => {
+        const { country, year } = req.params;
+        const result = datosElena.find(item => 
+            item.country.toLowerCase() === country.toLowerCase() && 
+            item.year === parseInt(year)
+        );
+
+        if (!result) {
+            return res.status(404).json({ error: "Recurso no encontrado" });
+        }
+        res.status(200).json(result);
+    });
+
+    //get con filtros
+    app.get(`${BASE_URL_API}/ozone-depleting-substance-consumptions/filters`, (req, res) => {
+    const { country, year, from, to } = req.query;
+    let results = [...datosElena];
+
+    if (country) results = results.filter(d => d.country.toLowerCase() === country.toLowerCase());
+    if (year) results = results.filter(d => d.year === parseInt(year));
+    if (from) results = results.filter(d => d.year >= parseInt(from));
+    if (to) results = results.filter(d => d.year <= parseInt(to));
+
+    res.status(200).json(results);
+    });
+
+    // //GET por campo
+// GET de un campo concreto de todos los recursos
+app.get(BASE_URL_API + "/ozone-depleting-substance-consumptions/:field", (req, res) => {
+    const field = req.params.field;
+
+    // 1. Verificamos si el array tiene datos
+    if (datosElena.length === 0) {
+        return res.status(200).json([]);
+    }
+
+    // 2. Verificamos si el campo existe en el primer objeto (ej: "country", "year"...)
+    // Usamos hasOwnProperty para mayor seguridad
+    if (!datosElena[0].hasOwnProperty(field)) {
+        return res.status(404).json({error: "Field not found"});
+    }
+
+    // 3. Mapeamos el array para extraer solo ese campo
+    const resultado = datosElena.map(item => item[field]);
+
+    res.status(200).json(resultado);
+});
+
 
 
     // POST para agregar un nuevo dato
@@ -75,19 +149,7 @@ export function loadBackEnd(app) {
         res.status(201).json(newData);
     });
 
-    // GET de un recurso específico
-    app.get(`${BASE_URL_API}/ozone-depleting-substance-consumptions/:country/:year`, (req, res) => {
-        const { country, year } = req.params;
-        const result = datosElena.find(item => 
-            item.country.toLowerCase() === country.toLowerCase() && 
-            item.year === parseInt(year)
-        );
-
-        if (!result) {
-            return res.status(404).json({ error: "Recurso no encontrado" });
-        }
-        res.status(200).json(result);
-    });
+    
 
     // PUT para actualizar un recurso específico
     app.put(`${BASE_URL_API}/ozone-depleting-substance-consumptions/:country/:year`, (req, res) => {

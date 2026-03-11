@@ -14,18 +14,19 @@
   "author": "Elena Martínez, Celia Leal, Julio Morales",
   "type": "module",
   "main": "index.js",
-"scripts": {
+  "scripts": {
     "start": "node index.js",
-    "test": "npm run test-CLS-local && npm run test-CLS-render ",
-"test-CLS-local": "newman run postman/CLS-collection.json -e postman/CLS-local.json --bail",
-"test-CLS-render": "newman run postman/CLS-collection.json -e postman/CLS-render.json --bail"
-},
+    "test": "npm run test-CLS-local && npm run test-CLS-render && npm run test-EMM-local && npm run test-EMM-render",
+    "test-CLS-local": "newman run postman/CLS-collection.json -e postman/CLS-local.json --bail",
+    "test-CLS-render": "newman run postman/CLS-collection.json -e postman/CLS-render.json --bail",
+    "test-EMM-local": "newman run postman/EMM-collection.json -e postman/EMM-local.json --bail",
+    "test-EMM-render": "newman run postman/EMM-collection.json -e postman/EMM-render.json --bail"
+  },
   "dependencies": {
-
-    "cool-ascii-faces": "^1.3.4",
-
     "body-parser": "^2.2.2",
-
-    "express": "^5.2.1"
+    "cool-ascii-faces": "^1.3.4",
+    "express": "^5.2.1",
+    "nedb": "^1.8.0",
+    "newman": "^6.2.2"
   }
 }
