@@ -328,8 +328,8 @@ app.all(`${BASE_URL_API}/global-agriculture-climate-impacts/:country/:year`, (re
 
 /////INDIVIDUAL ELENA 
 
-app.get("ozone-depleting-substance-consumptions/docs", (req, res) => {
-    res.redirect("https://documenter.getpostman.com/view/52404851/2sBXiertqM");
+app.get("/api/v1/ozone-depleting-substance-consumptions/docs", (req, res) => {
+    res.redirect("https://documenter.getpostman.com/view/52404851/2sBXiertqM"); 
 });
 
 //apartado 8. Replicar el algoritmo del archivo llamado “index-YYY.js” 
