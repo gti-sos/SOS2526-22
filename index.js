@@ -1,5 +1,10 @@
-let express = require('express');
-const bodyParser = require('body-parser');
+import express from 'express';
+import bodyParser from 'body-parser';  
+import { loadBackend } from './src/back/indexEMM.js';
+import { loadBackend } from './src/back/indexCLS.js';
+import { loadBackend } from './src/back/indexJMV.js';
+
+
 let BASE_URL_API = "/api/v1";
 let PORT = process.env.PORT || 3000;
 const app = express();
