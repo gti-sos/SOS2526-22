@@ -328,7 +328,7 @@ app.all(`${BASE_URL_API}/global-agriculture-climate-impacts/:country/:year`, (re
 
 /////INDIVIDUAL ELENA 
 
-app.get("/api/v1/contacts/docs", (req, res) => {
+app.get("/api/v1/ozone-depleting-substance-consumptions/docs", (req, res) => {
     res.redirect("https://documenter.getpostman.com/view/52404851/2sBXiertqM");
 });
 
