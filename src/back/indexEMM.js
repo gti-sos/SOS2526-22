@@ -25,7 +25,11 @@ export function loadBackEnd(app) {
         { country: "singapore", code: "sgp", year: 1997, methyl_chloroform: 0, methyl_bromide: 43, hcfc: 1431, carbon_tetrachloride: 0, halon: 0, cfc: -1789 }
     ];
 
-
+    const campos = [
+        "country", "code", "year", "methyl_chloroform", 
+        "methyl_bromide", "hcfc", "carbon_tetrachloride", 
+        "halon", "cfc"
+    ];
 
     // Carga de datos iniciales
     app.get(BASE_URL_API + "/ozone-depleting-substance-consumptions/loadInitialData", (req, res) => {
@@ -72,7 +76,7 @@ export function loadBackEnd(app) {
         db.find({ country: country, year: parseInt(year) }, (err, docs) => {
             
             if (docs.length === 0) {
-                res.status(404).send("NOT FOUND: No se encontraron recursos");
+                res.status(404).json({ error: "NOT FOUND: No se encontraron recursos" });
             } else {
                 let jsonData = JSON.stringify(docs.map((c) => {
                     delete c._id; 
@@ -130,7 +134,7 @@ export function loadBackEnd(app) {
 
             // Vemos si el campo existe en el primer objeto recuperado
             if (!docs[0].hasOwnProperty(field)) {
-                return res.status(404).send("NOT FOUND: Field not found");
+                return res.status(404).json({ error: "NOT FOUND: Field not found" });
             }
 
         
@@ -145,14 +149,13 @@ export function loadBackEnd(app) {
     // POST para agregar un nuevo dato (NeDB)
     app.post(`${BASE_URL_API}/ozone-depleting-substance-consumptions`, (req, res) => {
         const newData = req.body;
+        const requestKeys = Object.keys(newData);
 
-        if (
-            !newData.country || !newData.year || newData.code === undefined ||
-            newData.methyl_chloroform === undefined || newData.methyl_bromide === undefined ||
-            newData.hcfc === undefined || newData.carbon_tetrachloride === undefined ||
-            newData.halon === undefined || newData.cfc === undefined
-        ) {
-            return res.status(400).send("BAD REQUEST: Faltan campos obligatorios");
+        const hasRequiredKeys = campos.every(key => requestKeys.includes(key));
+        const hasSameLength = requestKeys.length === campos.length;
+
+        if (!hasRequiredKeys || !hasSameLength) {
+            return res.status(400).json({ error: "BAD REQUEST: El JSON no tiene la estructura de campos esperada" });
         }
 
         newData.year = parseInt(newData.year);
@@ -166,7 +169,7 @@ export function loadBackEnd(app) {
         // 3. Comprobar si el recurso ya existe 
         db.find({ country: newData.country, year: newData.year }, (err, docs) => {
             if (docs.length > 0) {
-                return res.status(409).send("CONFLICT: El recurso ya existe para ese país y año");
+                return res.status(409).json({ error: "CONFLICT: El recurso ya existe para ese país y año" });
             } else {
                 // 4. Si no existe, lo insertamos
                 db.insert(newData, (err, doc) => {
@@ -187,18 +190,18 @@ export function loadBackEnd(app) {
         const { country, year } = req.params;
         const updatedData = req.body;
 
-        // Validación de campos obligatorios 
-        if (
-            !updatedData.country || !updatedData.year || updatedData.code === undefined ||
-            updatedData.methyl_chloroform === undefined || updatedData.methyl_bromide === undefined ||
-            updatedData.hcfc === undefined || updatedData.carbon_tetrachloride === undefined ||
-            updatedData.halon === undefined || updatedData.cfc === undefined
-        ) {
-            return res.status(400).send("BAD REQUEST: Faltan campos en el JSON");
+        const requestKeys = Object.keys(updatedData);
+
+        // Comprobamos que están todas las necesarias Y que no hay ninguna extra
+        const hasRequiredKeys = campos.every(key => requestKeys.includes(key));
+        const hasSameLength = requestKeys.length === campos.length;
+
+        if (!hasRequiredKeys || !hasSameLength) {
+            return res.status(400).json({ error: "BAD REQUEST: El JSON no tiene la estructura de campos esperada" });
         }
 
         if (updatedData.country.toLowerCase() !== country.toLowerCase() || parseInt(updatedData.year) !== parseInt(year)) {
-            return res.status(400).send("BAD REQUEST: El país o el año no coinciden con la URL");
+            return res.status(400).json({ error: "BAD REQUEST: El país o el año no coinciden con la URL" });
         }
 
         // Actualizamos la base de datos
@@ -208,9 +211,9 @@ export function loadBackEnd(app) {
             {},
             (err, numReplaced) => {
                 if (numReplaced === 0) {
-                    return res.status(404).send("NOT FOUND: No existe el recurso");
+                    return res.status(404).json({ error: "NOT FOUND: No existe el recurso" });
                 } else {
-                    res.status(200).send("OK");
+                    res.status(200).json({ message: "OK: Recurso actualizado correctamente" });
                 }
             }
         );
@@ -225,9 +228,9 @@ export function loadBackEnd(app) {
         db.remove({ country: country, year: parseInt(year) }, {}, (err, numRemoved) => {
             
             if (numRemoved === 0) {
-                res.status(404).send("NOT FOUND: No se encuentra el recurso a borrar");
+                res.status(404).json({ error: "NOT FOUND: No se encuentra el recurso a borrar" });
             } else {
-                res.status(200).send("OK: Recurso eliminado correctamente");
+                res.status(200).json({ message: "OK: Recurso eliminado correctamente" });
             }
         });
     });
@@ -235,7 +238,7 @@ export function loadBackEnd(app) {
     // DELETE de todos los recursos
     app.delete(`${BASE_URL_API}/ozone-depleting-substance-consumptions`, (req, res) => {
         db.remove({}, { multi: true }, (err, numRemoved) => {
-            res.status(200).send("OK: Todos los datos han sido eliminados");
+            res.status(200).json({ message: "OK: Todos los datos han sido eliminados" });
         });
     });
 
@@ -245,8 +248,7 @@ export function loadBackEnd(app) {
     app.all(`${BASE_URL_API}/ozone-depleting-substance-consumptions`, (req, res, next) => {
         const allowed = ["GET", "POST", "DELETE"];
         if (!allowed.includes(req.method)) {
-            // 405 Method Not Allowed de tu tabla verde
-            return res.status(405).send("METHOD NOT ALLOWED: No se permite PUT sobre la lista");
+            return res.status(405).json({ error: "Method Not Allowed (No se permite PUT sobre la lista)" });
         }
         next();
     });
@@ -255,8 +257,7 @@ export function loadBackEnd(app) {
     app.all(`${BASE_URL_API}/ozone-depleting-substance-consumptions/:country/:year`, (req, res, next) => {
         const allowed = ["GET", "PUT", "DELETE"];
         if (!allowed.includes(req.method)) {
-            // 405 Method Not Allowed de tu tabla verde
-            return res.status(405).send("METHOD NOT ALLOWED: No se permite POST sobre un recurso concreto");
+            return res.status(405).json({ error: "Method Not Allowed (No se permite POST sobre un recurso concreto)" });
         }
         next();
     });
