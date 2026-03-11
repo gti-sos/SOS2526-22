@@ -12,7 +12,7 @@
   },
   "license": "ISC",
   "author": "Elena Martínez, Celia Leal, Julio Morales",
-  "type": "commonjs",
+  "type": "module",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
