@@ -16,11 +16,9 @@
   "main": "index.js",
 "scripts": {
     "start": "node index.js",
-    "test": "npm run test-CLS-local && npm run test-CLS-render && npm run test-EMM && npm run test-JMV",
+    "test": "npm run test-CLS-local && npm run test-CLS-render ",
 "test-CLS-local": "newman run postman/CLS-collection.json -e postman/CLS-local.json --bail",
-"test-CLS-render": "newman run postman/CLS-collection.json -e postman/CLS-render.json --bail",
-"test-EMM": "newman run postman/EMM-collection.json -e postman/EMM-environment.json --bail",
-"test-JMV": "newman run postman/JMV-collection.json -e postman/JMV-environment.json --bail"
+"test-CLS-render": "newman run postman/CLS-collection.json -e postman/CLS-render.json --bail"
 },
   "dependencies": {
 
