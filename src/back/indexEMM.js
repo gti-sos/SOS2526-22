@@ -55,21 +55,9 @@ export function loadBackEnd(app) {
         });
     });
 
-    // GET de la lista completa 
-    // app.get(BASE_URL_API + "/ozone-depleting-substance-consumptions", (req, res) => {
-        
-    //     db.find({}, (err, docs) => {
-    //         let jsonData = JSON.stringify(docs.map((c) => {
-    //             delete c._id; 
-    //             return c;
-    //         }), null, 2);
 
-    //         res.status(200).send(jsonData);
-    //     });
-    // });
     // GET de la lista completa con paginación por páginas y grupos de elementos
     app.get(BASE_URL_API + "/ozone-depleting-substance-consumptions", (req, res) => {
-        // 1. Recogemos tus parámetros: items (cuántos ver) y page (qué grupo ver)
         const page = parseInt(req.query.page);
         const items = parseInt(req.query.items);
 
@@ -81,17 +69,14 @@ export function loadBackEnd(app) {
             });
         }
 
-        // 2. Lógica interna: Si quiero la página 2 con 3 items, 
-        // internamente la DB debe ignorar los 3 primeros para mostrarme los 3 siguientes.
         const pageNum = Math.max(1, page);
         const limitNum = Math.max(1, items);
         const skipNum = (pageNum - 1) * limitNum;
 
-        // 3. Contamos el total para que sepas cuántas páginas existen en total
+        // Contamos el total para que sepas cuántas páginas existen en total
         db.count({}, (err, totalCount) => {
             if (err) return res.status(500).json({ error: "Error en la base de datos" });
 
-            // 4. Pedimos a la DB el bloque exacto de datos
             db.find({})
                 .skip(skipNum)
                 .limit(limitNum)
@@ -101,7 +86,6 @@ export function loadBackEnd(app) {
                     // Limpiamos los datos de _id
                     const resultado = data.map(({ _id, ...rest }) => rest);
 
-                    // 5. Respuesta final: Los datos que pediste y la información de la página
                     res.status(200).json({
                         data: resultado,
                         total_items: totalCount,
@@ -114,7 +98,8 @@ export function loadBackEnd(app) {
     });
 
 
-    // GET de un recurso específico (País y Año)
+
+    // GET de un recurso específico (País y Año) 
     app.get(`${BASE_URL_API}/ozone-depleting-substance-consumptions/:country/:year`, (req, res) => {
         const { country, year } = req.params;
 
@@ -123,17 +108,17 @@ export function loadBackEnd(app) {
             if (docs.length === 0) {
                 res.status(404).json({ error: "NOT FOUND: No se encontraron recursos" });
             } else {
-                let jsonData = JSON.stringify(docs.map((c) => {
-                    delete c._id; 
-                    return c;
-                }), null, 2); 
+                const recurso = docs[0];
                 
-                res.status(200).send(jsonData);
+                delete recurso._id;
+                
+                res.status(200).send(recurso);
             }
         });
     });
 
-    // GET con filtros usando NeDB
+
+    // GET con filtros 
     app.get(`${BASE_URL_API}/ozone-depleting-substance-consumptions/filters`, (req, res) => {
         const { country, year, from, to } = req.query;
 
@@ -191,7 +176,7 @@ export function loadBackEnd(app) {
     });
 
 
-    // POST para agregar un nuevo dato (NeDB)
+    // POST para agregar un nuevo dato 
     app.post(`${BASE_URL_API}/ozone-depleting-substance-consumptions`, (req, res) => {
         const newData = req.body;
         const requestKeys = Object.keys(newData);
@@ -211,12 +196,12 @@ export function loadBackEnd(app) {
         newData.halon = Number(newData.halon);
         newData.cfc = Number(newData.cfc);
 
-        // 3. Comprobar si el recurso ya existe 
+        // Comprobar si el recurso ya existe 
         db.find({ country: newData.country, year: newData.year }, (err, docs) => {
             if (docs.length > 0) {
                 return res.status(409).json({ error: "CONFLICT: El recurso ya existe para ese país y año" });
             } else {
-                // 4. Si no existe, lo insertamos
+                // Si no existe, lo insertamos
                 db.insert(newData, (err, doc) => {
                     delete doc._id;
                     let jsonData = JSON.stringify(doc, null, 2);
@@ -230,14 +215,12 @@ export function loadBackEnd(app) {
     
 
     // PUT para actualizar un recurso específico 
-  
     app.put(`${BASE_URL_API}/ozone-depleting-substance-consumptions/:country/:year`, (req, res) => {
         const { country, year } = req.params;
         const updatedData = req.body;
 
         const requestKeys = Object.keys(updatedData);
 
-        // Comprobamos que están todas las necesarias Y que no hay ninguna extra
         const hasRequiredKeys = campos.every(key => requestKeys.includes(key));
         const hasSameLength = requestKeys.length === campos.length;
 
