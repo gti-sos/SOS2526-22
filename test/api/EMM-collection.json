@@ -8,7 +8,25 @@
   },
   "item": [
     {
-      "name": "loadInitial Data 200 Ok",
+      "name": "GET obtener todos los datos iniciales 200 OK",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));\r",
+              "pm.test(\"Se han cargado datos iniciales\", () => {\r",
+              "    const res = pm.response.json();\r",
+              "    pm.expect(res).to.be.an('array');\r",
+              "    pm.expect(res.length).to.be.above(0);\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
       "request": {
         "method": "GET",
         "header": [],
@@ -28,12 +46,31 @@
       "response": []
     },
     {
-      "name": "200 Ok",
+      "name": "GET obtener todos los datos 200 OK",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));\r",
+              "pm.test(\"Estructura de datos correcta\", () => {\r",
+              "    const res = pm.response.json();\r",
+              "    pm.expect(res).to.be.an('object');\r",
+              "    pm.expect(res).to.have.property('data');\r",
+              "    pm.expect(res.data).to.be.an('array');\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
       "request": {
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "{{base_url}}/api/v1/ozone-depleting-substance-consumptions",
+          "raw": "{{base_url}}/api/v1/ozone-depleting-substance-consumptions?items=2&page=2",
           "host": [
             "{{base_url}}"
           ],
@@ -41,13 +78,40 @@
             "api",
             "v1",
             "ozone-depleting-substance-consumptions"
+          ],
+          "query": [
+            {
+              "key": "items",
+              "value": "2"
+            },
+            {
+              "key": "page",
+              "value": "2"
+            }
           ]
         }
       },
       "response": []
     },
     {
-      "name": "GET a un campo concreto",
+      "name": "GET a un campo concreto 200 OK",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));\r",
+              "pm.test(\"El campo devuelto es un array simple\", () => {\r",
+              "    const res = pm.response.json();\r",
+              "    pm.expect(res).to.be.an('array');\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
       "protocolProfileBehavior": {
         "disableBodyPruning": true
       },
@@ -74,7 +138,25 @@
       "response": []
     },
     {
-      "name": "200 OK GET a un pais y año",
+      "name": "GET a un pais y año 200 OK",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));\r",
+              "pm.test(\"El recurso coincide con lo pedido\", () => {\r",
+              "    const res = pm.response.json();\r",
+              "    pm.expect(res.country).to.eql(\"japan\"); \r",
+              "    pm.expect(res.year).to.eql(2013);\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
       "request": {
         "method": "GET",
         "header": [],
@@ -95,7 +177,27 @@
       "response": []
     },
     {
-      "name": "filtro rango de tiempo",
+      "name": "GET filtro rango de tiempo 200 OK",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));\r",
+              "pm.test(\"Los datos están dentro del rango\", () => {\r",
+              "    const res = pm.response.json();\r",
+              "    res.forEach(item => {\r",
+              "        pm.expect(item.year).to.be.at.least(2010);\r",
+              "        pm.expect(item.year).to.be.at.most(2015);\r",
+              "    });\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
       "request": {
         "method": "GET",
         "header": [],
@@ -125,7 +227,25 @@
       "response": []
     },
     {
-      "name": "201 created",
+      "name": "POST crear nuevo dato 201 created",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 201\", () => pm.response.to.have.status(201));\r",
+              "pm.test(\"El objeto creado tiene country y year\", () => {\r",
+              "    const res = pm.response.json();\r",
+              "    pm.expect(res.country).to.exist;\r",
+              "    pm.expect(res.year).to.be.a('number');\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
       "request": {
         "method": "POST",
         "header": [
@@ -159,7 +279,63 @@
       "response": []
     },
     {
-      "name": "409 conflict",
+      "name": "GET al pais y año creado 200 OK",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));\r",
+              "pm.test(\"El recurso coincide con lo pedido\", () => {\r",
+              "    const res = pm.response.json();\r",
+              "    pm.expect(res.country).to.eql(\"prueba\"); \r",
+              "    pm.expect(res.year).to.eql(2015);\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/ozone-depleting-substance-consumptions/prueba/2015",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "ozone-depleting-substance-consumptions",
+            "prueba",
+            "2015"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "POST país existente 409 conflict",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 409\", () => pm.response.to.have.status(409));\r",
+              "pm.test(\"Mensaje de conflicto correcto\", () => {\r",
+              "    const res = pm.response.json();\r",
+              "    pm.expect(res.error).to.contain(\"ya existe\");\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
       "request": {
         "method": "POST",
         "header": [],
@@ -187,7 +363,24 @@
       "response": []
     },
     {
-      "name": "400 Faltan campos",
+      "name": "POST faltan campos 400 Bad request",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 400\", () => pm.response.to.have.status(400));\r",
+              "pm.test(\"Error de estructura detectado\", () => {\r",
+              "    const res = pm.response.json();\r",
+              "    pm.expect(res.error).to.contain(\"estructura\");\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
       "request": {
         "method": "POST",
         "header": [
@@ -221,13 +414,30 @@
       "response": []
     },
     {
-      "name": "actualiza datos concreto 200 ok",
+      "name": "PUT actualiza datos concretos 200 ok",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));\r",
+              "pm.test(\"Mensaje de éxito en JSON\", () => {\r",
+              "    const res = pm.response.json();\r",
+              "    pm.expect(res.message).to.contain(\"correctamente\");\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
       "request": {
         "method": "PUT",
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n    \"country\": \"japan\",\r\n    \"code\": \"jpn\",\r\n    \"year\": 2013,\r\n    \"methyl_chloroform\": 100,\r\n    \"methyl_bromide\": 7,\r\n    \"hcfc\": 20569,\r\n    \"carbon_tetrachloride\": 145,\r\n    \"halon\": 0,\r\n    \"cfc\": -1813\r\n}",
+          "raw": "{\r\n    \"country\": \"prueba\",\r\n    \"code\": \"jpn\",\r\n    \"year\": 2015,\r\n    \"methyl_chloroform\": 0,\r\n    \"methyl_bromide\": 0,\r\n    \"hcfc\": 0,\r\n    \"carbon_tetrachloride\": 0,\r\n    \"halon\": 0,\r\n    \"cfc\": 0\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -235,7 +445,7 @@
           }
         },
         "url": {
-          "raw": "{{base_url}}/api/v1/ozone-depleting-substance-consumptions/japan/2013",
+          "raw": "{{base_url}}/api/v1/ozone-depleting-substance-consumptions/prueba/2015",
           "host": [
             "{{base_url}}"
           ],
@@ -243,15 +453,32 @@
             "api",
             "v1",
             "ozone-depleting-substance-consumptions",
-            "japan",
-            "2013"
+            "prueba",
+            "2015"
           ]
         }
       },
       "response": []
     },
     {
-      "name": "400 bad request",
+      "name": "PUT IDs no coinciden 400 bad request",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 400\", () => pm.response.to.have.status(400));\r",
+              "pm.test(\"Error de coincidencia de URL/Body\", () => {\r",
+              "    const res = pm.response.json();\r",
+              "    pm.expect(res.error).to.contain(\"no coinciden\");\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
       "request": {
         "method": "PUT",
         "header": [],
@@ -281,7 +508,24 @@
       "response": []
     },
     {
-      "name": "405 method not allowed",
+      "name": "PUT a una colección 405 method not allowed",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 405\", () => pm.response.to.have.status(405));\r",
+              "pm.test(\"Método no permitido detectado\", () => {\r",
+              "    const res = pm.response.json();\r",
+              "    pm.expect(res.error).to.contain(\"Method Not Allowed\");\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
       "request": {
         "method": "PUT",
         "header": [],
@@ -309,7 +553,24 @@
       "response": []
     },
     {
-      "name": "405 method no allowed",
+      "name": "POST a un recurso concreto 405 method not allowed",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 405\", () => pm.response.to.have.status(405));\r",
+              "pm.test(\"Método no permitido detectado\", () => {\r",
+              "    const res = pm.response.json();\r",
+              "    pm.expect(res.error).to.contain(\"Method Not Allowed\");\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
       "request": {
         "method": "POST",
         "header": [],
@@ -334,7 +595,25 @@
       "response": []
     },
     {
-      "name": "200 ok",
+      "name": "DEL recurso creado 200 ok",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));\r",
+              "pm.test(\"Elemento eliminado\", () => {\r",
+              "    const res = pm.response.json();\r",
+              "    pm.expect(res.message).to.include(\"eliminado\");\r",
+              "});\r",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
       "request": {
         "method": "DELETE",
         "header": [],
@@ -359,7 +638,24 @@
       "response": []
     },
     {
-      "name": "404 not found",
+      "name": "GET a un recurso no existente 404 not found",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 404\", () => pm.response.to.have.status(404));\r",
+              "pm.test(\"Cuerpo contiene error 404\", () => {\r",
+              "    const res = pm.response.json();\r",
+              "    pm.expect(res.error).to.contain(\"No se encontraron\");\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
       "protocolProfileBehavior": {
         "disableBodyPruning": true
       },
@@ -387,7 +683,24 @@
       "response": []
     },
     {
-      "name": "200 ok delete todo",
+      "name": "DEL todos los recursos 200 ok",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));\r",
+              "pm.test(\"Confirmación de borrado total\", () => {\r",
+              "    const res = pm.response.json();\r",
+              "    pm.expect(res.message).to.contain(\"eliminados\");\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
       "request": {
         "method": "DELETE",
         "header": [],
