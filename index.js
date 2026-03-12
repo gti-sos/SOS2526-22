@@ -18,7 +18,13 @@ const PORT = process.env.PORT || 3000;
 
 app.use(bodyParser.json());
 app.use("/", express.static(__dirname + "/public"));
-app.use(express.json()); 
+//app.use(express.json()); 
+const BASE_URL_API = "/api/v1";
+
+// Middleware
+app.use(bodyParser.json());
+app.use("/", express.static(__dirname + "/public"));
+
 
 // Ruta estática /about
 app.get("/about", (req, res) => {
