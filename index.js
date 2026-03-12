@@ -4,6 +4,7 @@ import bodyParser from "body-parser";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 
+
 // Importar backends individuales
 import { loadBackEnd as loadCLS } from "./src/back/indexCLS.js";
 import { loadBackEnd as loadEMM } from "./src/back/indexEMM.js";
@@ -14,11 +15,7 @@ const __dirname = dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const BASE_URL_API = "/api/v1";
 
-// Middleware
-app.use(bodyParser.json());
-app.use("/", express.static(__dirname + "/public"));
 
 // Ruta estática /about
 app.get("/about", (req, res) => {
@@ -26,7 +23,6 @@ app.get("/about", (req, res) => {
 });
 
 // Cargar backends
-// CELIA = CLS
 loadCLS(app);
 loadEMM(app);
 // loadJMV(app);
