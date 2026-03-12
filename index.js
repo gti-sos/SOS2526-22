@@ -16,6 +16,9 @@ const __dirname = dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+app.use(bodyParser.json());
+app.use("/", express.static(__dirname + "/public"));
+app.use(express.json()); 
 
 // Ruta estática /about
 app.get("/about", (req, res) => {
