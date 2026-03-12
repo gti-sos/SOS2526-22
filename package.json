@@ -19,6 +19,7 @@
     "test": "npm run test-CLS-local && npm run test-CLS-render && npm run test-EMM-local && npm run test-EMM-render",
     "test-CLS-local": "newman run test/api/CLS-collection.json -e test/api/CLS-local.json --bail",
     "test-CLS-render": "newman run test/api/CLS-collection.json -e test/api/CLS-render.json --bail",
+    "test-global":"npm run test-CLS-local & npx kill-port 3000",
 
     "NVM-EMM-local": "newman run test/api/EMM-collection.json -e test/api/EMM-local.json",
     "test-EMM-local": "start-server-and-test start http://localhost:3000 NVM-EMM-local ",
