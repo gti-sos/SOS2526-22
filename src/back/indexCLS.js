@@ -1,10 +1,18 @@
 
 
 // indexCLS.js
-const Datastore = require ('nedb');
+import Datastore from "nedb";
 
 const BASE_URL_API = "/api/v1";
-let db = new Datastore();
+let db = new Datastore({ filename: './data.db', autoload: true });
+
+db.loadDatabase(err => {
+    if(err) console.error("Error cargando DB:", err);
+    else console.log("Base de datos cargada correctamente");
+});
+
+
+
 
 export function loadBackEnd(app) {
 
@@ -101,25 +109,25 @@ export function loadBackEnd(app) {
     });
 
     // GET filtros por query (country, year, from, to)
-    app.get(`${BASE_URL_API}/global-agriculture-climate-impacts/filters`, (req, res) => {
-        const { country, year, from, to } = req.query;
-        let query = {};
-        if (country) query.country = country;
-        if (year) query.year = parseInt(year);
+app.get(`${BASE_URL_API}/global-agriculture-climate-impacts/filters`, (req, res) => {
+    const query = {};
+    for(const key of Object.keys(req.query)) {
+        if(key === "year" || key === "average_temperature_c" || key === "total_precipitation_mm") {
+            query[key] = parseInt(req.query[key]);
+        } else {
+            query[key] = req.query[key]; // texto sin minúsculas forzado
+        }
+    }
 
-        db.find(query, (err, docs) => {
-            let results = docs;
-            if (from) results = results.filter(d => d.year >= parseInt(from));
-            if (to) results = results.filter(d => d.year <= parseInt(to));
-
-            const resultado = results.map(d => {
-                delete d._id;
-                return d;
-            });
-
-            res.status(200).json(resultado);
-        });
+    db.find(query, (err, docs) => {
+        if(err) return res.status(500).json({ error: "Error al buscar en DB" });
+        const resultado = docs.map(({_id, ...rest}) => rest);
+        res.status(200).json(resultado);
     });
+});
+
+
+
 
     // POST nuevo recurso
     app.post(`${BASE_URL_API}/global-agriculture-climate-impacts`, (req, res) => {
