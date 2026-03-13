@@ -3,7 +3,7 @@
 
 import dataStore from 'nedb';
 const BASE_URL_API = "/api/v1";
- let db = new dataStore();
+ let db = new dataStore({ filename: './data/dataCLS.db', autoload: true });
 
 export function loadBackEnd(app) {
 
