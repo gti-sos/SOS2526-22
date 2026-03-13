@@ -40,9 +40,9 @@ let initialData=[
 // LOAD INITIAL DATA
 app.get(BASE_URL_API + "/loadInitialData",(req,res)=>{
 
-db.find({},(err,docs)=>{
+db.count({},(err,docs)=>{
 
-if(docs.length===0){
+if(count===0){
 
 db.insert(initialData,(err,newDocs)=>{
 
