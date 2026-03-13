@@ -175,7 +175,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n    \"country\": \"Argentina\",\r\n    \"year\": 2020,\r\n    \"crop_type\": \"Carrot\"\r\n}"
+          "raw": "{\r\n  \"country\": \"Argentina\",\r\n  \"year\": 2020,\r\n  \"crop_type\": \"Carrot\",\r\n  \"average_temperature_c\": 25,\r\n  \"total_precipitation_mm\": 400\r\n}"
         },
         "url": {
           "raw": "https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts/Argentina/2020",
@@ -244,7 +244,7 @@
           }
         },
         "url": {
-          "raw": "https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts/Argentina/2026",
+          "raw": "https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts",
           "protocol": "https",
           "host": [
             "sos2526-22",
@@ -254,9 +254,7 @@
           "path": [
             "api",
             "v1",
-            "global-agriculture-climate-impacts",
-            "Argentina",
-            "2026"
+            "global-agriculture-climate-impacts"
           ]
         }
       },
@@ -373,6 +371,86 @@
             "global-agriculture-climate-impacts",
             "Spain",
             "2020"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Busqueda simple",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts?country=Spain&year=2020",
+          "protocol": "https",
+          "host": [
+            "sos2526-22",
+            "onrender",
+            "com"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "global-agriculture-climate-impacts"
+          ],
+          "query": [
+            {
+              "key": "country",
+              "value": "Spain"
+            },
+            {
+              "key": "year",
+              "value": "2020"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Paginacion",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "/api/v1/global-agriculture-climate-impacts?limit=2",
+          "path": [
+            "api",
+            "v1",
+            "global-agriculture-climate-impacts"
+          ],
+          "query": [
+            {
+              "key": "limit",
+              "value": "2"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "paginacion",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "/api/v1/global-agriculture-climate-impacts?limit=2&offset=2",
+          "path": [
+            "api",
+            "v1",
+            "global-agriculture-climate-impacts"
+          ],
+          "query": [
+            {
+              "key": "limit",
+              "value": "2"
+            },
+            {
+              "key": "offset",
+              "value": "2"
+            }
           ]
         }
       },
