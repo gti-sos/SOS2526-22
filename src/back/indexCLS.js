@@ -4,6 +4,7 @@
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import Datastore from "nedb";
+const BASE_URL_API = "/api/v1";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
