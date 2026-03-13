@@ -415,6 +415,12 @@
         "header": [],
         "url": {
           "raw": "https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts?limit=2",
+          "protocol": "https",
+          "host": [
+            "sos2526-22",
+            "onrender",
+            "com"
+          ],
           "path": [
             "api",
             "v1",
@@ -437,6 +443,12 @@
         "header": [],
         "url": {
           "raw": "https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts?limit=2&offset=2",
+          "protocol": "https",
+          "host": [
+            "sos2526-22",
+            "onrender",
+            "com"
+          ],
           "path": [
             "api",
             "v1",
