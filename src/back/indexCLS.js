@@ -1,15 +1,9 @@
 
 
 
-import dataStore from "nedb";
+import dataStore from 'nedb';
 const BASE_URL_API = "/api/v1";
-
-
-
-
-const db = new Datastore({ filename: dbFile, autoload: true });
-
-
+ let db = new dataStore();
 
 export function loadBackEnd(app) {
 
