@@ -1,15 +1,9 @@
 
 
 // indexCLS.js
-import Datastore from "nedb";
-
+import dataStore from 'nedb';
 const BASE_URL_API = "/api/v1";
-let db = new Datastore({ filename: './data.db', autoload: true });
-
-db.loadDatabase(err => {
-    if(err) console.error("Error cargando DB:", err);
-    else console.log("Base de datos cargada correctamente");
-});
+ let db = new dataStore();
 
 
 
