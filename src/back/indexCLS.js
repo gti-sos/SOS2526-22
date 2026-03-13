@@ -1,7 +1,7 @@
 
 
 // indexCLS.js
-import Datastore from "nedb";
+const Datastore = require ('nedb');
 
 const BASE_URL_API = "/api/v1";
 let db = new Datastore();
