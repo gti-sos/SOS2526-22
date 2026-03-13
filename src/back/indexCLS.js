@@ -1,12 +1,29 @@
 // src/back/indexCLS.js - Backend individual de Celia
-import express from "express";
 
-export function loadBackEnd(app) {
-  const BASE_URL_API = "/api/v1";
 
-  // Datos iniciales de tu API
-  let globalAgricultureData = [
-    { country: "Spain", year: 2020, crop_type: "Wheat", average_temperature_c: 20, total_precipitation_mm: 500 },
+import dataStore from "nedb";
+
+const BASE_URL_API = "/api/v1/global-agriculture-climate-impacts";
+let db = new dataStore();
+
+export function loadBackEnd(app){
+
+app.get(BASE_URL_API + "/docs",(req,res)=>{
+res.redirect("https://documenter.getpostman.com/view/52404852/2sBXiesEcp");
+});
+
+
+const campos=[
+"country",
+"year",
+"crop_type",
+"average_temperature_c",
+"total_precipitation_mm"
+];
+
+
+let initialData=[
+{ country: "Spain", year: 2020, crop_type: "Wheat", average_temperature_c: 20, total_precipitation_mm: 500 },
     { country: "France", year: 2020, crop_type: "Corn", average_temperature_c: 19, total_precipitation_mm: 450 },
     { country: "Germany", year: 2020, crop_type: "Barley", average_temperature_c: 17, total_precipitation_mm: 480 },
     { country: "Italy", year: 2020, crop_type: "Soy", average_temperature_c: 21, total_precipitation_mm: 470 },
@@ -16,103 +33,250 @@ export function loadBackEnd(app) {
     { country: "Sweden", year: 2020, crop_type: "Wheat", average_temperature_c: 11, total_precipitation_mm: 310 },
     { country: "Finland", year: 2020, crop_type: "Corn", average_temperature_c: 8, total_precipitation_mm: 290 },
     { country: "Poland", year: 2020, crop_type: "Soy", average_temperature_c: 16, total_precipitation_mm: 320 }
-  ];
+  
+];
 
-  // Redirigir a la documentación de Postman
-  app.get(`${BASE_URL_API}/global-agriculture-climate-impacts/docs`, (req, res) => {
-    res.redirect("https://documenter.getpostman.com/view/52404852/2sBXiesEcp");
-  });
 
-  // Cargar datos iniciales
-  app.get(`${BASE_URL_API}/global-agriculture-climate-impacts/loadInitialData`, (req, res) => {
-    res.status(200).json(globalAgricultureData);
-  });
+// LOAD INITIAL DATA
+app.get(BASE_URL_API + "/loadInitialData",(req,res)=>{
 
-  // GET con filtros
-  app.get(`${BASE_URL_API}/global-agriculture-climate-impacts`, (req, res) => {
-    const { country, year, from, to } = req.query;
-    let results = [...globalAgricultureData];
+db.find({},(err,docs)=>{
 
-    if (country) results = results.filter(d => d.country.toLowerCase() === country.toLowerCase());
-    if (year) results = results.filter(d => d.year === parseInt(year));
-    if (from) results = results.filter(d => d.year >= parseInt(from));
-    if (to) results = results.filter(d => d.year <= parseInt(to));
+if(docs.length===0){
 
-    res.status(200).json(results);
-  });
+db.insert(initialData,(err,newDocs)=>{
 
-  // GET específico (objeto)
-  app.get(`${BASE_URL_API}/global-agriculture-climate-impacts/:country/:year`, (req, res) => {
-    const country = req.params.country;
-    const year = Number(req.params.year);
-    const result = globalAgricultureData.find(item => item.country.toLowerCase() === country.toLowerCase() && item.year === year);
+let data=newDocs.map(c=>{
+delete c._id
+return c
+})
 
-    if (!result) return res.status(404).json({ error: "Dato no encontrado" });
-    res.status(200).json(result);
-  });
+res.status(200).json(data)
 
-  // POST
-  app.post(`${BASE_URL_API}/global-agriculture-climate-impacts`, (req, res) => {
-    const newData = req.body;
-    newData.year = Number(newData.year);
-    newData.average_temperature_c = Number(newData.average_temperature_c);
-    newData.total_precipitation_mm = Number(newData.total_precipitation_mm);
+})
 
-    if (!newData.country || !newData.year || !newData.crop_type || isNaN(newData.average_temperature_c) || isNaN(newData.total_precipitation_mm)) {
-      return res.status(400).json({ error: "Faltan campos obligatorios" });
-    }
+}else{
 
-    const exists = globalAgricultureData.some(item => item.country.toLowerCase() === newData.country.toLowerCase() && item.year === newData.year);
-    if (exists) return res.status(409).json({ error: "El dato ya existe" });
+let data=docs.map(c=>{
+delete c._id
+return c
+})
 
-    globalAgricultureData.push(newData);
-    res.status(201).json(newData);
-  });
+res.status(200).json(data)
 
-  // PUT
-  app.put(`${BASE_URL_API}/global-agriculture-climate-impacts/:country/:year`, (req, res) => {
-    const country = req.params.country.toLowerCase();
-    const year = Number(req.params.year);
-    const updatedData = req.body;
+}
 
-    const index = globalAgricultureData.findIndex(item => item.country.toLowerCase() === country && item.year === year);
-    if (index === -1) return res.status(404).json({ error: "Dato no encontrado" });
+})
 
-    if (updatedData.country && updatedData.country.toLowerCase() !== country) return res.status(400).json({ error: "Country no coincide con la URL" });
-    if (updatedData.year && Number(updatedData.year) !== year) return res.status(400).json({ error: "Year no coincide con la URL" });
+});
 
-    globalAgricultureData[index] = { ...globalAgricultureData[index], ...updatedData };
-    res.status(200).json(globalAgricultureData[index]);
-  });
 
-  // DELETE específico
-  app.delete(`${BASE_URL_API}/global-agriculture-climate-impacts/:country/:year`, (req, res) => {
-    const country = req.params.country.toLowerCase();
-    const year = Number(req.params.year);
+// GET COLECCION (BUSQUEDAS + PAGINACION)
 
-    const index = globalAgricultureData.findIndex(item => item.country.toLowerCase() === country && item.year === year);
-    if (index === -1) return res.status(404).json({ error: "Dato no encontrado" });
+app.get(BASE_URL_API,(req,res)=>{
 
-    globalAgricultureData.splice(index, 1);
-    res.status(200).json({ message: "Dato eliminado" });
-  });
+let query={...req.query}
 
-  // DELETE todos
-  app.delete(`${BASE_URL_API}/global-agriculture-climate-impacts`, (req, res) => {
-    globalAgricultureData = [];
-    res.status(200).json({ message: "Todos los datos eliminados" });
-  });
+const limit=parseInt(query.limit)
+const offset=parseInt(query.offset)||0
 
-  // Restricciones de métodos
-  app.all(`${BASE_URL_API}/global-agriculture-climate-impacts`, (req, res, next) => {
-    const allowed = ["GET", "POST", "DELETE"];
-    if (!allowed.includes(req.method)) return res.status(405).json({ error: "Method Not Allowed" });
-    next();
-  });
+delete query.limit
+delete query.offset
 
-  app.all(`${BASE_URL_API}/global-agriculture-climate-impacts/:country/:year`, (req, res, next) => {
-    const allowed = ["GET", "PUT", "DELETE"];
-    if (!allowed.includes(req.method)) return res.status(405).json({ error: "Method Not Allowed" });
-    next();
-  });
+db.find(query,(err,docs)=>{
+
+let results=docs
+
+if(!isNaN(limit)){
+results=docs.slice(offset,offset+limit)
+}
+
+results=results.map(c=>{
+delete c._id
+return c
+})
+
+res.status(200).json(results)
+
+})
+
+});
+
+
+// GET RECURSO
+
+app.get(BASE_URL_API + "/:country/:year",(req,res)=>{
+
+const country=req.params.country
+const year=parseInt(req.params.year)
+
+db.find({country:country,year:year},(err,docs)=>{
+
+if(docs.length===0){
+
+res.status(404).json({error:"NOT FOUND"})
+
+}else{
+
+let recurso=docs[0]
+delete recurso._id
+
+res.status(200).json(recurso)
+
+}
+
+})
+
+});
+
+
+// POST
+
+app.post(BASE_URL_API,(req,res)=>{
+
+const newData=req.body
+const requestKeys=Object.keys(newData)
+
+const hasRequiredKeys=campos.every(k=>requestKeys.includes(k))
+const hasSameLength=requestKeys.length===campos.length
+
+if(!hasRequiredKeys || !hasSameLength){
+
+return res.status(400).json({error:"BAD REQUEST: estructura incorrecta"})
+
+}
+
+db.find({country:newData.country,year:newData.year},(err,docs)=>{
+
+if(docs.length>0){
+
+return res.status(409).json({error:"CONFLICT: recurso ya existe"})
+
+}else{
+
+db.insert(newData,(err,doc)=>{
+
+delete doc._id
+
+res.status(201).json(doc)
+
+})
+
+}
+
+})
+
+});
+
+
+// PUT
+
+app.put(BASE_URL_API + "/:country/:year",(req,res)=>{
+
+const country=req.params.country
+const year=parseInt(req.params.year)
+
+const updatedData=req.body
+
+const requestKeys=Object.keys(updatedData)
+
+const hasRequiredKeys=campos.every(k=>requestKeys.includes(k))
+const hasSameLength=requestKeys.length===campos.length
+
+if(!hasRequiredKeys || !hasSameLength){
+
+return res.status(400).json({error:"BAD REQUEST: estructura incorrecta"})
+
+}
+
+if(updatedData.country!==country || parseInt(updatedData.year)!==year){
+
+return res.status(400).json({error:"BAD REQUEST: id no coincide con URL"})
+
+}
+
+db.update(
+{country:country,year:year},
+{$set:updatedData},
+{},
+(err,numUpdated)=>{
+
+if(numUpdated===0){
+
+res.status(404).json({error:"NOT FOUND"})
+
+}else{
+
+res.status(200).json({message:"OK"})
+
+}
+
+})
+
+});
+
+
+// DELETE RECURSO
+
+app.delete(BASE_URL_API + "/:country/:year",(req,res)=>{
+
+const country=req.params.country
+const year=parseInt(req.params.year)
+
+db.remove({country:country,year:year},{},(err,numRemoved)=>{
+
+if(numRemoved===0){
+
+res.status(404).json({error:"NOT FOUND"})
+
+}else{
+
+res.status(200).json({message:"OK deleted"})
+
+}
+
+})
+
+});
+
+
+// DELETE COLECCION
+
+app.delete(BASE_URL_API,(req,res)=>{
+
+db.remove({}, {multi:true},(err)=>{
+
+res.status(200).json({message:"All data deleted"})
+
+})
+
+});
+
+
+// METODOS NO PERMITIDOS
+
+app.all(BASE_URL_API,(req,res,next)=>{
+
+const allowed=["GET","POST","DELETE"]
+
+if(!allowed.includes(req.method)){
+return res.status(405).json({error:"Method Not Allowed"})
+}
+
+next()
+
+})
+
+app.all(BASE_URL_API + "/:country/:year",(req,res,next)=>{
+
+const allowed=["GET","PUT","DELETE"]
+
+if(!allowed.includes(req.method)){
+return res.status(405).json({error:"Method Not Allowed"})
+}
+
+next()
+
+})
+
 }
