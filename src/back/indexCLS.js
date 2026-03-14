@@ -8,7 +8,7 @@ const BASE_URL_API = "/api/v1";
 export function loadBackEnd(app) {
 
     // Documentación
-    app.get(`${BASE_URL_API}/global-agriculture-climate-impacts/docs`, (req, res) => {
+    app.get("/api/v1/global-agriculture-climate-impacts/docs", (req, res) => {
         res.redirect("https://documenter.getpostman.com/view/52404852/2sBXiesEcp"); 
     });
 
