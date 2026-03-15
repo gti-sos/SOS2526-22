@@ -33,11 +33,6 @@ loadCLS(app);
 loadEMM(app);
 // loadJMV(app);
 
-// Ruta de prueba inicial
-app.get("/", (req, res) => {
-  res.send("SOS2526-22 API funcionando correctamente");
-});
-
 // Arrancar servidor
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
