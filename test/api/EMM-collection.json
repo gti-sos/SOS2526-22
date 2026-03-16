@@ -94,6 +94,153 @@
       "response": []
     },
     {
+      "name": "GET a una búsqueda cfc 200 OK",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));\r",
+              "pm.test(\"El campo devuelto es un array simple\", () => {\r",
+              "    const res = pm.response.json();\r",
+              "    pm.expect(res).to.be.an('array');\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"country\": \"prueba\",\r\n    \"code\": \"jpn\",\r\n    \"year\": 2013,\r\n    \"methyl_chloroform\": 0,\r\n    \"methyl_bromide\": 7,\r\n    \"hcfc\": 20569,\r\n    \"carbon_tetrachloride\": 145,\r\n    \"halon\": 0,\r\n    \"cfc\": -1813\r\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/ozone-depleting-substance-consumptions?cfc=1806",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "ozone-depleting-substance-consumptions"
+          ],
+          "query": [
+            {
+              "key": "cfc",
+              "value": "1806"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "GET a una búsqueda hcfc 200 OK",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));\r",
+              "pm.test(\"El campo devuelto es un array simple\", () => {\r",
+              "    const res = pm.response.json();\r",
+              "    pm.expect(res).to.be.an('array');\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"country\": \"prueba\",\r\n    \"code\": \"jpn\",\r\n    \"year\": 2013,\r\n    \"methyl_chloroform\": 0,\r\n    \"methyl_bromide\": 7,\r\n    \"hcfc\": 20569,\r\n    \"carbon_tetrachloride\": 145,\r\n    \"halon\": 0,\r\n    \"cfc\": -1813\r\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/ozone-depleting-substance-consumptions?hcfc=11717",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "ozone-depleting-substance-consumptions"
+          ],
+          "query": [
+            {
+              "key": "hcfc",
+              "value": "11717"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "GET a una búsqueda code 200 OK",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));\r",
+              "pm.test(\"El campo devuelto es un array simple\", () => {\r",
+              "    const res = pm.response.json();\r",
+              "    pm.expect(res).to.be.an('array');\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"country\": \"prueba\",\r\n    \"code\": \"jpn\",\r\n    \"year\": 2013,\r\n    \"methyl_chloroform\": 0,\r\n    \"methyl_bromide\": 7,\r\n    \"hcfc\": 20569,\r\n    \"carbon_tetrachloride\": 145,\r\n    \"halon\": 0,\r\n    \"cfc\": -1813\r\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/ozone-depleting-substance-consumptions?code=jpn",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "ozone-depleting-substance-consumptions"
+          ],
+          "query": [
+            {
+              "key": "code",
+              "value": "jpn"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
       "name": "GET a un campo concreto 200 OK",
       "event": [
         {
