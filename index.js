@@ -8,7 +8,7 @@ import { dirname } from "path";
 // Importar backends individuales
 import { loadBackEnd as loadCLS } from "./src/back/indexCLS.js";
 import { loadBackEnd as loadEMM } from "./src/back/indexEMM.js";
-// import { loadBackEnd as loadJMV } from "./src/back/indexJMV.js";
+import { loadBackEnd as loadJMV } from "./src/back/indexJMV.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -31,7 +31,7 @@ app.get("/about", (req, res) => {
 // Cargar backends
 loadCLS(app);
 loadEMM(app);
-// loadJMV(app);
+loadJMV(app);
 
 // Arrancar servidor
 app.listen(PORT, () => {
