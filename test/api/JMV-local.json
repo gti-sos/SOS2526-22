@@ -4,7 +4,7 @@
 	"values": [
 		{
 			"key": "url",
-			"value": "",
+			"value": "http://localhost:3000/api/v1/co2-emission-gap-among-countries-clustering-pca",
 			"type": "default",
 			"enabled": true
 		}
