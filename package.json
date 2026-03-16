@@ -20,7 +20,7 @@
 
     "NVM-CLS-local": "newman run test/api/CLS-collection.json -e test/api/CLS-local.json",
     "test-CLS-local": "start-server-and-test start http://localhost:3000 NVM-CLS-local ",
-    "test-global": "npm run test-CLS-local & npx kill-port 3000",
+    "test-global-agriculture-climate-impacts": "npm run test-CLS-local & npx kill-port 3000",
     "test-CLS-render": "newman run test/api/CLS-collection.json -e test/api/CLS-render.json --bail",
 
     "NVM-EMM-local": "newman run test/api/EMM-collection.json -e test/api/EMM-local.json",
