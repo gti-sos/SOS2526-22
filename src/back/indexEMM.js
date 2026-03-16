@@ -1,10 +1,9 @@
 /////INDIVIDUAL ELENA 
 import dataStore from 'nedb';
 const BASE_URL_API = "/api/v1";
- let db = new dataStore();
+let db = new dataStore();
 
 export function loadBackEnd(app) {
-
 
     app.get("/api/v1/ozone-depleting-substance-consumptions/docs", (req, res) => {
         res.redirect("https://documenter.getpostman.com/view/52404851/2sBXiertqM"); 
@@ -53,7 +52,7 @@ export function loadBackEnd(app) {
                 res.status(200).send(jsonData);
             }
         });
-        
+
     });
 
 
