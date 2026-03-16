@@ -4,7 +4,7 @@
 	"values": [
 		{
 			"key": "base_url",
-			"value": "http://sos2526-22.onrender.com",
+			"value": "https://sos2526-22.onrender.com",
 			"type": "default",
 			"enabled": true
 		}
