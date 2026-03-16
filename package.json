@@ -17,14 +17,17 @@
   "scripts": {
     "start": "node index.js",
     "test": "npm run test-JMV-local && npm run test-CLS-local && npm run test-EMM-local",
+
     "NVM-CLS-local": "newman run test/api/CLS-collection.json -e test/api/CLS-local.json",
     "test-CLS-local": "start-server-and-test start http://localhost:3000 NVM-CLS-local ",
     "test-global": "npm run test-CLS-local & npx kill-port 3000",
     "test-CLS-render": "newman run test/api/CLS-collection.json -e test/api/CLS-render.json --bail",
+
     "NVM-EMM-local": "newman run test/api/EMM-collection.json -e test/api/EMM-local.json",
     "test-EMM-local": "start-server-and-test start http://localhost:3000 NVM-EMM-local ",
     "test-ozono": "npm run test-EMM-local & npx kill-port 3000",
     "test-EMM-render": "newman run test/api/EMM-collection.json -e test/api/EMM-render.json --bail",
+    
     "NVM-JMV-local": "newman run test/api/JMV-collection.json -e test/api/JMV-local.json --bail",
     "test-JMV-local": "start-server-and-test start http://localhost:3000 NVM-JMV-local",
     "test-JMV-render": "newman run test/api/JMV-collection.json -e test/api/JMV-render.json --bail",
