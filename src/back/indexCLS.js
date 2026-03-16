@@ -29,25 +29,41 @@ export function loadBackEnd(app) {
     const campos = ["country","year","crop_type","average_temperature_c","total_precipitation_mm"];
 
     // LoadInitialData
-    app.get(`${BASE_URL_API}/global-agriculture-climate-impacts/loadInitialData`, (req, res) => {
-        db.find({}, (err, docs) => {
-            if (docs.length === 0) {
-                db.insert(initialData, (err, newDocs) => {
-                    const resultado = newDocs.map(d => {
-                        delete d._id;
-                        return d;
-                    });
-                    res.status(200).json(resultado);
-                });
-            } else {
-                const resultado = docs.map(d => {
+ app.get(`${BASE_URL_API}/global-agriculture-climate-impacts/loadInitialData`, (req, res) => {
+
+    db.find({}, (err, docs) => {
+
+        if(err) return res.status(500).json({error:"DB error"});
+
+        if (docs.length === 0) {
+
+            db.insert(initialData, (err, newDocs) => {
+
+                if(err) return res.status(500).json({error:"Insert error"});
+
+                const resultado = (Array.isArray(newDocs) ? newDocs : [newDocs]).map(d => {
                     delete d._id;
                     return d;
                 });
+
                 res.status(200).json(resultado);
-            }
-        });
+
+            });
+
+        } else {
+
+            const resultado = docs.map(d => {
+                delete d._id;
+                return d;
+            });
+
+            res.status(200).json(resultado);
+
+        }
+
     });
+
+});
 
     // GET lista completa + paginación
 // GET lista completa + búsqueda + paginación
