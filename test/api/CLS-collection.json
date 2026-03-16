@@ -1,167 +1,71 @@
-
 {
   "info": {
     "_postman_id": "2c4d3655-490a-4f94-88b7-7f72a1f76cc0",
     "name": "global-agriculture-climate-impacts",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "_exporter_id": "52404852",
-    "_collection_link": "https://go.postman.co/collection/52404852-2c4d3655-490a-4f94-88b7-7f72a1f76cc0?source=collection_link"
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
     {
       "name": "loadInitialData 200 OK",
       "request": {
         "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts/loadInitialData",
-          "protocol": "https",
-          "host": [
-            "sos2526-22",
-            "onrender",
-            "com"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "global-agriculture-climate-impacts",
-            "loadInitialData"
-          ]
-        }
-      },
-      "response": []
+        "url": "{{base_url}}/api/v1/global-agriculture-climate-impacts/loadInitialData"
+      }
     },
     {
       "name": "200 OK",
       "request": {
         "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts",
-          "protocol": "https",
-          "host": [
-            "sos2526-22",
-            "onrender",
-            "com"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "global-agriculture-climate-impacts"
-          ]
-        }
-      },
-      "response": []
+        "url": "{{base_url}}/api/v1/global-agriculture-climate-impacts"
+      }
     },
     {
       "name": "filtro 200 OK",
       "request": {
         "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts/Spain/2020",
-          "protocol": "https",
-          "host": [
-            "sos2526-22",
-            "onrender",
-            "com"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "global-agriculture-climate-impacts",
-            "Spain",
-            "2020"
-          ]
-        }
-      },
-      "response": []
+        "url": "{{base_url}}/api/v1/global-agriculture-climate-impacts/Spain/2020"
+      }
     },
     {
       "name": "200 OK acceder recurso especifico",
       "request": {
         "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts/Spain/2020",
-          "protocol": "https",
-          "host": [
-            "sos2526-22",
-            "onrender",
-            "com"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "global-agriculture-climate-impacts",
-            "Spain",
-            "2020"
-          ]
-        }
-      },
-      "response": []
+        "url": "{{base_url}}/api/v1/global-agriculture-climate-impacts/Spain/2020"
+      }
     },
     {
       "name": "201 CREATED",
       "request": {
         "method": "POST",
-        "header": [],
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n\"country\": \"Argentina\",\r\n\"year\": 2020,\r\n\"crop_type\": \"Corn\",\r\n\"average_temperature_c\": 23,\r\n\"total_precipitation_mm\": 410\r\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
+          "raw": "{\n\"country\": \"Argentina\",\n\"year\": 2020,\n\"crop_type\": \"Corn\",\n\"average_temperature_c\": 23,\n\"total_precipitation_mm\": 410\n}"
         },
-        "url": {
-          "raw": "https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts",
-          "protocol": "https",
-          "host": [
-            "sos2526-22",
-            "onrender",
-            "com"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "global-agriculture-climate-impacts"
-          ]
-        }
-      },
-      "response": []
+        "url": "{{base_url}}/api/v1/global-agriculture-climate-impacts"
+      }
     },
     {
       "name": "409 CONFLICT",
       "request": {
         "method": "POST",
-        "header": [],
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n\"country\": \"Argentina\",\r\n\"year\": 2020,\r\n\"crop_type\": \"Corn\",\r\n\"average_temperature_c\": 23,\r\n\"total_precipitation_mm\": 410\r\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
+          "raw": "{\n\"country\": \"Argentina\",\n\"year\": 2020,\n\"crop_type\": \"Corn\",\n\"average_temperature_c\": 23,\n\"total_precipitation_mm\": 410\n}"
         },
-        "url": {
-          "raw": "https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts",
-          "protocol": "https",
-          "host": [
-            "sos2526-22",
-            "onrender",
-            "com"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "global-agriculture-climate-impacts"
-          ]
-        }
-      },
-      "response": []
+        "url": "{{base_url}}/api/v1/global-agriculture-climate-impacts"
+      }
     },
     {
       "name": "actualizar dato concreto 200 OK",
@@ -170,476 +74,86 @@
         "header": [
           {
             "key": "Content-Type",
-            "value": "application/json",
-            "type": "text"
+            "value": "application/json"
           }
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n  \"country\": \"Argentina\",\r\n  \"year\": 2020,\r\n  \"crop_type\": \"Carrot\",\r\n  \"average_temperature_c\": 25,\r\n  \"total_precipitation_mm\": 400\r\n}"
+          "raw": "{\n\"country\": \"Argentina\",\n\"year\": 2020,\n\"crop_type\": \"Carrot\",\n\"average_temperature_c\": 25,\n\"total_precipitation_mm\": 400\n}"
         },
-        "url": {
-          "raw": "https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts/Argentina/2020",
-          "protocol": "https",
-          "host": [
-            "sos2526-22",
-            "onrender",
-            "com"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "global-agriculture-climate-impacts",
-            "Argentina",
-            "2020"
-          ]
-        }
-      },
-      "response": []
+        "url": "{{base_url}}/api/v1/global-agriculture-climate-impacts/Argentina/2020"
+      }
     },
     {
       "name": "400 Bad Request",
       "request": {
         "method": "PUT",
-        "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n\"country\": \"Argentina\",\r\n\"year\": 2020,\r\n\"crop_type\": \"Corn\",\r\n\"average_temperature_c\": 23,\r\n\"total_precipitation_mm\": 410\r\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
+          "raw": "{\n\"country\": \"Argentina\",\n\"year\": 2020,\n\"crop_type\": \"Corn\",\n\"average_temperature_c\": 23,\n\"total_precipitation_mm\": 410\n}"
         },
-        "url": {
-          "raw": "https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts/Argentina/2026",
-          "protocol": "https",
-          "host": [
-            "sos2526-22",
-            "onrender",
-            "com"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "global-agriculture-climate-impacts",
-            "Argentina",
-            "2026"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "405 Method not Allowed",
-      "request": {
-        "method": "PUT",
-        "header": [],
-        "body": {
-          "mode": "raw",
-          "raw": "{\r\n\"country\": \"Argentina\",\r\n\"year\": 2020,\r\n\"crop_type\": \"Corn\",\r\n\"average_temperature_c\": 23,\r\n\"total_precipitation_mm\": 410\r\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
-        },
-        "url": {
-          "raw": "https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts",
-          "protocol": "https",
-          "host": [
-            "sos2526-22",
-            "onrender",
-            "com"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "global-agriculture-climate-impacts"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "405 Method Not Allowed",
-      "request": {
-        "method": "POST",
-        "header": [],
-        "body": {
-          "mode": "raw",
-          "raw": "",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
-        },
-        "url": {
-          "raw": "https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts/Spain/2020",
-          "protocol": "https",
-          "host": [
-            "sos2526-22",
-            "onrender",
-            "com"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "global-agriculture-climate-impacts",
-            "Spain",
-            "2020"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Dato borrado 200 OK",
-      "request": {
-        "method": "DELETE",
-        "header": [],
-        "body": {
-          "mode": "raw",
-          "raw": "{\r\n\"country\": \"Argentina\",\r\n\"year\": 2020,\r\n\"crop_type\": \"Corn\",\r\n\"average_temperature_c\": 23,\r\n\"total_precipitation_mm\": 410\r\n}"
-        },
-        "url": {
-          "raw": "https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts/Argentina/2020",
-          "protocol": "https",
-          "host": [
-            "sos2526-22",
-            "onrender",
-            "com"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "global-agriculture-climate-impacts",
-            "Argentina",
-            "2020"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "DELETE",
-      "request": {
-        "method": "DELETE",
-        "header": [],
-        "body": {
-          "mode": "raw",
-          "raw": "{\r\n    \"country\": \"Argentina\",\r\n    \"year\": 2020,\r\n    \"crop_type\": \"Corn\",\r\n    \"average_temperature_c\": 0,\r\n    \"total_precipitation_mm\": 0\r\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
-        },
-        "url": {
-          "raw": "https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts",
-          "protocol": "https",
-          "host": [
-            "sos2526-22",
-            "onrender",
-            "com"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "global-agriculture-climate-impacts"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "404 NOT FOUND",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts/Spain/2020",
-          "protocol": "https",
-          "host": [
-            "sos2526-22",
-            "onrender",
-            "com"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "global-agriculture-climate-impacts",
-            "Spain",
-            "2020"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Busqueda simple",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts?country=Spain&year=2020",
-          "protocol": "https",
-          "host": [
-            "sos2526-22",
-            "onrender",
-            "com"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "global-agriculture-climate-impacts"
-          ],
-          "query": [
-            {
-              "key": "country",
-              "value": "Spain"
-            },
-            {
-              "key": "year",
-              "value": "2020"
-            }
-          ]
-        }
-      },
-      "response": []
+        "url": "{{base_url}}/api/v1/global-agriculture-climate-impacts/Argentina/2026"
+      }
     },
     {
       "name": "Paginacion",
       "request": {
         "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts?limit=2",
-          "protocol": "https",
-          "host": [
-            "sos2526-22",
-            "onrender",
-            "com"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "global-agriculture-climate-impacts"
-          ],
-          "query": [
-            {
-              "key": "limit",
-              "value": "2"
-            }
-          ]
-        }
-      },
-      "response": []
+        "url": "{{base_url}}/api/v1/global-agriculture-climate-impacts?limit=2"
+      }
+    },
+    {
+      "name": "405 Method not Allowed",
+      "request": {
+        "method": "PUT",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n\"country\": \"Argentina\",\n\"year\": 2020,\n\"crop_type\": \"Corn\",\n\"average_temperature_c\": 23,\n\"total_precipitation_mm\": 410\n}"
+        },
+        "url": "{{base_url}}/api/v1/global-agriculture-climate-impacts"
+      }
+    },
+    {
+      "name": "405 Method Not Allowed",
+      "request": {
+        "method": "POST",
+        "url": "{{base_url}}/api/v1/global-agriculture-climate-impacts/Spain/2020"
+      }
+    },
+    {
+      "name": "Dato borrado 200 OK",
+      "request": {
+        "method": "DELETE",
+        "url": "{{base_url}}/api/v1/global-agriculture-climate-impacts/Argentina/2020"
+      }
+    },
+    {
+      "name": "404 NOT FOUND",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/v1/global-agriculture-climate-impacts/Spain/2020"
+      }
+    },
+    {
+      "name": "Busqueda simple",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/v1/global-agriculture-climate-impacts?country=Spain&year=2020"
+      }
     },
     {
       "name": "paginacion",
       "request": {
         "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts?limit=2&offset=2",
-          "protocol": "https",
-          "host": [
-            "sos2526-22",
-            "onrender",
-            "com"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "global-agriculture-climate-impacts"
-          ],
-          "query": [
-            {
-              "key": "limit",
-              "value": "2"
-            },
-            {
-              "key": "offset",
-              "value": "2"
-            }
-          ]
-        }
-      },
-      "response": []
+        "url": "{{base_url}}/api/v1/global-agriculture-climate-impacts?limit=2&offset=2"
+      }
     },
     {
-      "name": "Filtro por country",
+      "name": "DELETE",
       "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts?country=Spain",
-          "protocol": "https",
-          "host": [
-            "sos2526-22",
-            "onrender",
-            "com"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "global-agriculture-climate-impacts"
-          ],
-          "query": [
-            {
-              "key": "country",
-              "value": "Spain"
-            }
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Filtro por year",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts?year=2020",
-          "protocol": "https",
-          "host": [
-            "sos2526-22",
-            "onrender",
-            "com"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "global-agriculture-climate-impacts"
-          ],
-          "query": [
-            {
-              "key": "year",
-              "value": "2020"
-            }
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Filtro por crop_type",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts?crop_type=Wheat",
-          "protocol": "https",
-          "host": [
-            "sos2526-22",
-            "onrender",
-            "com"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "global-agriculture-climate-impacts"
-          ],
-          "query": [
-            {
-              "key": "crop_type",
-              "value": "Wheat"
-            }
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Filtro por temp",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts?average_temperature_c=20",
-          "protocol": "https",
-          "host": [
-            "sos2526-22",
-            "onrender",
-            "com"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "global-agriculture-climate-impacts"
-          ],
-          "query": [
-            {
-              "key": "average_temperature_c",
-              "value": "20"
-            }
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Filtro por precipitacion",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts?total_precipitation_mm=500",
-          "protocol": "https",
-          "host": [
-            "sos2526-22",
-            "onrender",
-            "com"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "global-agriculture-climate-impacts"
-          ],
-          "query": [
-            {
-              "key": "total_precipitation_mm",
-              "value": "500"
-            }
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Busqueda combinada",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts?country=Spain&year=2020",
-          "protocol": "https",
-          "host": [
-            "sos2526-22",
-            "onrender",
-            "com"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "global-agriculture-climate-impacts"
-          ],
-          "query": [
-            {
-              "key": "country",
-              "value": "Spain"
-            },
-            {
-              "key": "year",
-              "value": "2020"
-            }
-          ]
-        }
-      },
-      "response": []
+        "method": "DELETE",
+        "url": "{{base_url}}/api/v1/global-agriculture-climate-impacts"
+      }
     }
   ]
 }
