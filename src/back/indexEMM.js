@@ -57,48 +57,106 @@ export function loadBackEnd(app) {
     });
 
 
-    // GET de la lista completa con paginación por páginas y grupos de elementos
-    app.get(BASE_URL_API + "/ozone-depleting-substance-consumptions", (req, res) => {
-        const page = parseInt(req.query.page);
-        const items = parseInt(req.query.items);
+    // // GET de la lista completa con paginación por páginas y grupos de elementos
+    // app.get(BASE_URL_API + "/ozone-depleting-substance-consumptions", (req, res) => {
+    //     const page = parseInt(req.query.page);
+    //     const items = parseInt(req.query.items);
 
-        // Si NO hay parámetros, devolvemos la lista completa como siempre
-        if (isNaN(page) || isNaN(items)) {
-            return db.find({}, (err, docs) => {
-                const resultado = docs.map(({ _id, ...rest }) => rest);
-                res.status(200).json(resultado);
-            });
-        }
+    //     // Si NO hay parámetros, devolvemos la lista completa como siempre
+    //     if (isNaN(page) || isNaN(items)) {
+    //         return db.find({}, (err, docs) => {
+    //             const resultado = docs.map(({ _id, ...rest }) => rest);
+    //             res.status(200).json(resultado);
+    //         });
+    //     }
 
-        const pageNum = Math.max(1, page);
-        const limitNum = Math.max(1, items);
-        const skipNum = (pageNum - 1) * limitNum;
+    //     const pageNum = Math.max(1, page);
+    //     const limitNum = Math.max(1, items);
+    //     const skipNum = (pageNum - 1) * limitNum;
 
-        // Contamos el total para que sepas cuántas páginas existen en total
-        db.count({}, (err, totalCount) => {
-            if (err) return res.status(500).json({ error: "Error en la base de datos" });
+    //     // Contamos el total para que sepas cuántas páginas existen en total
+    //     db.count({}, (err, totalCount) => {
+    //         if (err) return res.status(500).json({ error: "Error en la base de datos" });
 
-            db.find({})
-                .skip(skipNum)
-                .limit(limitNum)
-                .exec((err, data) => {
-                    if (err) return res.status(500).json({ error: "Error al acceder a los datos" });
+    //         db.find({})
+    //             .skip(skipNum)
+    //             .limit(limitNum)
+    //             .exec((err, data) => {
+    //                 if (err) return res.status(500).json({ error: "Error al acceder a los datos" });
 
-                    // Limpiamos los datos de _id
-                    const resultado = data.map(({ _id, ...rest }) => rest);
+    //                 // Limpiamos los datos de _id
+    //                 const resultado = data.map(({ _id, ...rest }) => rest);
 
-                    res.status(200).json({
-                        data: resultado,
-                        total_items: totalCount,
-                        pagina_actual: pageNum,
-                        items_por_pagina: limitNum,
-                        total_paginas: Math.ceil(totalCount / limitNum)
-                    });
-                });
+    //                 res.status(200).json({
+    //                     data: resultado,
+    //                     total_items: totalCount,
+    //                     pagina_actual: pageNum,
+    //                     items_por_pagina: limitNum,
+    //                     total_paginas: Math.ceil(totalCount / limitNum)
+    //                 });
+    //             });
+    //     });
+    // });
+
+// GET lista completa + búsqueda por todos los campos + paginación (Estructura compañera)
+app.get(`${BASE_URL_API}/ozone-depleting-substance-consumptions`, (req, res) => {
+
+    const query = {};
+
+    // Mapeo de tus campos para la búsqueda
+    if(req.query.country) query.country = req.query.country.toLowerCase();
+    if(req.query.code) query.code = req.query.code.toLowerCase();
+    if(req.query.year) query.year = parseInt(req.query.year);
+    if(req.query.methyl_chloroform) query.methyl_chloroform = Number(req.query.methyl_chloroform);
+    if(req.query.methyl_bromide) query.methyl_bromide = Number(req.query.methyl_bromide);
+    if(req.query.hcfc) query.hcfc = Number(req.query.hcfc);
+    if(req.query.carbon_tetrachloride) query.carbon_tetrachloride = Number(req.query.carbon_tetrachloride);
+    if(req.query.halon) query.halon = Number(req.query.halon);
+    if(req.query.cfc) query.cfc = Number(req.query.cfc);
+
+    const page = parseInt(req.query.page);
+    const items = parseInt(req.query.items);
+
+    // CASO 1: Búsqueda sin paginación
+    if(isNaN(page) || isNaN(items)){
+
+        db.find(query, (err, docs)=>{
+            if(err) return res.status(500).json({error:"Error en la base de datos"});
+
+            const resultado = docs.map(({_id,...rest})=>rest);
+            res.status(200).json(resultado);
         });
-    });
 
+    } else {
+        // CASO 2: Búsqueda con paginación
+        const pageNum = Math.max(1,page);
+        const limitNum = Math.max(1,items);
+        const skipNum = (pageNum-1)*limitNum;
 
+        db.count(query,(err,totalCount)=>{
+
+            if(err) return res.status(500).json({error:"Error en la base de datos"});
+
+            db.find(query)
+            .skip(skipNum)
+            .limit(limitNum)
+            .exec((err,data)=>{
+
+                if(err) return res.status(500).json({error:"Error al acceder a los datos"});
+
+                const resultado = data.map(({_id,...rest})=>rest);
+
+                res.status(200).json({
+                    data:resultado,
+                    total_items:totalCount,
+                    pagina_actual:pageNum,
+                    items_por_pagina:limitNum,
+                    total_paginas:Math.ceil(totalCount/limitNum)
+                });
+            });
+        });
+    }
+});
 
     // GET de un recurso específico (País y Año) 
     app.get(`${BASE_URL_API}/ozone-depleting-substance-consumptions/:country/:year`, (req, res) => {
