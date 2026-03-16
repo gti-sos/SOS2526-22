@@ -18,6 +18,7 @@
     "start": "node index.js",
     "test": "npm run test-CLS-local  && npm run test-EMM-local && npm run test-JMV-local",
     
+    
     "test-CLS-local": "newman run test/api/CLS-collection.json -e test/api/CLS-local.json --bail",
     "test-CLS-render": "newman run test/api/CLS-collection.json -e test/api/CLS-render.json --bail",
     "test-global": "npm run test-CLS-local & npx kill-port 3000",
