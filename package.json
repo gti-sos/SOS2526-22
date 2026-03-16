@@ -25,14 +25,14 @@
 
     "NVM-EMM-local": "newman run test/api/EMM-collection.json -e test/api/EMM-local.json",
     "test-EMM-local": "start-server-and-test start http://localhost:3000 NVM-EMM-local ",
-    "test-ozono": "npm run test-EMM-local & npx kill-port 3000",
+    "test-ozono": "npm run test-EMM-local ",
     "test-EMM-render": "newman run test/api/EMM-collection.json -e test/api/EMM-render.json --bail",
 
     "NVM-JMV-local": "newman run test/api/JMV-collection.json -e test/api/JMV-local.json --bail",
     "test-JMV-local": "start-server-and-test start http://localhost:3000 NVM-JMV-local",
     "test-JMV-render": "newman run test/api/JMV-collection.json -e test/api/JMV-render.json --bail",
     "test-jmv": "npm run test-JMV-local & npx kill-port 3000"
-    
+
   },
   "dependencies": {
     "body-parser": "^2.2.2",
