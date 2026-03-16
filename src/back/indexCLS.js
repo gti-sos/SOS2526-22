@@ -1,6 +1,7 @@
 import util from 'util';
 util.isDate = function(d) { return d instanceof Date; };
-
+util.isRegExp = function(re) { return re instanceof RegExp; };
+util.isArray = Array.isArray; // De paso, esto quita el Warning amarillo de tu consola
 import DataStore from 'nedb';
 const BASE_URL_API = "/api/v1";
 let db = new DataStore({ filename: './data/dataCLS.db', autoload: true });
