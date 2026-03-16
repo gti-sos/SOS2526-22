@@ -1,0 +1,259 @@
+{
+  "info": {
+    "_postman_id": "5eee656c-a74c-4dcb-93ca-64deddbf005a",
+    "name": "SOS2526-22-JMV",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "52411427",
+    "_collection_link": "https://go.postman.co/collection/52411427-5eee656c-a74c-4dcb-93ca-64deddbf005a?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Delete all",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{url}}",
+          "host": [
+            "{{url}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Cargar datos iniciales",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{url}}/loadInitialData",
+          "host": [
+            "{{url}}"
+          ],
+          "path": [
+            "loadInitialData"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get all",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Debe devolver un array\", function () {\r",
+              "    var jsonData = pm.response.json();\r",
+              "    pm.expect(jsonData).to.be.an('array');\r",
+              "});\r",
+              "\r",
+              "pm.test(\"El array debe tener datos\", function () {\r",
+              "    var jsonData = pm.response.json();\r",
+              "    pm.expect(jsonData.length).to.be.above(0);\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{url}}",
+          "host": [
+            "{{url}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Post new",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"country\": \"Spain\",\r\n    \"year\": 1990,\r\n    \"savanna_fire\": 20.5,\r\n    \"forest_fire\": 1.5,\r\n    \"crop_residues\": 210.0,\r\n    \"rice_cultivation\": 700,\r\n    \"drained_organic\": 0,\r\n    \"pesticides_manufacturing\": 15,\r\n    \"food_transport\": 890\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{url}}",
+          "host": [
+            "{{url}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Post duplicate",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{url}}",
+          "host": [
+            "{{url}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get single",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{url}}/Afghanistan/1990",
+          "host": [
+            "{{url}}"
+          ],
+          "path": [
+            "Afghanistan",
+            "1990"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Put especifico",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"country\": \"Afghanistan\",\r\n    \"year\": 1990,\r\n    \"savanna_fire\": 20.5,\r\n    \"forest_fire\": 1.5,\r\n    \"crop_residues\": 210.0,\r\n    \"rice_cultivation\": 700,\r\n    \"drained_organic\": 0,\r\n    \"pesticides_manufacturing\": 15,\r\n    \"food_transport\": 70\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{url}}/Afghanistan/1990",
+          "host": [
+            "{{url}}"
+          ],
+          "path": [
+            "Afghanistan",
+            "1990"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Delete single",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{url}}/Afghanistan/1990",
+          "host": [
+            "{{url}}"
+          ],
+          "path": [
+            "Afghanistan",
+            "1990"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get inexistente",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{url}}/Inexistente/2026",
+          "host": [
+            "{{url}}"
+          ],
+          "path": [
+            "Inexistente",
+            "2026"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Post individual(fallo)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"country\": \"Afghanistan\",\r\n    \"year\": 1990,\r\n    \"savanna_fire\": 20.5,\r\n    \"forest_fire\": 1.5,\r\n    \"crop_residues\": 210.0,\r\n    \"rice_cultivation\": 700,\r\n    \"drained_organic\": 0,\r\n    \"pesticides_manufacturing\": 15,\r\n    \"food_transport\": 70\r\n}"
+        },
+        "url": {
+          "raw": "{{url}}/Afghanistan/1990",
+          "host": [
+            "{{url}}"
+          ],
+          "path": [
+            "Afghanistan",
+            "1990"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Delete all Copy",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{url}}",
+          "host": [
+            "{{url}}"
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ]
+}
