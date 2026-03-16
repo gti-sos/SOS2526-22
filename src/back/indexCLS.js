@@ -50,42 +50,63 @@ export function loadBackEnd(app) {
     });
 
     // GET lista completa + paginación
-    app.get(`${BASE_URL_API}/global-agriculture-climate-impacts`, (req, res) => {
-        const page = parseInt(req.query.page);
-        const items = parseInt(req.query.items);
+// GET lista completa + búsqueda + paginación
+app.get(`${BASE_URL_API}/global-agriculture-climate-impacts`, (req, res) => {
 
-        if (isNaN(page) || isNaN(items)) {
-            return db.find({}, (err, docs) => {
-                const resultado = docs.map(({ _id, ...rest }) => rest);
-                res.status(200).json(resultado);
-            });
-        }
+    const query = {};
 
-        const pageNum = Math.max(1, page);
-        const limitNum = Math.max(1, items);
-        const skipNum = (pageNum - 1) * limitNum;
+    if(req.query.country) query.country = req.query.country;
+    if(req.query.year) query.year = parseInt(req.query.year);
+    if(req.query.crop_type) query.crop_type = req.query.crop_type;
+    if(req.query.average_temperature_c) query.average_temperature_c = Number(req.query.average_temperature_c);
+    if(req.query.total_precipitation_mm) query.total_precipitation_mm = Number(req.query.total_precipitation_mm);
 
-        db.count({}, (err, totalCount) => {
-            if (err) return res.status(500).json({ error: "Error en la base de datos" });
+    const page = parseInt(req.query.page);
+    const items = parseInt(req.query.items);
 
-            db.find({})
-                .skip(skipNum)
-                .limit(limitNum)
-                .exec((err, data) => {
-                    if (err) return res.status(500).json({ error: "Error al acceder a los datos" });
+    if(isNaN(page) || isNaN(items)){
 
-                    const resultado = data.map(({ _id, ...rest }) => rest);
-                    res.status(200).json({
-                        data: resultado,
-                        total_items: totalCount,
-                        pagina_actual: pageNum,
-                        items_por_pagina: limitNum,
-                        total_paginas: Math.ceil(totalCount / limitNum)
-                    });
-                });
+        db.find(query, (err, docs)=>{
+            if(err) return res.status(500).json({error:"Error en la base de datos"});
+
+            const resultado = docs.map(({_id,...rest})=>rest);
+            res.status(200).json(resultado);
         });
-    });
 
+    } else {
+
+        const pageNum = Math.max(1,page);
+        const limitNum = Math.max(1,items);
+        const skipNum = (pageNum-1)*limitNum;
+
+        db.count(query,(err,totalCount)=>{
+
+            if(err) return res.status(500).json({error:"Error en la base de datos"});
+
+            db.find(query)
+            .skip(skipNum)
+            .limit(limitNum)
+            .exec((err,data)=>{
+
+                if(err) return res.status(500).json({error:"Error al acceder a los datos"});
+
+                const resultado = data.map(({_id,...rest})=>rest);
+
+                res.status(200).json({
+                    data:resultado,
+                    total_items:totalCount,
+                    pagina_actual:pageNum,
+                    items_por_pagina:limitNum,
+                    total_paginas:Math.ceil(totalCount/limitNum)
+                });
+
+            });
+
+        });
+
+    }
+
+});
     // GET recurso específico (country + year)
     app.get(`${BASE_URL_API}/global-agriculture-climate-impacts/:country/:year`, (req, res) => {
         const { country, year } = req.params;

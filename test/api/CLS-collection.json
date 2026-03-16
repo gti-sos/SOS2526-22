@@ -467,6 +467,178 @@
         }
       },
       "response": []
+    },
+    {
+      "name": "Filtro por country",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts?country=Spain",
+          "protocol": "https",
+          "host": [
+            "sos2526-22",
+            "onrender",
+            "com"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "global-agriculture-climate-impacts"
+          ],
+          "query": [
+            {
+              "key": "country",
+              "value": "Spain"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Filtro por year",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts?year=2020",
+          "protocol": "https",
+          "host": [
+            "sos2526-22",
+            "onrender",
+            "com"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "global-agriculture-climate-impacts"
+          ],
+          "query": [
+            {
+              "key": "year",
+              "value": "2020"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Filtro por crop_type",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts?crop_type=Wheat",
+          "protocol": "https",
+          "host": [
+            "sos2526-22",
+            "onrender",
+            "com"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "global-agriculture-climate-impacts"
+          ],
+          "query": [
+            {
+              "key": "crop_type",
+              "value": "Wheat"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Filtro por temp",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts?average_temperature_c=20",
+          "protocol": "https",
+          "host": [
+            "sos2526-22",
+            "onrender",
+            "com"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "global-agriculture-climate-impacts"
+          ],
+          "query": [
+            {
+              "key": "average_temperature_c",
+              "value": "20"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Filtro por precipitacion",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts?total_precipitation_mm=500",
+          "protocol": "https",
+          "host": [
+            "sos2526-22",
+            "onrender",
+            "com"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "global-agriculture-climate-impacts"
+          ],
+          "query": [
+            {
+              "key": "total_precipitation_mm",
+              "value": "500"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Busqueda combinada",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts?country=Spain&year=2020",
+          "protocol": "https",
+          "host": [
+            "sos2526-22",
+            "onrender",
+            "com"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "global-agriculture-climate-impacts"
+          ],
+          "query": [
+            {
+              "key": "country",
+              "value": "Spain"
+            },
+            {
+              "key": "year",
+              "value": "2020"
+            }
+          ]
+        }
+      },
+      "response": []
     }
   ]
 }
