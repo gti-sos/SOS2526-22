@@ -1,155 +1,250 @@
 {
   "info": {
-    "_postman_id": "2c4d3655-490a-4f94-88b7-7f72a1f76cc0",
-    "name": "global-agriculture-climate-impacts",
+    "_postman_id": "f06-collection-001",
+    "name": "global-agriculture-climate-impacts-F06",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
     {
-      "name": "loadInitialData 200 OK",
+      "name": "GET loadInitialData 200 OK",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+              "pm.test(\"Datos iniciales cargados\", () => {",
+              "    const res = pm.response.json();",
+              "    pm.expect(res).to.be.an('array');",
+              "    pm.expect(res.length).to.be.above(0);",
+              "});"
+            ]
+          }
+        }
+      ],
       "request": {
         "method": "GET",
         "url": "{{base_url}}/api/v1/global-agriculture-climate-impacts/loadInitialData"
       }
     },
     {
-      "name": "200 OK",
-      "request": {
-        "method": "GET",
-        "url": "{{base_url}}/api/v1/global-agriculture-climate-impacts"
-      }
-    },
-    {
-      "name": "filtro 200 OK",
-      "request": {
-        "method": "GET",
-        "url": "{{base_url}}/api/v1/global-agriculture-climate-impacts/Spain/2020"
-      }
-    },
-    {
-      "name": "200 OK acceder recurso especifico",
-      "request": {
-        "method": "GET",
-        "url": "{{base_url}}/api/v1/global-agriculture-climate-impacts/Spain/2020"
-      }
-    },
-    {
-      "name": "201 CREATED",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
+      "name": "GET todos los datos 200 OK",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+              "pm.test(\"Respuesta es array\", () => {",
+              "    const res = pm.response.json();",
+              "    pm.expect(res).to.be.an('array');",
+              "});"
+            ]
           }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n\"country\": \"Argentina\",\n\"year\": 2020,\n\"crop_type\": \"Corn\",\n\"average_temperature_c\": 23,\n\"total_precipitation_mm\": 410\n}"
-        },
-        "url": "{{base_url}}/api/v1/global-agriculture-climate-impacts"
-      }
-    },
-    {
-      "name": "409 CONFLICT",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n\"country\": \"Argentina\",\n\"year\": 2020,\n\"crop_type\": \"Corn\",\n\"average_temperature_c\": 23,\n\"total_precipitation_mm\": 410\n}"
-        },
-        "url": "{{base_url}}/api/v1/global-agriculture-climate-impacts"
-      }
-    },
-    {
-      "name": "actualizar dato concreto 200 OK",
-      "request": {
-        "method": "PUT",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n\"country\": \"Argentina\",\n\"year\": 2020,\n\"crop_type\": \"Carrot\",\n\"average_temperature_c\": 25,\n\"total_precipitation_mm\": 400\n}"
-        },
-        "url": "{{base_url}}/api/v1/global-agriculture-climate-impacts/Argentina/2020"
-      }
-    },
-    {
-      "name": "400 Bad Request",
-      "request": {
-        "method": "PUT",
-        "body": {
-          "mode": "raw",
-          "raw": "{\n\"country\": \"Argentina\",\n\"year\": 2020,\n\"crop_type\": \"Corn\",\n\"average_temperature_c\": 23,\n\"total_precipitation_mm\": 410\n}"
-        },
-        "url": "{{base_url}}/api/v1/global-agriculture-climate-impacts/Argentina/2026"
-      }
-    },
-    {
-      "name": "Paginacion",
+        }
+      ],
       "request": {
         "method": "GET",
-        "url": "{{base_url}}/api/v1/global-agriculture-climate-impacts?limit=2"
-      }
-    },
-    {
-      "name": "405 Method not Allowed",
-      "request": {
-        "method": "PUT",
-        "body": {
-          "mode": "raw",
-          "raw": "{\n\"country\": \"Argentina\",\n\"year\": 2020,\n\"crop_type\": \"Corn\",\n\"average_temperature_c\": 23,\n\"total_precipitation_mm\": 410\n}"
-        },
         "url": "{{base_url}}/api/v1/global-agriculture-climate-impacts"
       }
     },
     {
-      "name": "405 Method Not Allowed",
-      "request": {
-        "method": "POST",
-        "url": "{{base_url}}/api/v1/global-agriculture-climate-impacts/Spain/2020"
-      }
-    },
-    {
-      "name": "Dato borrado 200 OK",
-      "request": {
-        "method": "DELETE",
-        "url": "{{base_url}}/api/v1/global-agriculture-climate-impacts/Argentina/2020"
-      }
-    },
-    {
-      "name": "404 NOT FOUND",
+      "name": "GET recurso concreto 200 OK",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+              "pm.test(\"Objeto devuelto correcto\", () => {",
+              "    const res = pm.response.json();",
+              "    pm.expect(res.country).to.eql('Spain');",
+              "    pm.expect(res.year).to.eql(2020);",
+              "});"
+            ]
+          }
+        }
+      ],
       "request": {
         "method": "GET",
         "url": "{{base_url}}/api/v1/global-agriculture-climate-impacts/Spain/2020"
       }
     },
     {
-      "name": "Busqueda simple",
+      "name": "GET filtro country+year 200 OK",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+              "pm.test(\"Filtro correcto\", () => {",
+              "    const res = pm.response.json();",
+              "    pm.expect(res).to.be.an('array');",
+              "    res.forEach(r => {",
+              "        pm.expect(r.country).to.eql('Spain');",
+              "        pm.expect(r.year).to.eql(2020);",
+              "    });",
+              "});"
+            ]
+          }
+        }
+      ],
       "request": {
         "method": "GET",
-        "url": "{{base_url}}/api/v1/global-agriculture-climate-impacts?country=Spain&year=2020"
+        "url": {
+          "raw": "{{base_url}}/api/v1/global-agriculture-climate-impacts?country=Spain&year=2020",
+          "query": [
+            { "key": "country", "value": "Spain" },
+            { "key": "year", "value": "2020" }
+          ]
+        }
       }
     },
     {
-      "name": "paginacion",
+      "name": "GET paginación 200 OK",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+              "pm.test(\"Paginación devuelve array\", () => {",
+              "    const res = pm.response.json();",
+              "    pm.expect(res).to.be.an('array');",
+              "});"
+            ]
+          }
+        }
+      ],
       "request": {
         "method": "GET",
         "url": "{{base_url}}/api/v1/global-agriculture-climate-impacts?limit=2&offset=2"
       }
     },
     {
-      "name": "DELETE",
+      "name": "POST crear dato 201 CREATED",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status 201\", () => pm.response.to.have.status(201));",
+              "pm.test(\"Objeto creado\", () => {",
+              "    const res = pm.response.json();",
+              "    pm.expect(res.country).to.eql('Argentina');",
+              "    pm.expect(res.year).to.eql(2020);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"country\":\"Argentina\", \"year\":2020, \"crop_type\":\"Corn\", \"average_temperature_c\":23, \"total_precipitation_mm\":410 }"
+        },
+        "url": "{{base_url}}/api/v1/global-agriculture-climate-impacts"
+      }
+    },
+    {
+      "name": "POST dato duplicado 409 CONFLICT",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status 409\", () => pm.response.to.have.status(409));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"country\":\"Argentina\", \"year\":2020, \"crop_type\":\"Corn\", \"average_temperature_c\":23, \"total_precipitation_mm\":410 }"
+        },
+        "url": "{{base_url}}/api/v1/global-agriculture-climate-impacts"
+      }
+    },
+    {
+      "name": "PUT actualizar dato concreto 200 OK",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+              "pm.test(\"Actualización correcta\", () => {",
+              "    const res = pm.response.json();",
+              "    pm.expect(res.crop_type).to.eql('Carrot');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"country\":\"Argentina\", \"year\":2020, \"crop_type\":\"Carrot\", \"average_temperature_c\":25, \"total_precipitation_mm\":400 }"
+        },
+        "url": "{{base_url}}/api/v1/global-agriculture-climate-impacts/Argentina/2020"
+      }
+    },
+    {
+      "name": "PUT mal estructurado 400 Bad Request",
+      "event": [
+        {
+          "listen": "test",
+          "script": { "exec": ["pm.test(\"Status 400\", () => pm.response.to.have.status(400));"] }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{ \"country\":\"Argentina\" }" },
+        "url": "{{base_url}}/api/v1/global-agriculture-climate-impacts/Argentina/2020"
+      }
+    },
+    {
+      "name": "DELETE recurso concreto 200 OK",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+              "pm.test(\"Elemento eliminado\", () => {",
+              "    const res = pm.response.json();",
+              "    pm.expect(res.message).to.include('eliminado');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "url": "{{base_url}}/api/v1/global-agriculture-climate-impacts/Argentina/2020"
+      }
+    },
+    {
+      "name": "DELETE todos los recursos 200 OK",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status 200\", () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ],
       "request": {
         "method": "DELETE",
         "url": "{{base_url}}/api/v1/global-agriculture-climate-impacts"
