@@ -16,7 +16,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "test": "npm run test-CLS-local && npm run test-CLS-render && npm run test-EMM-local && npm run test-EMM-render",
+    "test": "npm run test-CLS-local && npm run test-JMV-local && npm run test-EMM-local",
     
     "test-CLS-local": "newman run test/api/CLS-collection.json -e test/api/CLS-local.json --bail",
     "test-CLS-render": "newman run test/api/CLS-collection.json -e test/api/CLS-render.json --bail",
