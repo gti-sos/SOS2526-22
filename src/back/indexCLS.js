@@ -31,7 +31,10 @@ export function loadBackEnd(app) {
             if(err) return res.status(500).json({error:"DB error"});
 
             if (docs.length === 0) {
-                db.insert(initialData, (err, newDocs) => {
+                // CAMBIO MÍNIMO 1: Hacemos una copia del array para que NeDB no contamine el original
+                const datosLimpios = initialData.map(d => ({...d}));
+
+                db.insert(datosLimpios, (err, newDocs) => {
                     if(err) return res.status(500).json({error:"Insert error"});
 
                     const resultado = (Array.isArray(newDocs) ? newDocs : [newDocs]).map(d => {
@@ -103,7 +106,6 @@ export function loadBackEnd(app) {
         const { country, year } = req.params;
 
         db.find({ country, year: parseInt(year) }, (err, docs) => {
-            // AÑADIDO: Comprobación de error para que docs[0] no falle si hay error de DB
             if (err) return res.status(500).json({ error: "Error en base de datos" });
             if (docs.length === 0) return res.status(404).json({ error: "NOT FOUND: No se encontró recurso" });
 
@@ -146,12 +148,13 @@ export function loadBackEnd(app) {
         newData.total_precipitation_mm = Number(newData.total_precipitation_mm);
 
         db.find({ country: newData.country, year: newData.year }, (err, docs) => {
-            // AÑADIDO: Comprobación de error
             if (err) return res.status(500).json({ error: "Error al buscar recurso" });
             if (docs.length > 0) return res.status(409).json({ error: "CONFLICT: Recurso ya existe" });
 
-            db.insert(newData, (err, doc) => {
-                // AÑADIDO: Comprobación de error para que no haga delete doc._id si falla (Este era tu error en local)
+            // CAMBIO MÍNIMO 2: Hacemos una copia del objeto para que NeDB no lo corrompa
+            const datoLimpio = {...newData};
+
+            db.insert(datoLimpio, (err, doc) => {
                 if (err) return res.status(500).json({ error: "Error interno al insertar" });
                 
                 delete doc._id;
@@ -173,7 +176,6 @@ export function loadBackEnd(app) {
         if (updatedData.country !== country || parseInt(updatedData.year) !== parseInt(year)) return res.status(400).json({ error: "BAD REQUEST: country o year no coincide con URL" });
 
         db.update({ country, year: parseInt(year) }, { $set: updatedData }, {}, (err, numReplaced) => {
-            // AÑADIDO: Comprobación de error
             if (err) return res.status(500).json({ error: "Error al actualizar" });
             if (numReplaced === 0) return res.status(404).json({ error: "NOT FOUND: No existe recurso" });
             res.status(200).json({ message: "OK: Recurso actualizado correctamente" });
@@ -185,7 +187,6 @@ export function loadBackEnd(app) {
         const { country, year } = req.params;
 
         db.remove({ country, year: parseInt(year) }, {}, (err, numRemoved) => {
-            // AÑADIDO: Comprobación de error
             if (err) return res.status(500).json({ error: "Error al borrar" });
             if (numRemoved === 0) return res.status(404).json({ error: "NOT FOUND: No existe recurso" });
             res.status(200).json({ message: "OK: Recurso eliminado correctamente" });
@@ -195,7 +196,6 @@ export function loadBackEnd(app) {
     // DELETE todos los recursos
     app.delete(`${BASE_URL_API}/global-agriculture-climate-impacts`, (req, res) => {
         db.remove({}, { multi: true }, (err, numRemoved) => {
-            // AÑADIDO: Comprobación de error
             if (err) return res.status(500).json({ error: "Error al borrar todo" });
             res.status(200).json({ message: "OK: Todos los datos eliminados" });
         });
