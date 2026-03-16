@@ -1,6 +1,6 @@
-import dataStore from 'nedb';
+import DataStore from 'nedb';
 const BASE_URL_API = "/api/v1";
-let db = new dataStore();
+let db = new DataStore({ filename: './data/dataCLS.db', autoload: true });
 
 export function loadBackEnd(app) {
 
@@ -26,16 +26,25 @@ export function loadBackEnd(app) {
     const campos = ["country","year","crop_type","average_temperature_c","total_precipitation_mm"];
 
     // LoadInitialData
+    // LoadInitialData
     app.get(`${BASE_URL_API}/global-agriculture-climate-impacts/loadInitialData`, (req, res) => {
         db.find({}, (err, docs) => {
             if(err) return res.status(500).json({error:"DB error"});
 
             if (docs.length === 0) {
-                // CAMBIO MÍNIMO 1: Hacemos una copia del array para que NeDB no contamine el original
+                // Clonamos los datos para que NeDB no los contamine
                 const datosLimpios = initialData.map(d => ({...d}));
 
                 db.insert(datosLimpios, (err, newDocs) => {
-                    if(err) return res.status(500).json({error:"Insert error"});
+                    if(err) {
+                        // AQUÍ ESTÁ LA MAGIA: Imprimimos el error exacto
+                        console.error("🔥🔥 ERROR REAL AL INSERTAR:", err);
+                        return res.status(500).json({
+                            error: "Insert error", 
+                            motivo_exacto: err.message, 
+                            tipo_error: err.errorType
+                        });
+                    }
 
                     const resultado = (Array.isArray(newDocs) ? newDocs : [newDocs]).map(d => {
                         delete d._id;
