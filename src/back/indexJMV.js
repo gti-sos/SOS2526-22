@@ -124,6 +124,6 @@ export function loadBackEnd(app) {
     });
 
     app.get(JMV_API_URL + "/docs", (req, res) => {
-    res.redirect("TU_URL_PUBLICA_DE_POSTMAN_AQUI");
+    res.redirect("https://documenter.getpostman.com/view/52411427/2sBXigNZgB");
 });
 }
