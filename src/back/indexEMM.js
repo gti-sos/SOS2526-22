@@ -114,25 +114,7 @@ export function loadBackEnd(app) {
         }
     });
 
-        // GET de un recurso específico (País y Año) 
-        app.get(`${BASE_URL_API}/ozone-depleting-substance-consumptions/:country/:year`, (req, res) => {
-            const { country, year } = req.params;
-
-            db.find({ country: country, year: parseInt(year) }, (err, docs) => {
-                
-                if (docs.length === 0) {
-                    res.status(404).json({ error: "NOT FOUND: No se encontraron recursos" });
-                } else {
-                    const recurso = docs[0];
-                    
-                    delete recurso._id;
-                    
-                    res.status(200).send(recurso);
-                }
-            });
-        });
-
-
+    
     // GET con filtros 
     app.get(`${BASE_URL_API}/ozone-depleting-substance-consumptions/filters`, (req, res) => {
         const { country, year, from, to } = req.query;
@@ -164,6 +146,25 @@ export function loadBackEnd(app) {
             res.status(200).send(jsonData);
         });
     });
+
+        // GET de un recurso específico (País y Año) 
+        app.get(`${BASE_URL_API}/ozone-depleting-substance-consumptions/:country/:year`, (req, res) => {
+            const { country, year } = req.params;
+
+            db.find({ country: country, year: parseInt(year) }, (err, docs) => {
+                
+                if (docs.length === 0) {
+                    res.status(404).json({ error: "NOT FOUND: No se encontraron recursos" });
+                } else {
+                    const recurso = docs[0];
+                    
+                    delete recurso._id;
+                    
+                    res.status(200).json(recurso);
+                }
+            });
+        });
+
 
 
     // GET por campo específico 
