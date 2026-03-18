@@ -6,8 +6,6 @@ import DataStore from 'nedb';
 const BASE_URL_API = "/api/v1";
 let db = new DataStore({ filename: './data/dataCLS.db', autoload: true });
 
-
-
 export function loadBackEnd(app) {
 
     // Documentación
@@ -32,7 +30,6 @@ export function loadBackEnd(app) {
     const campos = ["country","year","crop_type","average_temperature_c","total_precipitation_mm"];
 
     // LoadInitialData
-    // LoadInitialData
     app.get(`${BASE_URL_API}/global-agriculture-climate-impacts/loadInitialData`, (req, res) => {
         db.find({}, (err, docs) => {
             if(err) return res.status(500).json({error:"DB error"});
@@ -43,7 +40,6 @@ export function loadBackEnd(app) {
 
                 db.insert(datosLimpios, (err, newDocs) => {
                     if(err) {
-                        // AQUÍ ESTÁ LA MAGIA: Imprimimos el error exacto
                         console.error("🔥🔥 ERROR REAL AL INSERTAR:", err);
                         return res.status(500).json({
                             error: "Insert error", 
@@ -86,7 +82,9 @@ export function loadBackEnd(app) {
             db.find(query, (err, docs)=>{
                 if(err) return res.status(500).json({error:"Error en la base de datos"});
                 const resultado = docs.map(({_id,...rest})=>rest);
-                res.status(200).json(resultado);
+
+                // ✅ CAMBIO 1: Quitadas las llaves { data: ... }. Ahora devuelve el Array directamente.
+                res.status(200).json(resultado); 
             });
         } else {
             const pageNum = Math.max(1,page);
@@ -130,23 +128,7 @@ export function loadBackEnd(app) {
         });
     });
 
-    // GET filtros por query
-    app.get(`${BASE_URL_API}/global-agriculture-climate-impacts/filters`, (req, res) => {
-        const query = {};
-        for(const key of Object.keys(req.query)) {
-            if(key === "year" || key === "average_temperature_c" || key === "total_precipitation_mm") {
-                query[key] = parseInt(req.query[key]);
-            } else {
-                query[key] = req.query[key]; 
-            }
-        }
-
-        db.find(query, (err, docs) => {
-            if(err) return res.status(500).json({ error: "Error al buscar en DB" });
-            const resultado = docs.map(({_id, ...rest}) => rest);
-            res.status(200).json(resultado);
-        });
-    });
+    // ✅ CAMBIO 2: Se ha eliminado por completo el bloque de /filters que sobraba.
 
     // POST nuevo recurso
     app.post(`${BASE_URL_API}/global-agriculture-climate-impacts`, (req, res) => {
@@ -166,7 +148,6 @@ export function loadBackEnd(app) {
             if (err) return res.status(500).json({ error: "Error al buscar recurso" });
             if (docs.length > 0) return res.status(409).json({ error: "CONFLICT: Recurso ya existe" });
 
-            // CAMBIO MÍNIMO 2: Hacemos una copia del objeto para que NeDB no lo corrompa
             const datoLimpio = {...newData};
 
             db.insert(datoLimpio, (err, doc) => {
