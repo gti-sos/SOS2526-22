@@ -29,11 +29,6 @@ app.use(bodyParser.json());
 
 
 
-// Ruta estática /about
-app.get("/about", (req, res) => {
-  res.sendFile(__dirname + "/public/about.html");
-});
-
 
 
 // Cargar backends
