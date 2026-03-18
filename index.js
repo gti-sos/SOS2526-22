@@ -1,10 +1,10 @@
 // index.js - Principal
 import express from "express";
-import cors from "cors";
+//import cors from "cors";
 import bodyParser from "body-parser";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
-import {handler} from "./src/front/build/handler.js";
+//import {handler} from "./src/front/build/handler.js";
 
 
 // Importar backends individuales
