@@ -17,7 +17,7 @@ const __dirname = dirname(__filename);
 
 const app = express();
 
-app.use(cors());
+//app.use(cors());
 
 const PORT = process.env.PORT || 3000;
 
@@ -38,7 +38,7 @@ loadCLS(app);
 loadEMM(app);
 loadJMV(app);
 
-app.use(handler);
+//app.use(handler);
 
 // Arrancar servidor
 app.listen(PORT, () => {
