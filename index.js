@@ -1,8 +1,10 @@
 // index.js - Principal
 import express from "express";
+import cors from "cors";
 import bodyParser from "body-parser";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
+import {handler} from "./src/front/build/handler.js";
 
 
 // Importar backends individuales
@@ -14,6 +16,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const app = express();
+
+app.use(cors());
+
 const PORT = process.env.PORT || 3000;
 
 app.use(bodyParser.json());
@@ -32,6 +37,8 @@ app.get("/about", (req, res) => {
 loadCLS(app);
 loadEMM(app);
 loadJMV(app);
+
+app.use(handler);
 
 // Arrancar servidor
 app.listen(PORT, () => {
