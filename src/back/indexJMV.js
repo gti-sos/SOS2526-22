@@ -104,6 +104,10 @@ export function loadBackEnd(app) {
         });
     });
 
+    app.put(JMV_API_URL, (req, res) => {
+        res.status(405).send("METHOD NOT ALLOWED: No se permite actualizar la colección completa.");
+    });
+
     app.delete(JMV_API_URL + "/:country/:year", (req, res) => {
         db.remove({ country: req.params.country, year: parseInt(req.params.year) }, {}, (err, numRemoved) => {
             if (err) return res.sendStatus(500);
