@@ -123,7 +123,7 @@
           "raw": "{\r\n    \"country\": \"prueba\",\r\n    \"code\": \"jpn\",\r\n    \"year\": 2013,\r\n    \"methyl_chloroform\": 0,\r\n    \"methyl_bromide\": 7,\r\n    \"hcfc\": 20569,\r\n    \"carbon_tetrachloride\": 145,\r\n    \"halon\": 0,\r\n    \"cfc\": -1813\r\n}"
         },
         "url": {
-          "raw": "{{base_url}}/api/v1/ozone-depleting-substance-consumptions?cfc=1806",
+          "raw": "  ",
           "host": [
             "{{base_url}}"
           ],

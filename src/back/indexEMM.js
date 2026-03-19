@@ -16,7 +16,7 @@ const db = new dataStore({
 export function loadBackEnd(app) {
 
 
-    app.get("/api/v1/ozone-depleting-substance-consumptions/docs", (req, res) => {
+    app.get(BASE_URL_API + "/ozone-depleting-substance-consumptions/docs", (req, res) => {
         res.redirect("https://documenter.getpostman.com/view/52404851/2sBXiertqM"); 
     });
 
@@ -42,28 +42,19 @@ export function loadBackEnd(app) {
     ];
 
     // Carga de datos iniciales
-    app.get(BASE_URL_API + "/ozone-depleting-substance-consumptions/loadInitialData", (req, res) => {
+app.get(BASE_URL_API + "/ozone-depleting-substance-consumptions/loadInitialData", (req, res) => {
         db.find({}, (err, docs) => {
-            // Si la base de datos está vacía, insertamos los datos iniciales
             if (docs.length === 0) {
                 db.insert(initialDataElena, (err, newDocs) => {
-                    let jsonData = JSON.stringify(newDocs.map((c) => {
-                        delete c._id; 
-                        return c;
-                    }), null, 2);
-                    res.status(200).send(jsonData);
+                    if (err) return res.status(500).json({ error: err.message });
+                    const result = newDocs.map(({ _id, ...rest }) => rest);
+                    res.status(200).json(result);
                 });
             } else {
-                // Si ya hay datos, devolvemos los existentes
-                let jsonData = JSON.stringify(docs.map((c) => {
-                    delete c._id;
-                    return c;
-                }), null, 2);
-
-                res.status(200).send(jsonData);
+                const result = docs.map(({ _id, ...rest }) => rest);
+                res.status(200).json(result);
             }
         });
-
     });
 
 
