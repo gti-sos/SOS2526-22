@@ -1,7 +1,9 @@
+
+
 {
   "name": "sos2526-22",
   "version": "0.0.0",
-  "description": "- **Team**\r   - Celia Leal Salvago (https://github.com/Celia-Leal)\r   - Elena Martínez Moreno (https://github.com/elemarmor)\r   - Julio Morales Vela (https://github.com/Juliomv02)\r - **Project description**: Our sources of information are aimed at analyzing the relationship that exists between the consumption of substances that deplete the ozone layer, the impact of climate change on agriculture and CO2 emissions in the agri-food sector.\r - **Repository**: [gti-sos/SOS2526-22](https://github.com/gti-sos/SOS2526-22)",
+  "description": "- **Team**\n   - Celia Leal Salvago (https://github.com/Celia-Leal)\n   - Elena Martínez Moreno (https://github.com/elemarmor)\n   - Julio Morales Vela (https://github.com/Juliomv02)\n - **Project description**: Our sources of information are aimed at analyzing the relationship that exists between the consumption of substances that deplete the ozone layer, the impact of climate change on agriculture and CO2 emissions in the agri-food sector.\n - **Repository**: [gti-sos/SOS2526-22](https://github.com/gti-sos/SOS2526-22)",
   "homepage": "https://github.com/gti-sos/SOS2526-22#readme",
   "bugs": {
     "url": "https://github.com/gti-sos/SOS2526-22/issues"
@@ -16,17 +18,16 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-
-    "build": "cd src/front && npm install &&npm run build",
+    "build": "cd src/front && npm install && npm run build",
     "dev-front": "cd src/front && npm run dev -- --open",
-    "test": "npm run test-JMV-local && npm run test-CLS-local && npm run test-EMM-local",
+    "test": "npm run build && npm run test-JMV-local && npm run test-CLS-local && npm run test-EMM-local",
     "NVM-CLS-local": "newman run test/api/CLS-collection.json -e test/api/CLS-local.json",
-    "test-CLS-local": "start-server-and-test start http://localhost:3000 NVM-CLS-local ",
+    "test-CLS-local": "start-server-and-test start http://localhost:3000 NVM-CLS-local",
     "test-global-agriculture-climate-impacts": "npm run test-CLS-local & npx kill-port 3000",
     "test-CLS-render": "newman run test/api/CLS-collection.json -e test/api/CLS-render.json --bail",
     "NVM-EMM-local": "newman run test/api/EMM-collection.json -e test/api/EMM-local.json",
-    "test-EMM-local": "start-server-and-test start http://localhost:3000 NVM-EMM-local ",
-    "test-ozone-depleting-substance-consumptions": "npm run test-EMM-local ",
+    "test-EMM-local": "start-server-and-test start http://localhost:3000 NVM-EMM-local",
+    "test-ozone-depleting-substance-consumptions": "npm run test-EMM-local",
     "test-EMM-render": "newman run test/api/EMM-collection.json -e test/api/EMM-render.json --bail",
     "NVM-JMV-local": "newman run test/api/JMV-collection.json -e test/api/JMV-local.json --bail",
     "test-JMV-local": "start-server-and-test start http://localhost:3000 NVM-JMV-local",
@@ -34,17 +35,13 @@
     "test-jmv": "npm run test-JMV-local & npx kill-port 3000"
   },
   "dependencies": {
-    "body-parser": "^2.2.2",
-    "cool-ascii-faces": "^1.3.4",
     "cors": "^2.8.6",
     "express": "^5.2.1",
     "nedb": "^1.8.0",
     "newman": "^6.2.2",
-    "npx": "^10.2.2",
-    "px": "^0.1.2"
+    "start-server-and-test": "^2.1.5"
   },
   "devDependencies": {
-    "@sveltejs/adapter-node": "^5.5.4",
-    "start-server-and-test": "^2.1.5"
+    "@sveltejs/adapter-node": "^5.5.4"
   }
 }
