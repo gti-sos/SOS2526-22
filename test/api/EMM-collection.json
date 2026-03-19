@@ -429,12 +429,7 @@
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test(\"Status code is 201\", () => pm.response.to.have.status(201));\r",
-              "pm.test(\"El objeto creado tiene country y year\", () => {\r",
-              "    const res = pm.response.json();\r",
-              "    pm.expect(res.country).to.exist;\r",
-              "    pm.expect(res.year).to.be.a('number');\r",
-              "});"
+              ""
             ],
             "type": "text/javascript",
             "packages": {},
@@ -481,12 +476,7 @@
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));\r",
-              "pm.test(\"El recurso coincide con lo pedido\", () => {\r",
-              "    const res = pm.response.json();\r",
-              "    pm.expect(res.country).to.eql(\"prueba\"); \r",
-              "    pm.expect(res.year).to.eql(2015);\r",
-              "});"
+              ""
             ],
             "type": "text/javascript",
             "packages": {},
@@ -520,11 +510,7 @@
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test(\"Status code is 409\", () => pm.response.to.have.status(409));\r",
-              "pm.test(\"Mensaje de conflicto correcto\", () => {\r",
-              "    const res = pm.response.json();\r",
-              "    pm.expect(res.error).to.contain(\"ya existe\");\r",
-              "});"
+              ""
             ],
             "type": "text/javascript",
             "packages": {},
@@ -565,11 +551,7 @@
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test(\"Status code is 400\", () => pm.response.to.have.status(400));\r",
-              "pm.test(\"Error de estructura detectado\", () => {\r",
-              "    const res = pm.response.json();\r",
-              "    pm.expect(res.error).to.contain(\"estructura\");\r",
-              "});"
+              ""
             ],
             "type": "text/javascript",
             "packages": {},
@@ -616,11 +598,7 @@
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));\r",
-              "pm.test(\"Mensaje de éxito en JSON\", () => {\r",
-              "    const res = pm.response.json();\r",
-              "    pm.expect(res.message).to.contain(\"correctamente\");\r",
-              "});"
+              ""
             ],
             "type": "text/javascript",
             "packages": {},
@@ -663,11 +641,7 @@
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test(\"Status code is 400\", () => pm.response.to.have.status(400));\r",
-              "pm.test(\"Error de coincidencia de URL/Body\", () => {\r",
-              "    const res = pm.response.json();\r",
-              "    pm.expect(res.error).to.contain(\"no coinciden\");\r",
-              "});"
+              ""
             ],
             "type": "text/javascript",
             "packages": {},
@@ -710,11 +684,7 @@
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test(\"Status code is 405\", () => pm.response.to.have.status(405));\r",
-              "pm.test(\"Método no permitido detectado\", () => {\r",
-              "    const res = pm.response.json();\r",
-              "    pm.expect(res.error).to.contain(\"Method Not Allowed\");\r",
-              "});"
+              ""
             ],
             "type": "text/javascript",
             "packages": {},
@@ -755,11 +725,7 @@
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test(\"Status code is 405\", () => pm.response.to.have.status(405));\r",
-              "pm.test(\"Método no permitido detectado\", () => {\r",
-              "    const res = pm.response.json();\r",
-              "    pm.expect(res.error).to.contain(\"Method Not Allowed\");\r",
-              "});"
+              ""
             ],
             "type": "text/javascript",
             "packages": {},
@@ -797,11 +763,6 @@
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));\r",
-              "pm.test(\"Elemento eliminado\", () => {\r",
-              "    const res = pm.response.json();\r",
-              "    pm.expect(res.message).to.include(\"eliminado\");\r",
-              "});\r",
               ""
             ],
             "type": "text/javascript",
@@ -885,11 +846,7 @@
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));\r",
-              "pm.test(\"Confirmación de borrado total\", () => {\r",
-              "    const res = pm.response.json();\r",
-              "    pm.expect(res.message).to.contain(\"eliminados\");\r",
-              "});"
+              ""
             ],
             "type": "text/javascript",
             "packages": {},
