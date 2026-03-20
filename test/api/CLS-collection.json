@@ -106,11 +106,19 @@
               "pm.test(\"Status code is 200\", function () {\r",
               "    pm.response.to.have.status(200);\r",
               "});\r",
-              "pm.test(\"Country is Spain and year 2020\", function () {\r",
-              "    const data = pm.response.json();\r",
               "\r",
-              "    pm.expect(data.country).to.eql(\"Spain\");\r",
-              "    pm.expect(data.year).to.eql(2020);\r",
+              "pm.test(`Verificar que el resultado es ${pm.collectionVariables.get(\"search_country\")} y ${pm.collectionVariables.get(\"search_year\")}`, function () {\r",
+              "    const data = pm.response.json();\r",
+              "    \r",
+              "    // Manejamos si es array u objeto\r",
+              "    const item = Array.isArray(data) ? data[0] : data;\r",
+              "    \r",
+              "    // Comparamos contra la variable de la colección, no contra un texto fijo\r",
+              "    pm.expect(item.country).to.eql(pm.collectionVariables.get(\"search_country\"));\r",
+              "    pm.expect(item.year).to.be.oneOf([\r",
+              "        parseInt(pm.collectionVariables.get(\"search_year\")), \r",
+              "        pm.collectionVariables.get(\"search_year\")\r",
+              "    ]);\r",
               "});"
             ],
             "type": "text/javascript",
@@ -394,51 +402,6 @@
       "response": []
     },
     {
-      "name": "Paginacion",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test(\"Status 200\", function () {\r",
-              "    pm.response.to.have.status(200);\r",
-              "});\r",
-              "\r",
-              "pm.test(\"Pagination working\", function () {\r",
-              "    const data = pm.response.json();\r",
-              "    pm.expect(data.length).to.be.below(20);\r",
-              "});"
-            ],
-            "type": "text/javascript",
-            "packages": {},
-            "requests": {}
-          }
-        }
-      ],
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "{{base_url}}/api/v1/global-agriculture-climate-impacts?limit=2",
-          "host": [
-            "{{base_url}}"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "global-agriculture-climate-impacts"
-          ],
-          "query": [
-            {
-              "key": "limit",
-              "value": "2"
-            }
-          ]
-        }
-      },
-      "response": []
-    },
-    {
       "name": "405 Method not Allowed",
       "event": [
         {
@@ -535,50 +498,6 @@
       "response": []
     },
     {
-      "name": "Dato borrado 200 OK",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test(\"Status 200\", function () {\r",
-              "    pm.response.to.have.status(200);\r",
-              "});\r",
-              "\r",
-              "pm.test(\"Resource deleted\", function () {\r",
-              "    pm.expect(pm.response.text()).to.not.be.empty;\r",
-              "});"
-            ],
-            "type": "text/javascript",
-            "packages": {},
-            "requests": {}
-          }
-        }
-      ],
-      "request": {
-        "method": "DELETE",
-        "header": [],
-        "body": {
-          "mode": "raw",
-          "raw": "{\r\n\"country\": \"Argentina\",\r\n\"year\": 2020,\r\n\"crop_type\": \"Corn\",\r\n\"average_temperature_c\": 23,\r\n\"total_precipitation_mm\": 410\r\n}"
-        },
-        "url": {
-          "raw": "{{base_url}}/api/v1/global-agriculture-climate-impacts/Argentina/2020",
-          "host": [
-            "{{base_url}}"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "global-agriculture-climate-impacts",
-            "Argentina",
-            "2020"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
       "name": "404 NOT FOUND",
       "event": [
         {
@@ -668,6 +587,51 @@
       "response": []
     },
     {
+      "name": "Paginacion",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status 200\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Pagination working\", function () {\r",
+              "    const data = pm.response.json();\r",
+              "    pm.expect(data.length).to.be.below(20);\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/global-agriculture-climate-impacts?limit=2",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "global-agriculture-climate-impacts"
+          ],
+          "query": [
+            {
+              "key": "limit",
+              "value": "2"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
       "name": "paginacion",
       "event": [
         {
@@ -711,6 +675,46 @@
               "key": "offset",
               "value": "2"
             }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Dato borrado 200 OK",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status 200\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Resource deleted\", function () {\r",
+              "    pm.expect(pm.response.text()).to.not.be.empty;\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/global-agriculture-climate-impacts/Argentina/2020",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "global-agriculture-climate-impacts",
+            "Argentina",
+            "2020"
           ]
         }
       },

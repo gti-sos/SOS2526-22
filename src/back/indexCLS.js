@@ -1,4 +1,4 @@
-import dataStore from 'nedb';
+import dataStore from '@seald-io/nedb';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -94,15 +94,14 @@ export function loadBackEnd(app) {
 
     function getOneHandler(db, req, res) {
         const { country, year } = req.params;
-        db.find({ country: country, year: parseInt(year) }, (err, docs) => {
+        db.findOne({ country: country, year: parseInt(year) }, (err, doc) => {
             if (err) return res.status(500).json({ error: "Error en BD" });
-            if (docs.length === 0) {
-                res.status(404).json({ error: "NOT FOUND: Recurso no encontrado" });
-            } else {
-                const recurso = docs[0];
-                delete recurso._id;
-                res.status(200).json(recurso);
+            if (!doc) {
+                // Si no existe, devolvemos 404 explícito
+                return res.status(404).json({ error: "NOT FOUND: Recurso no encontrado" });
             }
+            const { _id, ...rest } = doc;
+            res.status(200).json(rest);
         });
     }
 
