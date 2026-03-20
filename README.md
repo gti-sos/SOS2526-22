@@ -12,4 +12,5 @@
     - http://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts/docs (developed by Nombre Celia Leal Salvago)
     - http://sos2526-22.onrender.com/api/v1/co2-emission-gap-among-countries-clustering-pca/docs (developed by Nombre Julio Morales Vela)
     - http://sos2526-22.onrender.com/api/v2/co2-emission-gap-among-countries-clustering-pca/docs (developed by Nombre Julio Morales Vela) - **V2**
+    - http://sos2526-22.onrender.com/api/v2/global-agriculture-climate-impacts/docs (developed by Nombre Celia Leal Salvago) - **V2**
 
