@@ -12,7 +12,6 @@ import { dirname } from "path";
 import { loadBackEnd as loadCLS } from "./src/back/indexCLS.js";
 import { loadBackEnd as loadEMM } from "./src/back/indexEMM.js";
 import { loadBackEnd as loadJMV } from "./src/back/indexJMV.js";
-import { loadBackEnd as loadBackEndJMV_v2 } from './src/back/indexJMV_v2.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -29,7 +28,6 @@ app.use(express.json());
 loadCLS(app);
 loadEMM(app);
 loadJMV(app);
-loadBackEndJMV_v2(app);
 
 
 app.use(handler);
