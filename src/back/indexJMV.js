@@ -117,6 +117,7 @@ export function loadBackEnd(app) {
     app.put(v1Base + "/:country/:year", (req, res) => res.status(405).send("Method Not Allowed: v1 es solo lectura"));
     app.delete(v1Base + "/:country/:year", (req, res) => res.status(405).send("Method Not Allowed: v1 es solo lectura"));
     app.delete(v1Base, (req, res) => res.status(405).send("Method Not Allowed: v1 es solo lectura"));
+    app.post(v1Base + "/:country/:year", (req, res) => res.status(405).send("Method Not Allowed: v1 es solo lectura"));
 
     // ------------- RUTAS PARA V2 (lectura/escritura) -------------
     const v2Base = BASE_URL_API_V2 + "/co2-emission-gap-among-countries-clustering-pca";
