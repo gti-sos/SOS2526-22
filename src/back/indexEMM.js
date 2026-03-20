@@ -1,5 +1,5 @@
 ///// INDIVIDUAL ELENA 
-import dataStore from 'nedb';
+import dataStore from '@seald-io/nedb'
 import path from 'path';
 import { fileURLToPath } from 'url';
 
