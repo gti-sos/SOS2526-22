@@ -27,7 +27,6 @@ export function loadBackEnd(app) {
         res.redirect("https://documenter.getpostman.com/view/52411427/2sBXigNZgB"); 
     });
     app.get(BASE_URL_API_V2 + "/co2-emission-gap-among-countries-clustering-pca/docs", (req, res) => {
-        // PON AQUÍ TU NUEVO ENLACE DE POSTMAN V2 CUANDO LO TENGAS
         res.redirect("https://documenter.getpostman.com/view/52411427/2sBXijHWuU"); 
     });
 
