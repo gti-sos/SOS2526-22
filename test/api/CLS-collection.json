@@ -107,18 +107,24 @@
               "    pm.response.to.have.status(200);\r",
               "});\r",
               "\r",
-              "pm.test(`Verificar que el resultado es ${pm.collectionVariables.get(\"search_country\")} y ${pm.collectionVariables.get(\"search_year\")}`, function () {\r",
+              "pm.test(\"Verificar que el resultado coincide con la URL\", function () {\r",
               "    const data = pm.response.json();\r",
-              "    \r",
-              "    // Manejamos si es array u objeto\r",
               "    const item = Array.isArray(data) ? data[0] : data;\r",
+              "\r",
+              "    // Obtenemos todas las partes de la ruta de la URL\r",
+              "    const pathSegments = pm.request.url.path;\r",
               "    \r",
-              "    // Comparamos contra la variable de la colección, no contra un texto fijo\r",
-              "    pm.expect(item.country).to.eql(pm.collectionVariables.get(\"search_country\"));\r",
-              "    pm.expect(item.year).to.be.oneOf([\r",
-              "        parseInt(pm.collectionVariables.get(\"search_year\")), \r",
-              "        pm.collectionVariables.get(\"search_year\")\r",
-              "    ]);\r",
+              "    // El año es el ÚLTIMO segmento (/2020)\r",
+              "    const yearInUrl = pathSegments[pathSegments.length - 1];\r",
+              "    \r",
+              "    // El país es el PENÚLTIMO segmento (/Spain)\r",
+              "    const countryInUrl = pathSegments[pathSegments.length - 2];\r",
+              "\r",
+              "    // Verificamos país\r",
+              "    pm.expect(item.country).to.eql(countryInUrl);\r",
+              "    \r",
+              "    // Verificamos año (convertimos ambos a String por si acaso)\r",
+              "    pm.expect(item.year.toString()).to.eql(yearInUrl.toString());\r",
               "});"
             ],
             "type": "text/javascript",
@@ -498,6 +504,46 @@
       "response": []
     },
     {
+      "name": "Dato borrado 200 OK",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status 200\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Resource deleted\", function () {\r",
+              "    pm.expect(pm.response.text()).to.not.be.empty;\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/global-agriculture-climate-impacts/Argentina/2020",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "global-agriculture-climate-impacts",
+            "Argentina",
+            "2020"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
       "name": "404 NOT FOUND",
       "event": [
         {
@@ -675,46 +721,6 @@
               "key": "offset",
               "value": "2"
             }
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Dato borrado 200 OK",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test(\"Status 200\", function () {\r",
-              "    pm.response.to.have.status(200);\r",
-              "});\r",
-              "\r",
-              "pm.test(\"Resource deleted\", function () {\r",
-              "    pm.expect(pm.response.text()).to.not.be.empty;\r",
-              "});"
-            ],
-            "type": "text/javascript",
-            "packages": {},
-            "requests": {}
-          }
-        }
-      ],
-      "request": {
-        "method": "DELETE",
-        "header": [],
-        "url": {
-          "raw": "{{base_url}}/api/v1/global-agriculture-climate-impacts/Argentina/2020",
-          "host": [
-            "{{base_url}}"
-          ],
-          "path": [
-            "api",
-            "v1",
-            "global-agriculture-climate-impacts",
-            "Argentina",
-            "2020"
           ]
         }
       },
