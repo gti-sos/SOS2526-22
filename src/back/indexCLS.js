@@ -28,7 +28,7 @@ export function loadBackEnd(app) {
     });
     app.get(BASE_URL_API_V2 + "/global-agriculture-climate-impacts/docs", (req, res) => {
         // Cuando crees la colección V2 en Postman, cambia esta URL por la nueva
-        res.redirect("https://documenter.getpostman.com/view/52404852/2sBXiesEcp"); 
+        res.redirect("https://documenter.getpostman.com/view/52404852/2sBXijHrA5"); 
     });
 
     // ------------- DATOS INICIALES -------------
