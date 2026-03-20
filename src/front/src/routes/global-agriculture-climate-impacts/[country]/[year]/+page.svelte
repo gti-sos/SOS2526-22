@@ -5,39 +5,40 @@
     const country = $page.params.country;
     const year = $page.params.year;
     
-    // Conectamos con la API v2
+    // API V2
     const API_URL = `/api/v2/global-agriculture-climate-impacts/${country}/${year}`;
 
-    let dato = { country: country, year: year, crop_type: '', average_temperature_c: '', total_precipitation_mm: '' };
-    let mensaje = '';
-    let esError = false;
+    let dato = $state({ country: country, year: year, crop_type: '', average_temperature_c: '', total_precipitation_mm: '' });
+    
+    let mensaje = $state('');
+    let esError = $state(false);
 
-    function mostrarMensaje(texto, error = false) {
-        mensaje = texto; esError = error;
-    }
+    function mostrarMensaje(texto, error = false) { mensaje = texto; esError = error; }
 
     async function getDatoInfo() {
         try {
             const res = await fetch(API_URL);
-            if (res.ok) dato = await res.json();
-            else if (res.status === 404) mostrarMensaje(`No existe el registro de ${country}.`, true);
-        } catch (e) { mostrarMensaje("Fallo de conexión con el servidor.", true); }
+            if (res.ok) {
+                dato = { ...dato, ...(await res.json()) };
+            } else {
+                mostrarMensaje(res.status === 404 ? `No existe el registro de ${country}.` : "Error de servidor.", true);
+            }
+        } catch (error) { mostrarMensaje("Fallo de conexión.", true); }
     }
 
-    async function guardarCambios() {
+    async function guardarCambios(event) {
+        event.preventDefault();
+        const payload = {
+            country: dato.country, year: parseInt(dato.year), crop_type: dato.crop_type,
+            average_temperature_c: parseFloat(dato.average_temperature_c), total_precipitation_mm: parseFloat(dato.total_precipitation_mm)
+        };
         try {
-            dato.year = parseInt(dato.year);
-            dato.average_temperature_c = parseFloat(dato.average_temperature_c);
-            dato.total_precipitation_mm = parseFloat(dato.total_precipitation_mm);
-
             const res = await fetch(API_URL, {
-                method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dato)
+                method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
             });
-
-            if (res.ok) mostrarMensaje(`¡Actualizado correctamente!`);
-            else if (res.status === 400) mostrarMensaje("Error: Revisa los campos numéricos.", true);
-            else mostrarMensaje("Ha ocurrido un error.", true);
-        } catch (e) { mostrarMensaje("Fallo de conexión.", true); }
+            if (res.ok) mostrarMensaje(`Datos modificados correctamente.`);
+            else mostrarMensaje("Error: Faltan datos o formato incorrecto.", true);
+        } catch (error) { mostrarMensaje("Fallo al guardar.", true); }
     }
 
     onMount(getDatoInfo);
@@ -45,42 +46,37 @@
 
 <main class="container">
     <div class="card">
-        <h1>✏️ Modificar: {country} ({year})</h1>
+        <h1>✏️ Modificar Registro (v2)</h1>
 
         {#if mensaje} <div class="msg {esError ? 'error' : 'success'}">{mensaje}</div> {/if}
 
-        <div class="form">
-            <label>País (No modificable): <input type="text" value={dato.country} disabled></label>
-            <label>Año (No modificable): <input type="number" value={dato.year} disabled></label>
-            
-            <label>Tipo de Cultivo: <input type="text" bind:value={dato.crop_type}></label>
-            <label>Temperatura Media (ºC): <input type="number" step="any" bind:value={dato.average_temperature_c}></label>
-            <label>Precipitaciones Totales (mm): <input type="number" step="any" bind:value={dato.total_precipitation_mm}></label>
+        <form onsubmit={guardarCambios} class="form-grid">
+            <div class="field"><label>País:</label><input type="text" value={dato.country} disabled class="bloqueado"></div>
+            <div class="field"><label>Año:</label><input type="number" value={dato.year} disabled class="bloqueado"></div>
+            <div class="field"><label>Cultivo:</label><input type="text" bind:value={dato.crop_type} required></div>
+            <div class="field"><label>Temperatura (ºC):</label><input type="number" step="any" bind:value={dato.average_temperature_c} required></div>
+            <div class="field"><label>Precipitaciones (mm):</label><input type="number" step="any" bind:value={dato.total_precipitation_mm} required></div>
 
-            <div class="buttons">
-                <button class="btn success" on:click={guardarCambios}>Guardar Cambios</button>
-                <a class="btn secondary" href="/global-agriculture-climate-impacts">Volver Atrás</a>
+            <div class="botones">
+                <button type="submit" class="btn-guardar">Guardar</button>
+                <a class="btn-volver" href="/global-agriculture-climate-impacts">Volver</a>
             </div>
-        </div>
+        </form>
     </div>
 </main>
 
 <style>
-    .container { max-width: 600px; margin: 40px auto; font-family: 'Segoe UI', sans-serif; }
-    .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-    h1 { color: #2c7da0; text-align: center; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-bottom: 25px; }
-    
+    .container { max-width: 500px; margin: 40px auto; font-family: sans-serif; padding: 20px;}
+    .card { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    h1 { color: #2c7da0; text-align: center; border-bottom: 2px solid #eee; padding-bottom: 15px; }
     .msg { padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; font-weight: bold; }
-    .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-    .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-
-    .form { display: flex; flex-direction: column; gap: 15px; }
-    label { font-weight: bold; color: #444; display: flex; flex-direction: column; gap: 5px; }
-    input { padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 1em; }
-    input:disabled { background: #f5f5f5; color: #888; cursor: not-allowed; }
-
-    .buttons { display: flex; gap: 15px; margin-top: 20px; }
-    .btn { padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; text-align: center; flex: 1; text-decoration: none; color: white; font-size: 1.1em; }
-    .success { background: #27ae60; } .success:hover { background: #219653; }
-    .secondary { background: #95a5a6; } .secondary:hover { background: #7f8c8d; }
+    .success { background: #d4edda; color: #155724; } .error { background: #f8d7da; color: #721c24; }
+    .form-grid { display: flex; flex-direction: column; gap: 15px; }
+    .field { display: flex; flex-direction: column; gap: 5px; }
+    label { font-weight: bold; font-size: 0.9em; }
+    input { padding: 10px; border: 1px solid #ccc; border-radius: 6px; }
+    .bloqueado { background: #f5f5f5; cursor: not-allowed; }
+    .botones { display: flex; gap: 10px; margin-top: 15px; }
+    button, .btn-volver { padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; text-align: center; flex: 1; color: white; text-decoration: none; }
+    .btn-guardar { background: #27ae60; } .btn-volver { background: #6c757d; }
 </style>
