@@ -9,14 +9,14 @@ const BASE_URL_API = "/api/v1";
 const BASE_URL_API_V2 = "/api/v2";
 
 // Base de datos para v1 (Para que pasen tus tests de Postman)
-// Sustituye tus definiciones de dbV1 y dbV2 por esto:
 const dbV1 = new dataStore({ 
-    filename: './data/dataCLS-v1.db', 
+    filename: path.join(__dirname, '../../data/dataCLS-v1.db'), 
     autoload: true 
 });
 
+// Base de datos para v2
 const dbV2 = new dataStore({ 
-    filename: './data/dataCLS-v2.db', 
+    filename: path.join(__dirname, '../../data/dataCLS-v2.db'), 
     autoload: true 
 });
 
