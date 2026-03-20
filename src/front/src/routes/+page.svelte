@@ -17,8 +17,8 @@
                 <p class="data-source">Fuente: <code>global-agriculture-climate-impacts</code></p>
                 <div class="links">
                     <a href="/global-agriculture-climate-impacts" class="link-btn">🖥️ Front-end Svelte</a>
-                    <a href="/api/v1/global-agriculture-climate-impacts" target="_blank" class="link-btn outline">🔗 URL Base API</a>
-                    <a href="/api/v1/global-agriculture-climate-impacts/docs" target="_blank" class="link-btn outline">📚 Documentación Postman</a>
+                    <a href="/api/v2/global-agriculture-climate-impacts" target="_blank" class="link-btn outline">🔗 URL Base API (v2)</a>
+                    <a href="/api/v2/global-agriculture-climate-impacts/docs" target="_blank" class="link-btn outline">📚 Documentación Postman</a>
                 </div>
             </div>
 

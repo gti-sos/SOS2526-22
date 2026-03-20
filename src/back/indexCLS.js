@@ -1,19 +1,37 @@
-import util from 'util';
-util.isDate = function(d) { return d instanceof Date; };
-util.isRegExp = function(re) { return re instanceof RegExp; };
-util.isArray = Array.isArray; // De paso, esto quita el Warning amarillo de tu consola
-import DataStore from 'nedb';
+import dataStore from 'nedb';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const BASE_URL_API = "/api/v1";
-let db = new DataStore({ filename: './data/dataCLS.db', autoload: true });
+const BASE_URL_API_V2 = "/api/v2";
+
+// Base de datos para v1 (Para que pasen tus tests de Postman)
+const dbV1 = new dataStore({ 
+    filename: path.join(__dirname, '../../data/dataCLS-v1.db'), 
+    autoload: true 
+});
+
+// Base de datos para v2 (Para conectarla a tu frontend Svelte)
+const dbV2 = new dataStore({ 
+    filename: path.join(__dirname, '../../data/dataCLS-v2.db'), 
+    autoload: true 
+});
 
 export function loadBackEnd(app) {
 
-    // Documentación
-    app.get("/api/v1/global-agriculture-climate-impacts/docs", (req, res) => {
+    // ------------- DOCS (ambas versiones) -------------
+    app.get(BASE_URL_API + "/global-agriculture-climate-impacts/docs", (req, res) => {
+        res.redirect("https://documenter.getpostman.com/view/52404852/2sBXiesEcp"); 
+    });
+    app.get(BASE_URL_API_V2 + "/global-agriculture-climate-impacts/docs", (req, res) => {
+        // Cuando crees la colección V2 en Postman, cambia esta URL por la nueva
         res.redirect("https://documenter.getpostman.com/view/52404852/2sBXiesEcp"); 
     });
 
-    // Datos iniciales
+    // ------------- DATOS INICIALES -------------
     const initialData = [
         { country: "Spain", year: 2020, crop_type: "Wheat", average_temperature_c: 20, total_precipitation_mm: 500 },
         { country: "France", year: 2020, crop_type: "Corn", average_temperature_c: 19, total_precipitation_mm: 450 },
@@ -27,187 +45,167 @@ export function loadBackEnd(app) {
         { country: "Poland", year: 2020, crop_type: "Soy", average_temperature_c: 16, total_precipitation_mm: 320 }
     ];
 
-    const campos = ["country","year","crop_type","average_temperature_c","total_precipitation_mm"];
+    const campos = ["country", "year", "crop_type", "average_temperature_c", "total_precipitation_mm"];
 
-    // LoadInitialData
-    app.get(`${BASE_URL_API}/global-agriculture-climate-impacts/loadInitialData`, (req, res) => {
+    // ------------- FUNCIONES AUXILIARES -------------
+    
+    function loadInitialDataHandler(db, res) {
         db.find({}, (err, docs) => {
-            if(err) return res.status(500).json({error:"DB error"});
-
+            if (err) return res.status(500).json({ error: "DB error" });
             if (docs.length === 0) {
-                // Clonamos los datos para que NeDB no los contamine
-                const datosLimpios = initialData.map(d => ({...d}));
-
+                const datosLimpios = initialData.map(d => ({ ...d }));
                 db.insert(datosLimpios, (err, newDocs) => {
-                    if(err) {
-                        console.error("🔥🔥 ERROR REAL AL INSERTAR:", err);
-                        return res.status(500).json({
-                            error: "Insert error", 
-                            motivo_exacto: err.message, 
-                            tipo_error: err.errorType
-                        });
-                    }
-
-                    const resultado = (Array.isArray(newDocs) ? newDocs : [newDocs]).map(d => {
-                        delete d._id;
-                        return d;
-                    });
-
-                    res.status(200).json(resultado);
+                    if (err) return res.status(500).json({ error: "Insert error" });
+                    const result = newDocs.map(({ _id, ...rest }) => rest);
+                    res.status(200).json(result);
                 });
             } else {
-                const resultado = docs.map(d => {
-                    delete d._id;
-                    return d;
-                });
-                res.status(200).json(resultado);
+                const result = docs.map(({ _id, ...rest }) => rest);
+                res.status(200).json(result);
             }
         });
-    });
+    }
 
-    // GET lista completa + búsqueda + paginación
-    app.get(`${BASE_URL_API}/global-agriculture-climate-impacts`, (req, res) => {
-        const query = {};
+    function getAllHandler(db, req, res) {
+        let query = {};
+        
+        if (req.query.country) query.country = req.query.country;
+        if (req.query.year) query.year = parseInt(req.query.year);
+        if (req.query.crop_type) query.crop_type = req.query.crop_type;
+        if (req.query.average_temperature_c) query.average_temperature_c = parseFloat(req.query.average_temperature_c);
+        if (req.query.total_precipitation_mm) query.total_precipitation_mm = parseFloat(req.query.total_precipitation_mm);
 
-        if(req.query.country) query.country = req.query.country;
-        if(req.query.year) query.year = parseInt(req.query.year);
-        if(req.query.crop_type) query.crop_type = req.query.crop_type;
-        if(req.query.average_temperature_c) query.average_temperature_c = Number(req.query.average_temperature_c);
-        if(req.query.total_precipitation_mm) query.total_precipitation_mm = Number(req.query.total_precipitation_mm);
-
-        const page = parseInt(req.query.page);
-        const items = parseInt(req.query.items);
-
-        if(isNaN(page) || isNaN(items)){
-            db.find(query, (err, docs)=>{
-                if(err) return res.status(500).json({error:"Error en la base de datos"});
-                const resultado = docs.map(({_id,...rest})=>rest);
-
-                // ✅ CAMBIO 1: Quitadas las llaves { data: ... }. Ahora devuelve el Array directamente.
-                res.status(200).json(resultado); 
-            });
-        } else {
-            const pageNum = Math.max(1,page);
-            const limitNum = Math.max(1,items);
-            const skipNum = (pageNum-1)*limitNum;
-
-            db.count(query,(err,totalCount)=>{
-                if(err) return res.status(500).json({error:"Error en la base de datos"});
-
-                db.find(query)
-                .skip(skipNum)
-                .limit(limitNum)
-                .exec((err,data)=>{
-                    if(err) return res.status(500).json({error:"Error al acceder a los datos"});
-
-                    const resultado = data.map(({_id,...rest})=>rest);
-
-                    res.status(200).json({
-                        data:resultado,
-                        total_items:totalCount,
-                        pagina_actual:pageNum,
-                        items_por_pagina:limitNum,
-                        total_paginas:Math.ceil(totalCount/limitNum)
-                    });
-                });
-            });
+        // Búsqueda por rango (necesaria para el front)
+        if (req.query.from || req.query.to) {
+            query.year = {};
+            if (req.query.from) query.year.$gte = parseInt(req.query.from);
+            if (req.query.to) query.year.$lte = parseInt(req.query.to);
         }
-    });
 
-    // GET recurso específico (country + year)
-    app.get(`${BASE_URL_API}/global-agriculture-climate-impacts/:country/:year`, (req, res) => {
-        const { country, year } = req.params;
+        let offset = parseInt(req.query.offset) || 0;
+        let limit = parseInt(req.query.limit) || 1000;
 
-        db.find({ country, year: parseInt(year) }, (err, docs) => {
-            if (err) return res.status(500).json({ error: "Error en base de datos" });
-            if (docs.length === 0) return res.status(404).json({ error: "NOT FOUND: No se encontró recurso" });
-
-            const recurso = docs[0];
-            delete recurso._id;
-            res.status(200).json(recurso);
+        db.find(query).skip(offset).limit(limit).exec((err, docs) => {
+            if (err) return res.status(500).json({ error: "Error en BD" });
+            const result = docs.map(({ _id, ...rest }) => rest);
+            res.status(200).json(result); 
         });
-    });
+    }
 
-    // ✅ CAMBIO 2: Se ha eliminado por completo el bloque de /filters que sobraba.
+    function getOneHandler(db, req, res) {
+        const { country, year } = req.params;
+        db.find({ country: country, year: parseInt(year) }, (err, docs) => {
+            if (err) return res.status(500).json({ error: "Error en BD" });
+            if (docs.length === 0) {
+                res.status(404).json({ error: "NOT FOUND: Recurso no encontrado" });
+            } else {
+                const recurso = docs[0];
+                delete recurso._id;
+                res.status(200).json(recurso);
+            }
+        });
+    }
 
-    // POST nuevo recurso
-    app.post(`${BASE_URL_API}/global-agriculture-climate-impacts`, (req, res) => {
+    function postHandler(db, req, res) {
         const newData = req.body;
-        const keys = Object.keys(newData);
+        const requestKeys = Object.keys(newData);
+        const hasRequiredKeys = campos.every(key => requestKeys.includes(key));
+        const hasSameLength = requestKeys.length === campos.length;
 
-        const hasAllKeys = campos.every(c => keys.includes(c));
-        const sameLength = keys.length === campos.length;
-
-        if (!hasAllKeys || !sameLength) return res.status(400).json({ error: "BAD REQUEST: JSON incompleto o incorrecto" });
+        if (!hasRequiredKeys || !hasSameLength) {
+            return res.status(400).json({ error: "BAD REQUEST: JSON incompleto o incorrecto" });
+        }
 
         newData.year = parseInt(newData.year);
-        newData.average_temperature_c = Number(newData.average_temperature_c);
-        newData.total_precipitation_mm = Number(newData.total_precipitation_mm);
+        newData.average_temperature_c = parseFloat(newData.average_temperature_c);
+        newData.total_precipitation_mm = parseFloat(newData.total_precipitation_mm);
 
         db.find({ country: newData.country, year: newData.year }, (err, docs) => {
-            if (err) return res.status(500).json({ error: "Error al buscar recurso" });
-            if (docs.length > 0) return res.status(409).json({ error: "CONFLICT: Recurso ya existe" });
-
-            const datoLimpio = {...newData};
-
-            db.insert(datoLimpio, (err, doc) => {
-                if (err) return res.status(500).json({ error: "Error interno al insertar" });
-                
-                delete doc._id;
-                res.status(201).json(doc);
-            });
+            if (docs.length > 0) {
+                return res.status(409).json({ error: "CONFLICT: El recurso ya existe" });
+            } else {
+                db.insert(newData, (err, doc) => {
+                    if (err) return res.status(500).json({ error: "Error al guardar" });
+                    delete doc._id;
+                    res.status(201).json(doc);
+                });
+            }
         });
-    });
+    }
 
-    // PUT recurso específico
-    app.put(`${BASE_URL_API}/global-agriculture-climate-impacts/:country/:year`, (req, res) => {
+    function putHandler(db, req, res) {
         const { country, year } = req.params;
         const updatedData = req.body;
-        const keys = Object.keys(updatedData);
+        const requestKeys = Object.keys(updatedData);
 
-        const hasAllKeys = campos.every(c => keys.includes(c));
-        const sameLength = keys.length === campos.length;
+        const hasRequiredKeys = campos.every(key => requestKeys.includes(key));
+        const hasSameLength = requestKeys.length === campos.length;
 
-        if (!hasAllKeys || !sameLength) return res.status(400).json({ error: "BAD REQUEST: JSON incompleto o incorrecto" });
-        if (updatedData.country !== country || parseInt(updatedData.year) !== parseInt(year)) return res.status(400).json({ error: "BAD REQUEST: country o year no coincide con URL" });
+        if (!hasRequiredKeys || !hasSameLength) {
+            return res.status(400).json({ error: "BAD REQUEST: Estructura JSON incorrecta" });
+        }
 
-        db.update({ country, year: parseInt(year) }, { $set: updatedData }, {}, (err, numReplaced) => {
-            if (err) return res.status(500).json({ error: "Error al actualizar" });
-            if (numReplaced === 0) return res.status(404).json({ error: "NOT FOUND: No existe recurso" });
-            res.status(200).json({ message: "OK: Recurso actualizado correctamente" });
+        if (updatedData.country !== country || parseInt(updatedData.year) !== parseInt(year)) {
+            return res.status(400).json({ error: "BAD REQUEST: El ID no coincide con el cuerpo" });
+        }
+
+        updatedData.year = parseInt(updatedData.year);
+        updatedData.average_temperature_c = parseFloat(updatedData.average_temperature_c);
+        updatedData.total_precipitation_mm = parseFloat(updatedData.total_precipitation_mm);
+
+        db.update({ country: country, year: parseInt(year) }, { $set: updatedData }, {}, (err, numReplaced) => {
+            if (numReplaced === 0) {
+                res.status(404).json({ error: "NOT FOUND: No existe el recurso" });
+            } else {
+                res.status(200).json({ message: "OK: Recurso actualizado correctamente" });
+            }
         });
-    });
+    }
 
-    // DELETE recurso específico
-    app.delete(`${BASE_URL_API}/global-agriculture-climate-impacts/:country/:year`, (req, res) => {
+    function deleteOneHandler(db, req, res) {
         const { country, year } = req.params;
-
-        db.remove({ country, year: parseInt(year) }, {}, (err, numRemoved) => {
-            if (err) return res.status(500).json({ error: "Error al borrar" });
-            if (numRemoved === 0) return res.status(404).json({ error: "NOT FOUND: No existe recurso" });
-            res.status(200).json({ message: "OK: Recurso eliminado correctamente" });
+        db.remove({ country: country, year: parseInt(year) }, {}, (err, numRemoved) => {
+            if (numRemoved === 0) {
+                res.status(404).json({ error: "NOT FOUND: No se encontró el recurso" });
+            } else {
+                res.status(200).json({ message: "OK: Recurso eliminado" });
+            }
         });
-    });
+    }
 
-    // DELETE todos los recursos
-    app.delete(`${BASE_URL_API}/global-agriculture-climate-impacts`, (req, res) => {
+    function deleteAllHandler(db, req, res) {
         db.remove({}, { multi: true }, (err, numRemoved) => {
-            if (err) return res.status(500).json({ error: "Error al borrar todo" });
-            res.status(200).json({ message: "OK: Todos los datos eliminados" });
+            res.status(200).json({ message: "OK: Todos los recursos eliminados" });
         });
-    });
+    }
 
-    // Métodos no permitidos para lista
-    app.all(`${BASE_URL_API}/global-agriculture-climate-impacts`, (req, res, next) => {
-        const allowed = ["GET","POST","DELETE"];
-        if (!allowed.includes(req.method)) return res.status(405).json({ error: "Method Not Allowed" });
-        next();
-    });
+    function methodNotAllowed(req, res) {
+        res.status(405).json({ error: "Method Not Allowed" });
+    }
 
-    // Métodos no permitidos para recurso específico
-    app.all(`${BASE_URL_API}/global-agriculture-climate-impacts/:country/:year`, (req, res, next) => {
-        const allowed = ["GET","PUT","DELETE"];
-        if (!allowed.includes(req.method)) return res.status(405).json({ error: "Method Not Allowed" });
-        next();
-    });
+    // ------------- ENRUTAMIENTO V1 (Para pasar Postman y Newman) -------------
+    const v1Base = BASE_URL_API + "/global-agriculture-climate-impacts";
+
+    app.get(v1Base + "/loadInitialData", (req, res) => loadInitialDataHandler(dbV1, res));
+    app.get(v1Base, (req, res) => getAllHandler(dbV1, req, res));
+    app.get(v1Base + "/:country/:year", (req, res) => getOneHandler(dbV1, req, res));
+    app.post(v1Base, (req, res) => postHandler(dbV1, req, res));
+    app.put(v1Base + "/:country/:year", (req, res) => putHandler(dbV1, req, res));
+    app.delete(v1Base + "/:country/:year", (req, res) => deleteOneHandler(dbV1, req, res));
+    app.delete(v1Base, (req, res) => deleteAllHandler(dbV1, req, res));
+    app.put(v1Base, methodNotAllowed);
+    app.post(v1Base + "/:country/:year", methodNotAllowed);
+
+    // ------------- ENRUTAMIENTO V2 (Para tu Frontend en Svelte) -------------
+    const v2Base = BASE_URL_API_V2 + "/global-agriculture-climate-impacts";
+
+    app.get(v2Base + "/loadInitialData", (req, res) => loadInitialDataHandler(dbV2, res));
+    app.get(v2Base, (req, res) => getAllHandler(dbV2, req, res));
+    app.get(v2Base + "/:country/:year", (req, res) => getOneHandler(dbV2, req, res));
+    app.post(v2Base, (req, res) => postHandler(dbV2, req, res));
+    app.put(v2Base + "/:country/:year", (req, res) => putHandler(dbV2, req, res));
+    app.delete(v2Base + "/:country/:year", (req, res) => deleteOneHandler(dbV2, req, res));
+    app.delete(v2Base, (req, res) => deleteAllHandler(dbV2, req, res));
+    app.put(v2Base, methodNotAllowed);
+    app.post(v2Base + "/:country/:year", methodNotAllowed);
 }
