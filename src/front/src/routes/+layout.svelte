@@ -2,7 +2,7 @@
 	import favicon from '$lib/assets/favicon.svg';
 	import Header from './Header.svelte';
 	import Footer from './Footer.svelte';
-	import 'bootstrap/dist/css/bootstrap.min.css';
+	
 
 	let { children } = $props();
 </script>
