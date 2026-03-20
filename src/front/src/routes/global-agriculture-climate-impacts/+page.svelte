@@ -45,7 +45,7 @@
     // --- CONFIGURACIÓN API (Apuntando a V2 como dice tu backend) ---
     let API_BASE = '/api/v2/global-agriculture-climate-impacts';
     if (dev) {
-        API_BASE = 'http://localhost:8080' + API_BASE; 
+        API_BASE = 'http://localhost:3000' + API_BASE; 
     }
 
     function limpiarMensajes() {
