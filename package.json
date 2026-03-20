@@ -16,7 +16,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "build": "cd src/front && npm install && npm run build",
+    "build": "cd src/front && npm install --legacy-peer-deps && npm run build",
     "dev-front": "cd src/front && npm run dev -- --open",
 
     "test": "npm run build && npm run test-JMV-local && npm run test-CLS-local && npm run test-EMM-local",
@@ -34,7 +34,7 @@
     "NVM-JMV-local": "newman run test/api/JMV-collection.json -e test/api/JMV-local.json --bail",
     "test-JMV-local": "start-server-and-test start http://localhost:3000 NVM-JMV-local",
     "test-JMV-render": "newman run test/api/JMV-collection.json -e test/api/JMV-render.json --bail",
-    "test-jmv": "npm run test-JMV-local & npx kill-port 3000"
+    "test-co2-emission-gap-among-countries-clustering-pca": "npm run test-JMV-local & npx kill-port 3000"
   },
   "dependencies": {
     "cors": "^2.8.6",
