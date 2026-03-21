@@ -67,6 +67,7 @@ export function loadBackEnd(app) {
             }
         });
     }
+    
 
     function getAllHandler(db, req, res) {
         const query = {};
@@ -263,8 +264,7 @@ export function loadBackEnd(app) {
             } else {
                 dbV2.insert(newData, (err, doc) => {
                     if (err) return res.status(500).json({ error: err.message });
-                    delete doc._id;
-                    res.status(201).json(doc);
+                        res.status(201).json({ message: "Recurso creado correctamente" });
                 });
             }
         });

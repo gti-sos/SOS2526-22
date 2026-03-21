@@ -1,472 +1,157 @@
 <script>
     // @ts-nocheck
+    import { dev } from "$app/environment";
+
+    // Estados reactivos
     let recursos = $state([]);
     let loading = $state(false);
-    let error = $state(null);
-    let successMessage = $state(null);
-
-    // Estado para paginación
+    let message = $state({ type: null, text: null });
     let currentPage = $state(1);
     let itemsPerPage = $state(5);
     let totalItems = $state(0);
     let totalPages = $state(1);
-    let paginationData = $state(null);
 
-    // Estado para el formulario de edición
-    let editando = $state(null);
-    let showEditForm = $state(false);
-
-    // Control de visibilidad del formulario de creación
+    // Formularios
     let showCreateForm = $state(false);
-
-    // Datos del formulario de creación
-    let newCountry = $state('');
-    let newCode = $state('');
-    let newYear = $state('');
-    let newMethylChloroform = $state('');
-    let newMethylBromide = $state('');
-    let newHcfc = $state('');
-    let newCarbonTetrachloride = $state('');
-    let newHalon = $state('');
-    let newCfc = $state('');
-
-    // Datos del formulario de edición
-    let editForm = $state({
-        country: '',
-        code: '',
-        year: '',
-        methyl_chloroform: '',
-        methyl_bromide: '',
-        hcfc: '',
-        carbon_tetrachloride: '',
-        halon: '',
-        cfc: ''
+    let newData = $state({
+        country: '', code: '', year: '', methyl_chloroform: '', methyl_bromide: '',
+        hcfc: '', carbon_tetrachloride: '', halon: '', cfc: ''
     });
+    let editando = $state(null);
+    // svelte-ignore state_referenced_locally
+        let editForm = $state({ ...newData });
 
-    // Estado para búsquedas y filtros
-    let searchField = $state('country');
-    let searchValue = $state('');
+    // Búsquedas
+    let activeSearch = $state({ type: null, params: {} }); // type: 'field', 'range', 'concrete', 'fieldValues'
     let searchResults = $state(null);
-    let searchError = $state(null);
-    let searchMode = $state(false);
     let searchLoading = $state(false);
 
-    // Filtro por rango
-    let fromYear = $state('');
-    let toYear = $state('');
-    let rangeResults = $state(null);
-    let rangeError = $state(null);
-    let rangeMode = $state(false);
+    // API base
+    let API_BASE = dev ? 'http://localhost:3000/api/v2/ozone-depleting-substance-consumptions' : '/api/v2/ozone-depleting-substance-consumptions';
 
-    // Búsqueda de recurso concreto
-    let concreteCountry = $state('');
-    let concreteYear = $state('');
-    let concreteResult = $state(null);
-    let concreteError = $state(null);
-    let concreteMode = $state(false);
+    // Funciones auxiliares
+    function setMessage(text, type = 'success') { message = { text, type }; setTimeout(() => { if (message.text === text) message = { type: null, text: null }; }, 5000); }
 
-    // Búsqueda de campo (ej. /year)
-    let fieldName = $state('year');
-    let fieldResults = $state(null);
-    let fieldError = $state(null);
-    let fieldMode = $state(false);
-
-    import { dev } from "$app/environment";
-
-    // API v2
-    let API_BASE = '/api/v2/ozone-depleting-substance-consumptions';
-    if (dev) {
-        API_BASE = 'http://localhost:3000' + API_BASE;
-    }
-
-    // Limpiar mensajes después de 5 segundos
-    function limpiarMensajes() {
-        setTimeout(() => {
-            error = null;
-            successMessage = null;
-            searchError = null;
-            rangeError = null;
-            concreteError = null;
-            fieldError = null;
-        }, 5000);
-    }
-
-    // Cargar recursos con paginación
-    async function cargarRecursos(page = currentPage, mostrarMensajeExito = false) {
-        searchMode = false;
-        rangeMode = false;
-        concreteMode = false;
-        fieldMode = false;
-        showCreateForm = false; // Ocultar formulario al cambiar de vista
-
+    // Carga principal con paginación
+    async function cargarRecursos(page = currentPage, showSuccess = false) {
+        activeSearch = { type: null, params: {} };
         loading = true;
-        error = null;
         try {
-            const url = `${API_BASE}?page=${page}&items=${itemsPerPage}&t=${Date.now()}`;
-            const res = await fetch(url);
-            if (!res.ok) throw new Error(`Error ${res.status}`);
+            const res = await fetch(`${API_BASE}?page=${page}&items=${itemsPerPage}&t=${Date.now()}`);
+            if (!res.ok) throw new Error();
             const data = await res.json();
-
             recursos = data.data || [];
-            paginationData = data;
-
-            if (paginationData) {
-                totalItems = paginationData.total_items;
-                totalPages = paginationData.total_paginas;
-                currentPage = paginationData.pagina_actual;
-            }
-
-            if (recursos.length === 0 && currentPage > 1) {
-                goToPage(1);
-            }
-
-            if (mostrarMensajeExito) {
-                successMessage = 'Lista actualizada correctamente.';
-            }
-        } catch (e) {
-            error = 'No se pudieron cargar los datos. Por favor, inténtalo de nuevo más tarde.';
-        } finally {
-            loading = false;
-            limpiarMensajes();
-        }
+            totalItems = data.total_items;
+            totalPages = data.total_paginas;
+            currentPage = data.pagina_actual;
+            if (showSuccess) setMessage('Lista actualizada correctamente.');
+        } catch { setMessage('Error al cargar datos.', 'error'); }
+        finally { loading = false; }
     }
 
-    // Cambiar de página
-    function goToPage(page) {
-        if (page >= 1 && page <= totalPages) {
-            currentPage = page;
-            cargarRecursos(page);
-        }
-    }
-
-    // Cambiar items por página
-    function changeItemsPerPage() {
-        currentPage = 1;
-        cargarRecursos(1);
-    }
-
-    // Cargar datos de ejemplo
-    async function cargarEjemplo() {
-        loading = true;
-        error = null;
-        try {
-            await fetch(API_BASE, { method: 'DELETE' });
-            const res = await fetch(API_BASE + '/loadInitialData');
-            if (!res.ok) throw new Error(`Error ${res.status}`);
-            successMessage = 'Se han cargado 11 registros de ejemplo.';
-            await cargarRecursos(1);
-        } catch (e) {
-            error = 'No se pudieron cargar los datos de ejemplo. Comprueba la conexión con el servidor.';
-        } finally {
-            loading = false;
-            limpiarMensajes();
-        }
-    }
-
-    // Búsqueda por campo
-    async function buscarPorCampo() {
-        if (!searchValue.trim()) {
-            searchError = 'Por favor, introduce un valor para buscar.';
-            return;
-        }
+    // Ejecutar búsqueda según activeSearch
+    async function ejecutarBusqueda() {
+        if (activeSearch.type === null) return;
         searchLoading = true;
-        searchError = null;
         searchResults = null;
-        searchMode = true;
-        rangeMode = false;
-        concreteMode = false;
-        fieldMode = false;
-
         try {
-            const url = `${API_BASE}?${searchField}=${encodeURIComponent(searchValue)}`;
+            let url = API_BASE;
+            if (activeSearch.type === 'field') {
+                url += `?${activeSearch.params.field}=${encodeURIComponent(activeSearch.params.value)}`;
+            } else if (activeSearch.type === 'range') {
+                url += `?${activeSearch.params.from ? `from=${activeSearch.params.from}&` : ''}${activeSearch.params.to ? `to=${activeSearch.params.to}` : ''}`;
+            } else if (activeSearch.type === 'concrete') {
+                url += `/${encodeURIComponent(activeSearch.params.country)}/${activeSearch.params.year}`;
+            } else if (activeSearch.type === 'fieldValues') {
+                url += `/${activeSearch.params.fieldName}`;
+            }
             const res = await fetch(url);
             if (!res.ok) {
-                if (res.status === 404) {
-                    searchResults = [];
-                    searchError = `No se encontraron recursos con ${searchField} = "${searchValue}".`;
-                    return;
-                }
-                throw new Error(`Error ${res.status}`);
+                if (res.status === 404) searchResults = [];
+                else throw new Error();
+            } else {
+                searchResults = await res.json();
             }
-            const data = await res.json();
-            searchResults = data;
-            if (searchResults.length === 0) {
-                searchError = `No se encontraron recursos con ${searchField} = "${searchValue}".`;
-            }
-        } catch (e) {
-            searchError = 'Error al realizar la búsqueda. Inténtalo de nuevo.';
-        } finally {
-            searchLoading = false;
-            limpiarMensajes();
-        }
-    }
-
-    // Búsqueda por rango
-    async function buscarPorRango() {
-        if (!fromYear && !toYear) {
-            rangeError = 'Debes indicar al menos un año (desde o hasta).';
-            return;
-        }
-        rangeError = null;
-        rangeResults = null;
-        rangeMode = true;
-        searchMode = false;
-        concreteMode = false;
-        fieldMode = false;
-        searchLoading = true;
-
-        try {
-            let url = `${API_BASE}?`;
-            if (fromYear) url += `from=${fromYear}&`;
-            if (toYear) url += `to=${toYear}`;
-            const res = await fetch(url);
-            if (!res.ok) throw new Error(`Error ${res.status}`);
-            const data = await res.json();
-            rangeResults = data;
-            if (rangeResults.length === 0) {
-                rangeError = `No hay recursos entre ${fromYear || 'inicio'} y ${toYear || 'fin'}.`;
-            }
-        } catch (e) {
-            rangeError = 'Error en la búsqueda por rango.';
-        } finally {
-            searchLoading = false;
-            limpiarMensajes();
-        }
-    }
-
-    // Recurso concreto
-    async function buscarConcreto() {
-        if (!concreteCountry.trim() || !concreteYear) {
-            concreteError = 'Debes introducir país y año.';
-            return;
-        }
-        concreteError = null;
-        concreteResult = null;
-        concreteMode = true;
-        searchMode = false;
-        rangeMode = false;
-        fieldMode = false;
-        searchLoading = true;
-
-        try {
-            const url = `${API_BASE}/${encodeURIComponent(concreteCountry)}/${concreteYear}`;
-            const res = await fetch(url);
-            if (res.status === 404) {
-                concreteError = `No existe un recurso con país "${concreteCountry}" y año ${concreteYear}.`;
-                return;
-            }
-            if (!res.ok) throw new Error(`Error ${res.status}`);
-            const data = await res.json();
-            concreteResult = data;
-        } catch (e) {
-            concreteError = 'Error al buscar el recurso concreto.';
-        } finally {
-            searchLoading = false;
-            limpiarMensajes();
-        }
-    }
-
-    // Valores de un campo
-    async function buscarCampo() {
-        if (!fieldName) {
-            fieldError = 'Selecciona un campo.';
-            return;
-        }
-        fieldError = null;
-        fieldResults = null;
-        fieldMode = true;
-        searchMode = false;
-        rangeMode = false;
-        concreteMode = false;
-        searchLoading = true;
-
-        try {
-            const url = `${API_BASE}/${fieldName}`;
-            const res = await fetch(url);
-            if (res.status === 404) {
-                fieldError = `El campo "${fieldName}" no existe.`;
-                return;
-            }
-            if (!res.ok) throw new Error(`Error ${res.status}`);
-            const data = await res.json();
-            fieldResults = data;
-        } catch (e) {
-            fieldError = 'Error al obtener los valores del campo.';
-        } finally {
-            searchLoading = false;
-            limpiarMensajes();
-        }
+            if (activeSearch.type === 'concrete' && !searchResults) setMessage(`No existe recurso con país "${activeSearch.params.country}" y año ${activeSearch.params.year}.`, 'error');
+            else if ((Array.isArray(searchResults) && searchResults.length === 0)) setMessage('No hay resultados.', 'error');
+            else setMessage('Búsqueda completada.', 'success');
+        } catch { setMessage('Error en la búsqueda.', 'error'); }
+        finally { searchLoading = false; }
     }
 
     // Crear recurso
-    async function crearRecurso(event) {
-        event.preventDefault();
+    async function crearRecurso(e) {
+        e.preventDefault();
         loading = true;
-        error = null;
-
-        const payload = {
-            country: newCountry.toLowerCase(),
-            code: newCode.toLowerCase(),
-            year: parseInt(newYear),
-            methyl_chloroform: parseFloat(newMethylChloroform) || 0,
-            methyl_bromide: parseFloat(newMethylBromide) || 0,
-            hcfc: parseFloat(newHcfc) || 0,
-            carbon_tetrachloride: parseFloat(newCarbonTetrachloride) || 0,
-            halon: parseFloat(newHalon) || 0,
-            cfc: parseFloat(newCfc) || 0
-        };
-
+        const payload = { ...newData, year: parseInt(newData.year), methyl_chloroform: parseFloat(newData.methyl_chloroform)||0, methyl_bromide: parseFloat(newData.methyl_bromide)||0, hcfc: parseFloat(newData.hcfc)||0, carbon_tetrachloride: parseFloat(newData.carbon_tetrachloride)||0, halon: parseFloat(newData.halon)||0, cfc: parseFloat(newData.cfc)||0 };
         try {
-            const res = await fetch(API_BASE, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            if (res.status === 409) {
-                throw new Error(`Ya existe un recurso con el país "${newCountry}" y el año ${newYear}.`);
-            }
-            if (res.status === 400) {
-                throw new Error('Los datos enviados no son válidos. Revisa que todos los campos obligatorios estén completos y con el formato correcto.');
-            }
-            if (!res.ok) {
-                throw new Error('Error al crear el recurso. Inténtalo de nuevo más tarde.');
-            }
-
-            newCountry = newCode = newYear = newMethylChloroform = newMethylBromide = newHcfc = newCarbonTetrachloride = newHalon = newCfc = '';
-            successMessage = 'Recurso creado correctamente.';
-            showCreateForm = false; // Ocultar formulario tras crear
+            const res = await fetch(API_BASE, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            if (res.status === 409) throw new Error(`Ya existe recurso con país "${newData.country}" y año ${newData.year}.`);
+            if (!res.ok) throw new Error();
+            setMessage('Recurso creado correctamente.');
+            newData = { country: '', code: '', year: '', methyl_chloroform: '', methyl_bromide: '', hcfc: '', carbon_tetrachloride: '', halon: '', cfc: '' };
+            showCreateForm = false;
             await cargarRecursos(1);
-        } catch (e) {
-            error = e.message;
-        } finally {
-            loading = false;
-            limpiarMensajes();
-        }
+        } catch (e) { setMessage(e.message || 'Error al crear.', 'error'); }
+        finally { loading = false; }
     }
 
-    function iniciarEdicion(recurso) {
-        editando = recurso;
-        editForm = { ...recurso };
-        showEditForm = true;
-        setTimeout(() => {
-            document.getElementById('edit-form')?.scrollIntoView({ behavior: 'smooth' });
-        }, 100);
-    }
-
-    function cancelarEdicion() {
-        showEditForm = false;
-        editando = null;
-    }
-
-    async function guardarEdicion(event) {
-        event.preventDefault();
+    // Editar
+    function iniciarEdicion(r) { editando = r; editForm = { ...r }; }
+    function cancelarEdicion() { editando = null; }
+    async function guardarEdicion(e) {
+        e.preventDefault();
         if (!editando) return;
         loading = true;
-        error = null;
-
-        const payload = {
-            country: editForm.country,
-            code: editForm.code,
-            year: editForm.year,
-            methyl_chloroform: parseFloat(editForm.methyl_chloroform) || 0,
-            methyl_bromide: parseFloat(editForm.methyl_bromide) || 0,
-            hcfc: parseFloat(editForm.hcfc) || 0,
-            carbon_tetrachloride: parseFloat(editForm.carbon_tetrachloride) || 0,
-            halon: parseFloat(editForm.halon) || 0,
-            cfc: parseFloat(editForm.cfc) || 0
-        };
-
+        const payload = { ...editForm, year: parseInt(editForm.year), methyl_chloroform: parseFloat(editForm.methyl_chloroform)||0, methyl_bromide: parseFloat(editForm.methyl_bromide)||0, hcfc: parseFloat(editForm.hcfc)||0, carbon_tetrachloride: parseFloat(editForm.carbon_tetrachloride)||0, halon: parseFloat(editForm.halon)||0, cfc: parseFloat(editForm.cfc)||0 };
         try {
-            const res = await fetch(`${API_BASE}/${editando.country}/${editando.year}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            if (res.status === 404) {
-                throw new Error(`No se encontró el recurso "${editando.country}" (${editando.year}) para actualizar. Puede que haya sido eliminado.`);
-            }
-            if (res.status === 400) {
-                throw new Error('Los datos enviados no son válidos. Revisa los campos e inténtalo de nuevo.');
-            }
-            if (!res.ok) {
-                throw new Error('Error al actualizar el recurso. Inténtalo de nuevo.');
-            }
-
-            successMessage = 'Recurso actualizado correctamente.';
+            const res = await fetch(`${API_BASE}/${editando.country}/${editando.year}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            if (res.status === 404) throw new Error(`Recurso ${editando.country}/${editando.year} no encontrado.`);
+            if (!res.ok) throw new Error();
+            setMessage('Recurso actualizado correctamente.');
             cancelarEdicion();
             await cargarRecursos(currentPage);
-        } catch (e) {
-            error = e.message;
-        } finally {
-            loading = false;
-            limpiarMensajes();
-        }
+        } catch (e) { setMessage(e.message || 'Error al actualizar.', 'error'); }
+        finally { loading = false; }
     }
 
-    async function eliminarRecurso(recurso) {
-        if (!confirm(`¿Estás seguro de que quieres eliminar el recurso de ${recurso.country} (${recurso.year})?`)) return;
+    // Eliminar
+    async function eliminarRecurso(r) {
+        if (!confirm(`¿Eliminar ${r.country} (${r.year})?`)) return;
         loading = true;
-        error = null;
         try {
-            const res = await fetch(`${API_BASE}/${recurso.country}/${recurso.year}`, {
-                method: 'DELETE'
-            });
-
-            if (res.status === 404) {
-                throw new Error(`No se encontró el recurso "${recurso.country}" (${recurso.year}) para eliminar. Puede que ya no exista.`);
-            }
-            if (!res.ok) {
-                throw new Error('Error al eliminar el recurso. Inténtalo de nuevo.');
-            }
-
-            successMessage = 'Recurso eliminado correctamente.';
+            const res = await fetch(`${API_BASE}/${r.country}/${r.year}`, { method: 'DELETE' });
+            if (res.status === 404) throw new Error(`Recurso no encontrado.`);
+            if (!res.ok) throw new Error();
+            setMessage('Recurso eliminado.');
             await cargarRecursos(currentPage);
-        } catch (e) {
-            error = e.message;
-        } finally {
-            loading = false;
-            limpiarMensajes();
-        }
+        } catch (e) { setMessage(e.message || 'Error al eliminar.', 'error'); }
+        finally { loading = false; }
     }
 
     async function eliminarTodos() {
-        if (!confirm('¿Estás seguro de que quieres eliminar TODOS los recursos? Esta acción no se puede deshacer.')) return;
+        if (!confirm('¿Eliminar TODOS los recursos? No se puede deshacer.')) return;
         loading = true;
-        error = null;
-        successMessage = null;
         try {
             const res = await fetch(API_BASE, { method: 'DELETE' });
-            if (!res.ok) throw new Error('Error al eliminar todos los recursos');
-
-            await cargarRecursos(1, false);
-            successMessage = 'Todos los recursos han sido eliminados.';
-        } catch (e) {
-            error = 'Error al eliminar todos los recursos. Inténtalo de nuevo.';
-        } finally {
-            loading = false;
-            limpiarMensajes();
-        }
+            if (!res.ok) throw new Error();
+            setMessage('Todos los recursos eliminados.');
+            await cargarRecursos(1);
+        } catch { setMessage('Error al eliminar todos.', 'error'); }
+        finally { loading = false; }
     }
 
-    // Cargar al montar
+    // Carga inicial
     cargarRecursos(1);
 </script>
 
-<!-- Mensajes de éxito y error -->
-{#if successMessage}
-    <div class="msg msg-success">{successMessage}</div>
-{/if}
-{#if error}
-    <div class="msg msg-error">{error}</div>
+<!-- Mensajes -->
+{#if message.text}
+    <div class="msg msg-{message.type}">{message.text}</div>
 {/if}
 
 <div class="container">
-    <header class="header">
-        <h1>🌍 Gestión de consumo de sustancias que agotan la capa de ozono</h1>
-        <p class="subtitle">API v2 · Panel de administración</p>
-    </header>
+    <header><h1>🌍 Gestión de consumo de sustancias (v2)</h1></header>
 
     <!-- SECCIÓN DE BÚSQUEDAS Y FILTROS -->
     <section class="card">
@@ -476,95 +161,67 @@
             <div class="search-item">
                 <label>Buscar por campo</label>
                 <div class="input-group">
-                    <select bind:value={searchField}>
-                        <option value="country">País</option>
-                        <option value="code">Código</option>
-                        <option value="year">Año</option>
-                        <option value="methyl_chloroform">Metilcloroformo</option>
-                        <option value="methyl_bromide">Bromuro de metilo</option>
-                        <option value="hcfc">HCFC</option>
-                        <option value="carbon_tetrachloride">Tetracloruro de carbono</option>
-                        <option value="halon">Halon</option>
-                        <option value="cfc">CFC</option>
+                    <select bind:value={activeSearch.params.field}>
+                        <option value="country">País</option><option value="code">Código</option><option value="year">Año</option>
+                        <option value="methyl_chloroform">Metilcloroformo</option><option value="methyl_bromide">Bromuro de metilo</option>
+                        <option value="hcfc">HCFC</option><option value="carbon_tetrachloride">Tetracloruro de carbono</option>
+                        <option value="halon">Halon</option><option value="cfc">CFC</option>
                     </select>
-                    <input type="text" bind:value={searchValue} placeholder="Valor" />
-                    <button onclick={buscarPorCampo} disabled={searchLoading} class="btn-primary">Buscar</button>
+                    <input type="text" bind:value={activeSearch.params.value} placeholder="Valor" />
+                    <button onclick={() => { activeSearch = { type: 'field', params: { field: activeSearch.params.field, value: activeSearch.params.value } }; ejecutarBusqueda(); }} class="btn-primary">Buscar</button>
                 </div>
-                {#if searchError}<span class="error-text">{searchError}</span>{/if}
             </div>
-
             <!-- Rango de años -->
             <div class="search-item">
                 <label>Filtrar por rango de años</label>
                 <div class="input-group">
-                    <input type="number" bind:value={fromYear} placeholder="Desde" />
-                    <input type="number" bind:value={toYear} placeholder="Hasta" />
-                    <button onclick={buscarPorRango} disabled={searchLoading} class="btn-primary">Filtrar</button>
+                    <input type="number" bind:value={activeSearch.params.from} placeholder="Desde" />
+                    <input type="number" bind:value={activeSearch.params.to} placeholder="Hasta" />
+                    <button onclick={() => { activeSearch = { type: 'range', params: { from: activeSearch.params.from, to: activeSearch.params.to } }; ejecutarBusqueda(); }} class="btn-primary">Filtrar</button>
                 </div>
-                {#if rangeError}<span class="error-text">{rangeError}</span>{/if}
             </div>
-
             <!-- Recurso concreto -->
             <div class="search-item">
                 <label>Buscar recurso concreto</label>
                 <div class="input-group">
-                    <input type="text" bind:value={concreteCountry} placeholder="País" />
-                    <input type="number" bind:value={concreteYear} placeholder="Año" />
-                    <button onclick={buscarConcreto} disabled={searchLoading} class="btn-primary">Buscar</button>
+                    <input type="text" bind:value={activeSearch.params.country} placeholder="País" />
+                    <input type="number" bind:value={activeSearch.params.year} placeholder="Año" />
+                    <button onclick={() => { activeSearch = { type: 'concrete', params: { country: activeSearch.params.country, year: activeSearch.params.year } }; ejecutarBusqueda(); }} class="btn-primary">Buscar</button>
                 </div>
-                {#if concreteError}<span class="error-text">{concreteError}</span>{/if}
             </div>
-
             <!-- Valores de un campo -->
             <div class="search-item">
                 <label>Ver todos los valores de un campo</label>
                 <div class="input-group">
-                    <select bind:value={fieldName}>
-                        <option value="country">País</option>
-                        <option value="code">Código</option>
-                        <option value="year">Año</option>
-                        <option value="methyl_chloroform">Metilcloroformo</option>
-                        <option value="methyl_bromide">Bromuro de metilo</option>
-                        <option value="hcfc">HCFC</option>
-                        <option value="carbon_tetrachloride">Tetracloruro de carbono</option>
-                        <option value="halon">Halon</option>
-                        <option value="cfc">CFC</option>
+                    <select bind:value={activeSearch.params.fieldName}>
+                        <option value="country">País</option><option value="code">Código</option><option value="year">Año</option>
+                        <option value="methyl_chloroform">Metilcloroformo</option><option value="methyl_bromide">Bromuro de metilo</option>
+                        <option value="hcfc">HCFC</option><option value="carbon_tetrachloride">Tetracloruro de carbono</option>
+                        <option value="halon">Halon</option><option value="cfc">CFC</option>
                     </select>
-                    <button onclick={buscarCampo} disabled={searchLoading} class="btn-primary">Ver</button>
+                    <button onclick={() => { activeSearch = { type: 'fieldValues', params: { fieldName: activeSearch.params.fieldName } }; ejecutarBusqueda(); }} class="btn-primary">Ver</button>
                 </div>
-                {#if fieldError}<span class="error-text">{fieldError}</span>{/if}
             </div>
-        </div>
-        <div class="search-actions">
-            <button onclick={() => cargarRecursos(1)} class="btn-secondary">🗂️ Volver a lista paginada</button>
         </div>
     </section>
 
     <!-- Botones de acción global -->
     <div class="action-bar">
-        <button onclick={cargarEjemplo} disabled={loading} class="btn-sample">📥 Cargar datos de ejemplo</button>
-        <button onclick={() => { showCreateForm = !showCreateForm; }} class="btn-create">
-            {showCreateForm ? '✖️ Cerrar' : '➕ Nuevo recurso'}
-        </button>
-        <button onclick={eliminarTodos} disabled={loading} class="btn-danger">🗑️ Eliminar todos</button>
-        <button onclick={() => cargarRecursos(currentPage, true)} disabled={loading} class="btn-refresh">🔄 Actualizar lista</button>
+        <button onclick={async () => { await fetch(API_BASE, { method: 'DELETE' }); await fetch(API_BASE + '/loadInitialData'); cargarRecursos(1); setMessage('Datos de ejemplo cargados.'); }} class="btn-sample">📥 Cargar datos de ejemplo</button>
+        <button onclick={() => showCreateForm = !showCreateForm} class="btn-create">{showCreateForm ? '✖️ Cerrar' : '➕ Nuevo recurso'}</button>
+        <button onclick={eliminarTodos} class="btn-danger">🗑️ Eliminar todos</button>
+        <button onclick={() => cargarRecursos(currentPage, true)} class="btn-refresh">🔄 Actualizar lista</button>
     </div>
 
-    <!-- Formulario de creación (visible solo si showCreateForm es true) -->
+    <!-- Formulario de creación -->
     {#if showCreateForm}
         <section class="card create-card">
             <h2>➕ Crear nuevo recurso</h2>
             <form onsubmit={crearRecurso}>
                 <div class="form-grid">
-                    <input type="text" bind:value={newCountry} placeholder="País *" required />
-                    <input type="text" bind:value={newCode} placeholder="Código *" required />
-                    <input type="number" bind:value={newYear} placeholder="Año *" required />
-                    <input type="number" step="any" bind:value={newMethylChloroform} placeholder="Metilcloroformo" />
-                    <input type="number" step="any" bind:value={newMethylBromide} placeholder="Bromuro de metilo" />
-                    <input type="number" step="any" bind:value={newHcfc} placeholder="HCFC" />
-                    <input type="number" step="any" bind:value={newCarbonTetrachloride} placeholder="Tetracloruro de carbono" />
-                    <input type="number" step="any" bind:value={newHalon} placeholder="Halon" />
-                    <input type="number" step="any" bind:value={newCfc} placeholder="CFC" />
+                    {#each ['country','code','year','methyl_chloroform','methyl_bromide','hcfc','carbon_tetrachloride','halon','cfc'] as field}
+                        <input type={field === 'year' ? 'number' : field.includes('_') ? 'number' : 'text'} step={field.includes('_') ? 'any' : undefined} bind:value={newData[field]} placeholder={field.replace(/_/g,' ').toUpperCase()} required={field === 'country' || field === 'code' || field === 'year'} />
+                    {/each}
                 </div>
                 <div class="form-actions">
                     <button type="submit" disabled={loading} class="btn-submit">Guardar recurso</button>
@@ -574,48 +231,18 @@
         </section>
     {/if}
 
-    <!-- Formulario de edición (vista separada) -->
-    {#if showEditForm && editando}
+    <!-- Formulario de edición -->
+    {#if editando}
         <section id="edit-form" class="card edit-card">
             <h2>✏️ Editando: {editando.country} ({editando.year})</h2>
             <form onsubmit={guardarEdicion}>
                 <div class="form-grid">
-                    <div class="readonly-field">
-                        <label>País:</label>
-                        <input type="text" bind:value={editForm.country} readonly disabled />
-                    </div>
-                    <div>
-                        <label>Código:</label>
-                        <input type="text" bind:value={editForm.code} required />
-                    </div>
-                    <div class="readonly-field">
-                        <label>Año:</label>
-                        <input type="number" bind:value={editForm.year} readonly disabled />
-                    </div>
-                    <div>
-                        <label>Metilcloroformo:</label>
-                        <input type="number" step="any" bind:value={editForm.methyl_chloroform} />
-                    </div>
-                    <div>
-                        <label>Bromuro de metilo:</label>
-                        <input type="number" step="any" bind:value={editForm.methyl_bromide} />
-                    </div>
-                    <div>
-                        <label>HCFC:</label>
-                        <input type="number" step="any" bind:value={editForm.hcfc} />
-                    </div>
-                    <div>
-                        <label>Tetracloruro de carbono:</label>
-                        <input type="number" step="any" bind:value={editForm.carbon_tetrachloride} />
-                    </div>
-                    <div>
-                        <label>Halon:</label>
-                        <input type="number" step="any" bind:value={editForm.halon} />
-                    </div>
-                    <div>
-                        <label>CFC:</label>
-                        <input type="number" step="any" bind:value={editForm.cfc} />
-                    </div>
+                    <div class="readonly-field"><label>País:</label><input type="text" bind:value={editForm.country} readonly disabled /></div>
+                    <div><label>Código:</label><input type="text" bind:value={editForm.code} required /></div>
+                    <div class="readonly-field"><label>Año:</label><input type="number" bind:value={editForm.year} readonly disabled /></div>
+                    {#each ['methyl_chloroform','methyl_bromide','hcfc','carbon_tetrachloride','halon','cfc'] as field}
+                        <div><label>{field.replace(/_/g,' ')}:</label><input type="number" step="any" bind:value={editForm[field]} /></div>
+                    {/each}
                 </div>
                 <div class="form-actions">
                     <button type="submit" disabled={loading} class="btn-submit">Guardar cambios</button>
@@ -625,194 +252,71 @@
         </section>
     {/if}
 
-    <!-- Mostrar resultados de búsquedas -->
-    {#if searchMode}
+    <!-- Mostrar resultados de búsqueda (si hay activa) -->
+    {#if activeSearch.type}
         <section class="card results-card">
-            <h3>Resultados de búsqueda por {searchField} = "{searchValue}"</h3>
+            <h3>Resultados</h3>
             {#if searchLoading}
                 <p class="loading">Buscando...</p>
-            {:else if searchError}
-                <p class="error-text">{searchError}</p>
-            {:else if searchResults && searchResults.length > 0}
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>País</th><th>Código</th><th>Año</th><th>Metilcloroformo</th><th>Bromuro de metilo</th>
-                            <th>HCFC</th><th>Tetracloruro de carbono</th><th>Halon</th><th>CFC</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {#each searchResults as item (item.country + item.year)}
-                            <tr>
-                                <td>{item.country}</td><td>{item.code}</td><td>{item.year}</td>
-                                <td>{item.methyl_chloroform}</td><td>{item.methyl_bromide}</td>
-                                <td>{item.hcfc}</td><td>{item.carbon_tetrachloride}</td>
-                                <td>{item.halon}</td><td>{item.cfc}</td>
-                            </tr>
-                        {/each}
-                    </tbody>
-                </table>
-            {:else}
-                <p>No hay resultados.</p>
+            {:else if searchResults !== null}
+                {#if Array.isArray(searchResults) && searchResults.length > 0}
+                    <table class="table">
+                        <thead><tr><th>País</th><th>Código</th><th>Año</th><th>Metilcloroformo</th><th>Bromuro de metilo</th><th>HCFC</th><th>Tetracloruro de carbono</th><th>Halon</th><th>CFC</th></tr></thead>
+                        <tbody>
+                            {#each searchResults as item}
+                                <tr><td>{item.country}</td><td>{item.code}</td><td>{item.year}</td><td>{item.methyl_chloroform}</td><td>{item.methyl_bromide}</td><td>{item.hcfc}</td><td>{item.carbon_tetrachloride}</td><td>{item.halon}</td><td>{item.cfc}</td></tr>
+                            {/each}
+                        </tbody>
+                    </table>
+                {:else if !Array.isArray(searchResults) && searchResults}
+                    <table class="table"><thead><tr><th>País</th><th>Código</th><th>Año</th><th>Metilcloroformo</th><th>Bromuro de metilo</th><th>HCFC</th><th>Tetracloruro de carbono</th><th>Halon</th><th>CFC</th></tr></thead><tbody><tr><td>{searchResults.country}</td><td>{searchResults.code}</td><td>{searchResults.year}</td><td>{searchResults.methyl_chloroform}</td><td>{searchResults.methyl_bromide}</td><td>{searchResults.hcfc}</td><td>{searchResults.carbon_tetrachloride}</td><td>{searchResults.halon}</td><td>{searchResults.cfc}</td></tr></tbody></table>
+                {:else}
+                    <p>No hay resultados.</p>
+                {/if}
             {/if}
         </section>
     {/if}
 
-    {#if rangeMode}
-        <section class="card results-card">
-            <h3>Resultados de filtro por rango {fromYear ? `desde ${fromYear}` : ''} {toYear ? `hasta ${toYear}` : ''}</h3>
-            {#if searchLoading}
-                <p class="loading">Buscando...</p>
-            {:else if rangeError}
-                <p class="error-text">{rangeError}</p>
-            {:else if rangeResults && rangeResults.length > 0}
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>País</th><th>Código</th><th>Año</th><th>Metilcloroformo</th><th>Bromuro de metilo</th>
-                            <th>HCFC</th><th>Tetracloruro de carbono</th><th>Halon</th><th>CFC</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {#each rangeResults as item (item.country + item.year)}
-                            <tr>
-                                <td>{item.country}</td><td>{item.code}</td><td>{item.year}</td>
-                                <td>{item.methyl_chloroform}</td><td>{item.methyl_bromide}</td>
-                                <td>{item.hcfc}</td><td>{item.carbon_tetrachloride}</td>
-                                <td>{item.halon}</td><td>{item.cfc}</td>
-                            </tr>
-                        {/each}
-                    </tbody>
-                </table>
-            {:else}
-                <p>No hay resultados.</p>
-            {/if}
-        </section>
-    {/if}
-
-    {#if concreteMode}
-        <section class="card results-card">
-            <h3>Recurso concreto: {concreteCountry} / {concreteYear}</h3>
-            {#if searchLoading}
-                <p class="loading">Buscando...</p>
-            {:else if concreteError}
-                <p class="error-text">{concreteError}</p>
-            {:else if concreteResult}
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>País</th><th>Código</th><th>Año</th><th>Metilcloroformo</th><th>Bromuro de metilo</th>
-                            <th>HCFC</th><th>Tetracloruro de carbono</th><th>Halon</th><th>CFC</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>{concreteResult.country}</td><td>{concreteResult.code}</td><td>{concreteResult.year}</td>
-                            <td>{concreteResult.methyl_chloroform}</td><td>{concreteResult.methyl_bromide}</td>
-                            <td>{concreteResult.hcfc}</td><td>{concreteResult.carbon_tetrachloride}</td>
-                            <td>{concreteResult.halon}</td><td>{concreteResult.cfc}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            {/if}
-        </section>
-    {/if}
-
-    {#if fieldMode}
-        <section class="card results-card">
-            <h3>Valores del campo "{fieldName}"</h3>
-            {#if searchLoading}
-                <p class="loading">Buscando...</p>
-            {:else if fieldError}
-                <p class="error-text">{fieldError}</p>
-            {:else if fieldResults && fieldResults.length > 0}
-                <div class="value-list">
-                    {#each fieldResults as val (val)}
-                        <span class="value-tag">{val}</span>
-                    {/each}
-                </div>
-            {:else}
-                <p>No hay valores.</p>
-            {/if}
-        </section>
-    {/if}
-
-    <!-- Listado normal paginado -->
-    {#if !searchMode && !rangeMode && !concreteMode && !fieldMode}
-        <!-- Controles de paginación superior -->
+    <!-- Listado normal paginado (solo si no hay búsqueda activa) -->
+    {#if !activeSearch.type}
+        <!-- Controles de paginación -->
         {#if recursos.length > 0}
             <div class="pagination-bar">
-                <div class="pagination-left">
-                    <label>Mostrar:</label>
-                    <select bind:value={itemsPerPage} onchange={changeItemsPerPage}>
-                        <option value={5}>5</option>
-                        <option value={10}>10</option>
-                        <option value={20}>20</option>
-                        <option value={50}>50</option>
-                    </select>
-                    <span>por página</span>
-                </div>
+                <div class="pagination-left"><label>Mostrar:</label><select bind:value={itemsPerPage} onchange={() => { currentPage=1; cargarRecursos(1); }}><option value={5}>5</option><option value={10}>10</option><option value={20}>20</option><option value={50}>50</option></select><span>por página</span></div>
                 <div class="pagination-right">
-                    <button onclick={() => goToPage(1)} disabled={currentPage === 1} class="btn-page">⏮️</button>
-                    <button onclick={() => goToPage(currentPage - 1)} disabled={currentPage === 1} class="btn-page">◀</button>
+                    <button onclick={() => cargarRecursos(1)} disabled={currentPage===1} class="btn-page">⏮️</button>
+                    <button onclick={() => cargarRecursos(currentPage-1)} disabled={currentPage===1} class="btn-page">◀</button>
                     <span class="page-info">Pág. {currentPage} de {totalPages} ({totalItems} total)</span>
-                    <button onclick={() => goToPage(currentPage + 1)} disabled={currentPage === totalPages} class="btn-page">▶</button>
-                    <button onclick={() => goToPage(totalPages)} disabled={currentPage === totalPages} class="btn-page">⏭️</button>
+                    <button onclick={() => cargarRecursos(currentPage+1)} disabled={currentPage===totalPages} class="btn-page">▶</button>
+                    <button onclick={() => cargarRecursos(totalPages)} disabled={currentPage===totalPages} class="btn-page">⏭️</button>
                 </div>
             </div>
         {/if}
 
-        <!-- Tabla de recursos -->
         <section class="card">
             {#if loading}
                 <p class="loading">Cargando...</p>
             {:else if recursos.length === 0}
-                <p class="empty">No hay recursos para mostrar. Puedes cargar datos de ejemplo o crear uno nuevo.</p>
+                <p class="empty">No hay recursos. Puedes cargar datos de ejemplo o crear uno nuevo.</p>
             {:else}
                 <table class="table">
-                    <thead>
-                        <tr>
-                            <th>País</th><th>Código</th><th>Año</th><th>Metilcloroformo</th><th>Bromuro de metilo</th>
-                            <th>HCFC</th><th>Tetracloruro de carbono</th><th>Halon</th><th>CFC</th><th>Acciones</th>
-                        </tr>
-                    </thead>
+                    <thead><tr><th>País</th><th>Código</th><th>Año</th><th>Metilcloroformo</th><th>Bromuro de metilo</th><th>HCFC</th><th>Tetracloruro de carbono</th><th>Halon</th><th>CFC</th><th>Acciones</th></tr></thead>
                     <tbody>
-                        {#each recursos as recurso (recurso.country + recurso.year)}
-                            <tr>
-                                <td>{recurso.country}</td>
-                                <td>{recurso.code}</td>
-                                <td>{recurso.year}</td>
-                                <td>{recurso.methyl_chloroform}</td>
-                                <td>{recurso.methyl_bromide}</td>
-                                <td>{recurso.hcfc}</td>
-                                <td>{recurso.carbon_tetrachloride}</td>
-                                <td>{recurso.halon}</td>
-                                <td>{recurso.cfc}</td>
-                                <td class="action-cell">
-                                    <button onclick={() => iniciarEdicion(recurso)} disabled={loading} class="btn-icon btn-edit" title="Editar">✏️</button>
-                                    <button onclick={() => eliminarRecurso(recurso)} disabled={loading} class="btn-icon btn-delete" title="Eliminar">🗑️</button>
-                                </td>
-                            </tr>
+                        {#each recursos as r}
+                            <tr><td>{r.country}</td><td>{r.code}</td><td>{r.year}</td><td>{r.methyl_chloroform}</td><td>{r.methyl_bromide}</td><td>{r.hcfc}</td><td>{r.carbon_tetrachloride}</td><td>{r.halon}</td><td>{r.cfc}</td><td class="action-cell"><button onclick={() => iniciarEdicion(r)} class="btn-icon btn-edit" title="Editar">✏️</button><button onclick={() => eliminarRecurso(r)} class="btn-icon btn-delete" title="Eliminar">delete</button></td></tr>
                         {/each}
                     </tbody>
                 </table>
             {/if}
         </section>
 
-        <!-- Paginación inferior -->
         {#if recursos.length > 0}
-            <div class="pagination-bar bottom">
-                <div class="pagination-right">
-                    <button onclick={() => goToPage(1)} disabled={currentPage === 1} class="btn-page">⏮️</button>
-                    <button onclick={() => goToPage(currentPage - 1)} disabled={currentPage === 1} class="btn-page">◀</button>
-                    <span class="page-info">{currentPage}/{totalPages}</span>
-                    <button onclick={() => goToPage(currentPage + 1)} disabled={currentPage === totalPages} class="btn-page">▶</button>
-                    <button onclick={() => goToPage(totalPages)} disabled={currentPage === totalPages} class="btn-page">⏭️</button>
-                </div>
-            </div>
+            <div class="pagination-bar bottom"><div class="pagination-right"><button onclick={() => cargarRecursos(1)} disabled={currentPage===1} class="btn-page">⏮️</button><button onclick={() => cargarRecursos(currentPage-1)} disabled={currentPage===1} class="btn-page">◀</button><span class="page-info">{currentPage}/{totalPages}</span><button onclick={() => cargarRecursos(currentPage+1)} disabled={currentPage===totalPages} class="btn-page">▶</button><button onclick={() => cargarRecursos(totalPages)} disabled={currentPage===totalPages} class="btn-page">⏭️</button></div></div>
         {/if}
     {/if}
 </div>
+
+
 
 <style>
     /* Variables de color */
