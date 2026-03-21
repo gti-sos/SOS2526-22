@@ -1,0 +1,10 @@
+{"country":"Spain","year":2020,"crop_type":"Wheat","average_temperature_c":20,"total_precipitation_mm":500,"_id":"yGQqw8Ayrspz52as"}
+{"country":"France","year":2020,"crop_type":"Corn","average_temperature_c":19,"total_precipitation_mm":450,"_id":"XZmSykyAzQtrVEPH"}
+{"country":"Germany","year":2020,"crop_type":"Barley","average_temperature_c":17,"total_precipitation_mm":480,"_id":"zxCMZBKrojfxUhqC"}
+{"country":"Italy","year":2020,"crop_type":"Soy","average_temperature_c":21,"total_precipitation_mm":470,"_id":"3OMnwpvJWOqa3ul1"}
+{"country":"Portugal","year":2020,"crop_type":"Rice","average_temperature_c":22,"total_precipitation_mm":460,"_id":"JrVckbqrIUJHyUra"}
+{"country":"Greece","year":2020,"crop_type":"Olive","average_temperature_c":25,"total_precipitation_mm":430,"_id":"85e3FsIGejI2UGBZ"}
+{"country":"Norway","year":2020,"crop_type":"Barley","average_temperature_c":10,"total_precipitation_mm":300,"_id":"rqX8gcyQT2TG6DTG"}
+{"country":"Sweden","year":2020,"crop_type":"Wheat","average_temperature_c":11,"total_precipitation_mm":310,"_id":"xgY9CDAuJOMtIFvW"}
+{"country":"Finland","year":2020,"crop_type":"Corn","average_temperature_c":8,"total_precipitation_mm":290,"_id":"JPVFzKDcCn5GJR3e"}
+{"country":"Poland","year":2020,"crop_type":"Soy","average_temperature_c":16,"total_precipitation_mm":320,"_id":"34pqJNt4tydYO1Ut"}
