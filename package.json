@@ -33,7 +33,6 @@
     "test-co2-emission-gap-among-countries-clustering-pca": "npm run test-JMV-local"
   },
   "dependencies": {
-    "@seald-io/nedb": "^4.1.2",
     "cors": "^2.8.6",
     "express": "^5.2.1",
     "nedb": "^1.8.0",

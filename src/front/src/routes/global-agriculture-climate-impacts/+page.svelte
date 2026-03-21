@@ -196,7 +196,7 @@
             </div>
 
             <div class="search-item">
-                <label>Filtrar por rango de Años</label>
+                <span style="display:block; margin-bottom: 5px; font-weight: bold;">Filtrar por rango de Años</span>
                 <div class="input-group">
                     <input type="number" bind:value={fromYear} placeholder="Desde" />
                     <input type="number" bind:value={toYear} placeholder="Hasta" />
