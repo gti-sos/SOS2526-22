@@ -45,27 +45,56 @@ export function loadBackEnd(app) {
     const campos = ["country", "year", "crop_type", "average_temperature_c", "total_precipitation_mm"];
 
     // ------------- FUNCIONES AUXILIARES -------------
-    
-    function loadInitialDataHandler(db, res) {
-        db.find({}, (err, docs) => {
-            if (err) return res.status(500).json({ error: "DB error" });
-            if (docs.length === 0) {
-                // Limpieza profunda para evitar errores de inserción en NeDB
-                const datosInsertar = JSON.parse(JSON.stringify(initialData));
-                db.insert(datosInsertar, (err, newDocs) => {
+function loadInitialDataHandler(db, res) {
+    db.find({}, (err, docs) => {
+        if (err) {
+            console.error("Error al buscar en DB:", err);
+            return res.status(500).json({ error: "DB error", detalle: err.message });
+        }
+        
+        if (docs.length === 0) {
+            // NeDB no soporta inserción masiva directamente con un array
+            // Tenemos que insertar uno por uno
+            const datosInsertar = JSON.parse(JSON.stringify(initialData));
+            let insertados = 0;
+            const errores = [];
+            
+            datosInsertar.forEach((item, index) => {
+                db.insert(item, (err, newDoc) => {
                     if (err) {
-                        console.error("Error al insertar en local:", err);
-                        return res.status(500).json({ error: "Insert error", detalle: err.message });
+                        console.error(`Error al insertar item ${index}:`, err);
+                        errores.push({ item: item, error: err.message });
+                    } else {
+                        insertados++;
                     }
-                    const result = newDocs.map(({ _id, ...rest }) => rest);
-                    res.status(200).json(result);
+                    
+                    // Cuando todos los inserts han terminado
+                    if (insertados + errores.length === datosInsertar.length) {
+                        if (errores.length > 0) {
+                            return res.status(500).json({ 
+                                error: "Insert error parcial", 
+                                insertados: insertados,
+                                errores: errores 
+                            });
+                        }
+                        
+                        // Obtener todos los documentos insertados para devolverlos
+                        db.find({}, (err, allDocs) => {
+                            if (err) {
+                                return res.status(500).json({ error: "Error al recuperar datos" });
+                            }
+                            const result = allDocs.map(({ _id, ...rest }) => rest);
+                            res.status(200).json(result);
+                        });
+                    }
                 });
-            } else {
-                const result = docs.map(({ _id, ...rest }) => rest);
-                res.status(200).json(result);
-            }
-        });
-    }
+            });
+        } else {
+            const result = docs.map(({ _id, ...rest }) => rest);
+            res.status(200).json(result);
+        }
+    });
+}
 
     function getAllHandler(db, req, res) {
         let query = {};
