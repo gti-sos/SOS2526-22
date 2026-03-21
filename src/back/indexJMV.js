@@ -1,4 +1,4 @@
-import dataStore from 'nedb';
+import dataStore from '@seald-io/nedb'
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -27,8 +27,7 @@ export function loadBackEnd(app) {
         res.redirect("https://documenter.getpostman.com/view/52411427/2sBXigNZgB"); 
     });
     app.get(BASE_URL_API_V2 + "/co2-emission-gap-among-countries-clustering-pca/docs", (req, res) => {
-        // PON AQUÍ TU NUEVO ENLACE DE POSTMAN V2 CUANDO LO TENGAS
-        res.redirect("PON_AQUI_TU_NUEVO_ENLACE_POSTMAN_V2"); 
+        res.redirect("https://documenter.getpostman.com/view/52411427/2sBXijHWuU"); 
     });
 
     // Datos iniciales (iguales para ambas) [cite: 510]
@@ -117,6 +116,7 @@ export function loadBackEnd(app) {
     app.put(v1Base + "/:country/:year", (req, res) => res.status(405).send("Method Not Allowed: v1 es solo lectura"));
     app.delete(v1Base + "/:country/:year", (req, res) => res.status(405).send("Method Not Allowed: v1 es solo lectura"));
     app.delete(v1Base, (req, res) => res.status(405).send("Method Not Allowed: v1 es solo lectura"));
+    app.post(v1Base + "/:country/:year", (req, res) => res.status(405).send("Method Not Allowed: v1 es solo lectura"));
 
     // ------------- RUTAS PARA V2 (lectura/escritura) -------------
     const v2Base = BASE_URL_API_V2 + "/co2-emission-gap-among-countries-clustering-pca";
