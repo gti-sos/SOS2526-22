@@ -1,4 +1,4 @@
-import dataStore from '@seald-io/nedb'
+import dataStore from 'nedb'
 import path from 'path';
 import { fileURLToPath } from 'url';
 
