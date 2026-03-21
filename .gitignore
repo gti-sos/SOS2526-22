@@ -137,3 +137,9 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Base de datos NeDB
+*.db
+*.db-journal
+data/*.db
+data/*.db-journal
