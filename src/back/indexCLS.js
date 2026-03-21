@@ -45,56 +45,68 @@ export function loadBackEnd(app) {
     const campos = ["country", "year", "crop_type", "average_temperature_c", "total_precipitation_mm"];
 
     // ------------- FUNCIONES AUXILIARES -------------
-function loadInitialDataHandler(db, res) {
-    db.find({}, (err, docs) => {
-        if (err) {
-            console.error("Error al buscar en DB:", err);
-            return res.status(500).json({ error: "DB error", detalle: err.message });
+    
+    // Función para insertar múltiples documentos de forma síncrona
+    function insertMultiple(db, documents, callback) {
+        let inserted = 0;
+        let errors = [];
+        
+        if (documents.length === 0) {
+            callback(null, []);
+            return;
         }
         
-        if (docs.length === 0) {
-            // NeDB no soporta inserción masiva directamente con un array
-            // Tenemos que insertar uno por uno
-            const datosInsertar = JSON.parse(JSON.stringify(initialData));
-            let insertados = 0;
-            const errores = [];
-            
-            datosInsertar.forEach((item, index) => {
-                db.insert(item, (err, newDoc) => {
-                    if (err) {
-                        console.error(`Error al insertar item ${index}:`, err);
-                        errores.push({ item: item, error: err.message });
+        documents.forEach((doc, index) => {
+            db.insert(doc, (err, newDoc) => {
+                if (err) {
+                    errors.push({ index, error: err.message, doc });
+                } else {
+                    inserted++;
+                }
+                
+                if (inserted + errors.length === documents.length) {
+                    if (errors.length > 0) {
+                        callback(new Error(`Failed to insert ${errors.length} documents`), errors);
                     } else {
-                        insertados++;
+                        callback(null, inserted);
+                    }
+                }
+            });
+        });
+    }
+
+    function loadInitialDataHandler(db, res) {
+        db.find({}, (err, docs) => {
+            if (err) {
+                console.error("Error al buscar en DB:", err);
+                return res.status(500).json({ error: "DB error", detalle: err.message });
+            }
+            
+            if (docs.length === 0) {
+                // Insertar datos iniciales
+                const datosInsertar = JSON.parse(JSON.stringify(initialData));
+                
+                insertMultiple(db, datosInsertar, (err, result) => {
+                    if (err) {
+                        console.error("Error inserting initial data:", err);
+                        return res.status(500).json({ error: "Insert error", detalle: err.message });
                     }
                     
-                    // Cuando todos los inserts han terminado
-                    if (insertados + errores.length === datosInsertar.length) {
-                        if (errores.length > 0) {
-                            return res.status(500).json({ 
-                                error: "Insert error parcial", 
-                                insertados: insertados,
-                                errores: errores 
-                            });
+                    // Recuperar todos los datos insertados
+                    db.find({}, (err, allDocs) => {
+                        if (err) {
+                            return res.status(500).json({ error: "Error al recuperar datos" });
                         }
-                        
-                        // Obtener todos los documentos insertados para devolverlos
-                        db.find({}, (err, allDocs) => {
-                            if (err) {
-                                return res.status(500).json({ error: "Error al recuperar datos" });
-                            }
-                            const result = allDocs.map(({ _id, ...rest }) => rest);
-                            res.status(200).json(result);
-                        });
-                    }
+                        const result = allDocs.map(({ _id, ...rest }) => rest);
+                        res.status(200).json(result);
+                    });
                 });
-            });
-        } else {
-            const result = docs.map(({ _id, ...rest }) => rest);
-            res.status(200).json(result);
-        }
-    });
-}
+            } else {
+                const result = docs.map(({ _id, ...rest }) => rest);
+                res.status(200).json(result);
+            }
+        });
+    }
 
     function getAllHandler(db, req, res) {
         let query = {};
@@ -142,11 +154,19 @@ function loadInitialDataHandler(db, res) {
         newData.total_precipitation_mm = parseFloat(newData.total_precipitation_mm);
 
         db.find({ country: newData.country, year: newData.year }, (err, docs) => {
+            if (err) {
+                console.error("Error checking existing:", err);
+                return res.status(500).json({ error: "DB error" });
+            }
             if (docs.length > 0) return res.status(409).json({ error: "CONFLICT" });
+            
             db.insert(newData, (err, doc) => {
-                if (err) return res.status(500).json({ error: "Insert error" });
-                delete doc._id;
-                res.status(201).json(doc);
+                if (err) {
+                    console.error("Error inserting:", err);
+                    return res.status(500).json({ error: "Insert error", detalle: err.message });
+                }
+                const { _id, ...rest } = doc;
+                res.status(201).json(rest);
             });
         });
     }
@@ -154,11 +174,19 @@ function loadInitialDataHandler(db, res) {
     function putHandler(db, req, res) {
         const { country, year } = req.params;
         const updatedData = req.body;
+        
+        // Verificar que los IDs coinciden
         if (updatedData.country !== country || parseInt(updatedData.year) !== parseInt(year)) {
             return res.status(400).json({ error: "BAD REQUEST: ID mismatch" });
         }
+        
         updatedData.year = parseInt(updatedData.year);
+        
         db.update({ country: country, year: parseInt(year) }, { $set: updatedData }, {}, (err, numReplaced) => {
+            if (err) {
+                console.error("Error updating:", err);
+                return res.status(500).json({ error: "Update error" });
+            }
             if (numReplaced === 0) return res.status(404).json({ error: "NOT FOUND" });
             res.status(200).json({ message: "OK" });
         });
@@ -167,6 +195,10 @@ function loadInitialDataHandler(db, res) {
     function deleteOneHandler(db, req, res) {
         const { country, year } = req.params;
         db.remove({ country: country, year: parseInt(year) }, {}, (err, numRemoved) => {
+            if (err) {
+                console.error("Error deleting:", err);
+                return res.status(500).json({ error: "Delete error" });
+            }
             if (numRemoved === 0) return res.status(404).json({ error: "NOT FOUND" });
             res.status(200).json({ message: "OK" });
         });
@@ -174,6 +206,10 @@ function loadInitialDataHandler(db, res) {
 
     function deleteAllHandler(db, req, res) {
         db.remove({}, { multi: true }, (err, numRemoved) => {
+            if (err) {
+                console.error("Error deleting all:", err);
+                return res.status(500).json({ error: "Delete error" });
+            }
             res.status(200).json({ message: "OK" });
         });
     }
