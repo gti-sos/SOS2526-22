@@ -18,15 +18,21 @@
     "start": "node index.js",
     "build": "cd src/front && npm install --legacy-peer-deps && npm run build",
     "dev-front": "cd src/front && npm run dev -- --open",
-    "test": "npm run build && npm run test-EMM-local && npm run test-CLS-local &&  npm run test-JMV-local",
+    
+    "test": "npm run test-EMM-local && npm run test-EMM-local-v2 && npm run test-CLS-local &&  npm run test-JMV-local",
+    
     "NVM-CLS-local": "newman run test/api/CLS-collection.json -e test/api/CLS-local.json",
     "test-CLS-local": "start-server-and-test start http://localhost:3000 NVM-CLS-local",
     "test-global-agriculture-climate-impacts": "npm run test-CLS-local & npx kill-port 3000",
     "test-CLS-render": "newman run test/api/CLS-collection.json -e test/api/CLS-render.json --bail",
+    
     "NVM-EMM-local": "newman run test/api/EMM-collection.json -e test/api/EMM-local.json",
+    "NVM-EMM-local-v2": "newman run test/api/EMM-collection-v2.json -e test/api/EMM-local.json",
     "test-EMM-local": "start-server-and-test start http://localhost:3000 NVM-EMM-local",
+    "test-EMM-local-v2": "start-server-and-test start http://localhost:3000 NVM-EMM-local-v2",
     "test-ozone-depleting-substance-consumptions": "npm run test-EMM-local & npx kill-port 3000",
     "test-EMM-render": "newman run test/api/EMM-collection.json -e test/api/EMM-render.json --bail",
+    
     "NVM-JMV-local": "newman run test/api/JMV-collection.json -e test/api/JMV-local.json --bail",
     "test-JMV-local": "start-server-and-test start http://localhost:3000 NVM-JMV-local",
     "test-JMV-render": "newman run test/api/JMV-collection.json -e test/api/JMV-render.json --bail",

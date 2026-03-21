@@ -1,10 +1,10 @@
 {
   "info": {
-    "_postman_id": "5e96a815-1f39-4835-800e-9f0135c9697d",
-    "name": "ozone-depleting-substance-consumptions",
+    "_postman_id": "1e810476-c4de-4d11-9a23-7b616ddf05c6",
+    "name": "ozone-depleting-substance-consumptions V2",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "_exporter_id": "52404851",
-    "_collection_link": "https://go.postman.co/collection/52404851-5e96a815-1f39-4835-800e-9f0135c9697d?source=collection_link"
+    "_collection_link": "https://go.postman.co/collection/52404851-1e810476-c4de-4d11-9a23-7b616ddf05c6?source=collection_link"
   },
   "item": [
     {
@@ -31,13 +31,13 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "{{base_url}}/api/v1/ozone-depleting-substance-consumptions/loadInitialData",
+          "raw": "{{base_url}}/api/v2/ozone-depleting-substance-consumptions/loadInitialData",
           "host": [
             "{{base_url}}"
           ],
           "path": [
             "api",
-            "v1",
+            "v2",
             "ozone-depleting-substance-consumptions",
             "loadInitialData"
           ]
@@ -70,13 +70,13 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "{{base_url}}/api/v1/ozone-depleting-substance-consumptions?items=2&page=2",
+          "raw": "{{base_url}}/api/v2/ozone-depleting-substance-consumptions?items=2&page=2",
           "host": [
             "{{base_url}}"
           ],
           "path": [
             "api",
-            "v1",
+            "v2",
             "ozone-depleting-substance-consumptions"
           ],
           "query": [
@@ -123,13 +123,13 @@
           "raw": "{\r\n    \"country\": \"prueba\",\r\n    \"code\": \"jpn\",\r\n    \"year\": 2013,\r\n    \"methyl_chloroform\": 0,\r\n    \"methyl_bromide\": 7,\r\n    \"hcfc\": 20569,\r\n    \"carbon_tetrachloride\": 145,\r\n    \"halon\": 0,\r\n    \"cfc\": -1813\r\n}"
         },
         "url": {
-          "raw": "{{base_url}}/api/v1/ozone-depleting-substance-consumptions?cfc=1806",
+          "raw": "{{base_url}}/api/v2/ozone-depleting-substance-consumptions?cfc=1806",
           "host": [
             "{{base_url}}"
           ],
           "path": [
             "api",
-            "v1",
+            "v2",
             "ozone-depleting-substance-consumptions"
           ],
           "query": [
@@ -172,13 +172,13 @@
           "raw": "{\r\n    \"country\": \"prueba\",\r\n    \"code\": \"jpn\",\r\n    \"year\": 2013,\r\n    \"methyl_chloroform\": 0,\r\n    \"methyl_bromide\": 7,\r\n    \"hcfc\": 20569,\r\n    \"carbon_tetrachloride\": 145,\r\n    \"halon\": 0,\r\n    \"cfc\": -1813\r\n}"
         },
         "url": {
-          "raw": "{{base_url}}/api/v1/ozone-depleting-substance-consumptions?hcfc=11717",
+          "raw": "{{base_url}}/api/v2/ozone-depleting-substance-consumptions?hcfc=11717",
           "host": [
             "{{base_url}}"
           ],
           "path": [
             "api",
-            "v1",
+            "v2",
             "ozone-depleting-substance-consumptions"
           ],
           "query": [
@@ -221,13 +221,13 @@
           "raw": "{\r\n    \"country\": \"prueba\",\r\n    \"code\": \"jpn\",\r\n    \"year\": 2013,\r\n    \"methyl_chloroform\": 0,\r\n    \"methyl_bromide\": 7,\r\n    \"hcfc\": 20569,\r\n    \"carbon_tetrachloride\": 145,\r\n    \"halon\": 0,\r\n    \"cfc\": -1813\r\n}"
         },
         "url": {
-          "raw": "{{base_url}}/api/v1/ozone-depleting-substance-consumptions?code=jpn",
+          "raw": "{{base_url}}/api/v2/ozone-depleting-substance-consumptions?code=jpn",
           "host": [
             "{{base_url}}"
           ],
           "path": [
             "api",
-            "v1",
+            "v2",
             "ozone-depleting-substance-consumptions"
           ],
           "query": [
@@ -270,13 +270,13 @@
           "raw": "{\r\n    \"country\": \"prueba\",\r\n    \"code\": \"jpn\",\r\n    \"year\": 2013,\r\n    \"methyl_chloroform\": 0,\r\n    \"methyl_bromide\": 7,\r\n    \"hcfc\": 20569,\r\n    \"carbon_tetrachloride\": 145,\r\n    \"halon\": 0,\r\n    \"cfc\": -1813\r\n}"
         },
         "url": {
-          "raw": "{{base_url}}/api/v1/ozone-depleting-substance-consumptions/year",
+          "raw": "{{base_url}}/api/v2/ozone-depleting-substance-consumptions/year",
           "host": [
             "{{base_url}}"
           ],
           "path": [
             "api",
-            "v1",
+            "v2",
             "ozone-depleting-substance-consumptions",
             "year"
           ]
@@ -308,13 +308,13 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "{{base_url}}/api/v1/ozone-depleting-substance-consumptions/japan/2013",
+          "raw": "{{base_url}}/api/v2/ozone-depleting-substance-consumptions/japan/2013",
           "host": [
             "{{base_url}}"
           ],
           "path": [
             "api",
-            "v1",
+            "v2",
             "ozone-depleting-substance-consumptions",
             "japan",
             "2013"
@@ -349,13 +349,13 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "{{base_url}}/api/v1/ozone-depleting-substance-consumptions?from=2012&to=2013",
+          "raw": "{{base_url}}/api/v2/ozone-depleting-substance-consumptions?from=2012&to=2013",
           "host": [
             "{{base_url}}"
           ],
           "path": [
             "api",
-            "v1",
+            "v2",
             "ozone-depleting-substance-consumptions"
           ],
           "query": [
@@ -398,13 +398,13 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "{{base_url}}/api/v1/ozone-depleting-substance-consumptions/japan?from=2012&to=2013",
+          "raw": "{{base_url}}/api/v2/ozone-depleting-substance-consumptions/japan?from=2012&to=2013",
           "host": [
             "{{base_url}}"
           ],
           "path": [
             "api",
-            "v1",
+            "v2",
             "ozone-depleting-substance-consumptions",
             "japan"
           ],
@@ -423,18 +423,16 @@
       "response": []
     },
     {
-      "name": "POST crear nuevo dato 405 Method Not Allowed",
+      "name": "POST crear nuevo dato 201 created",
       "event": [
         {
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test(\"Status code is 405\", () => pm.response.to.have.status(405));\r",
-              "\r",
-              "pm.test(\"Devuelve error de método no permitido\", function(){\r",
-              "    const jsonData = pm.response.json();\r",
-              "    pm.expect(jsonData).to.be.an('object');\r",
-              "    pm.expect(jsonData.error).to.include(\"Method Not Allowed\");\r",
+              "pm.test(\"Status code is 201\", () => pm.response.to.have.status(201));\r",
+              "pm.test(\"El objeto creado tiene country y year\", () => {\r",
+              "    const res = pm.response.json();\r",
+              "    pm.expect(res.message).to.include(\"creado\")\r",
               "});"
             ],
             "type": "text/javascript",
@@ -462,13 +460,13 @@
           }
         },
         "url": {
-          "raw": "{{base_url}}/api/v1/ozone-depleting-substance-consumptions",
+          "raw": "{{base_url}}/api/v2/ozone-depleting-substance-consumptions",
           "host": [
             "{{base_url}}"
           ],
           "path": [
             "api",
-            "v1",
+            "v2",
             "ozone-depleting-substance-consumptions"
           ]
         }
@@ -482,10 +480,11 @@
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test(\"Status code is 404\", () => pm.response.to.have.status(404));\r",
-              "pm.test(\"Cuerpo contiene error 404\", () => {\r",
+              "pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));\r",
+              "pm.test(\"El recurso coincide con lo pedido\", () => {\r",
               "    const res = pm.response.json();\r",
-              "    pm.expect(res.error).to.contain(\"No se encontraron\");\r",
+              "    pm.expect(res.country).to.eql(\"prueba\"); \r",
+              "    pm.expect(res.year).to.eql(2015);\r",
               "});"
             ],
             "type": "text/javascript",
@@ -498,13 +497,13 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "{{base_url}}/api/v1/ozone-depleting-substance-consumptions/prueba/2015",
+          "raw": "{{base_url}}/api/v2/ozone-depleting-substance-consumptions/prueba/2015",
           "host": [
             "{{base_url}}"
           ],
           "path": [
             "api",
-            "v1",
+            "v2",
             "ozone-depleting-substance-consumptions",
             "prueba",
             "2015"
@@ -514,18 +513,16 @@
       "response": []
     },
     {
-      "name": "POST país existente 405 Method Not Allowed",
+      "name": "POST país existente 409 conflict",
       "event": [
         {
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test(\"Status code is 405\", () => pm.response.to.have.status(405));\r",
-              "\r",
-              "pm.test(\"Devuelve error de método no permitido\", function(){\r",
-              "    const jsonData = pm.response.json();\r",
-              "    pm.expect(jsonData).to.be.an('object');\r",
-              "    pm.expect(jsonData.error).to.include(\"Method Not Allowed\");\r",
+              "pm.test(\"Status code is 409\", () => pm.response.to.have.status(409));\r",
+              "pm.test(\"Mensaje de conflicto correcto\", () => {\r",
+              "    const res = pm.response.json();\r",
+              "    pm.expect(res.error).to.contain(\"ya existe\");\r",
               "});"
             ],
             "type": "text/javascript",
@@ -547,13 +544,13 @@
           }
         },
         "url": {
-          "raw": "{{base_url}}/api/v1/ozone-depleting-substance-consumptions",
+          "raw": "{{base_url}}/api/v2/ozone-depleting-substance-consumptions",
           "host": [
             "{{base_url}}"
           ],
           "path": [
             "api",
-            "v1",
+            "v2",
             "ozone-depleting-substance-consumptions"
           ]
         }
@@ -561,18 +558,16 @@
       "response": []
     },
     {
-      "name": "POST faltan campos 405 Method Not Allowed",
+      "name": "POST faltan campos 400 Bad request",
       "event": [
         {
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test(\"Status code is 405\", () => pm.response.to.have.status(405));\r",
-              "\r",
-              "pm.test(\"Devuelve error de método no permitido\", function(){\r",
-              "    const jsonData = pm.response.json();\r",
-              "    pm.expect(jsonData).to.be.an('object');\r",
-              "    pm.expect(jsonData.error).to.include(\"Method Not Allowed\");\r",
+              "pm.test(\"Status code is 400\", () => pm.response.to.have.status(400));\r",
+              "pm.test(\"Error de estructura detectado\", () => {\r",
+              "    const res = pm.response.json();\r",
+              "    pm.expect(res.error).to.contain(\"estructura\");\r",
               "});"
             ],
             "type": "text/javascript",
@@ -600,13 +595,13 @@
           }
         },
         "url": {
-          "raw": "{{base_url}}/api/v1/ozone-depleting-substance-consumptions",
+          "raw": "{{base_url}}/api/v2/ozone-depleting-substance-consumptions",
           "host": [
             "{{base_url}}"
           ],
           "path": [
             "api",
-            "v1",
+            "v2",
             "ozone-depleting-substance-consumptions"
           ]
         }
@@ -614,18 +609,16 @@
       "response": []
     },
     {
-      "name": "PUT actualiza datos 405 Method Not Allowed",
+      "name": "PUT actualiza datos concretos 200 ok",
       "event": [
         {
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test(\"Status code is 405\", () => pm.response.to.have.status(405));\r",
-              "\r",
-              "pm.test(\"Devuelve error de método no permitido\", function(){\r",
-              "    const jsonData = pm.response.json();\r",
-              "    pm.expect(jsonData).to.be.an('object');\r",
-              "    pm.expect(jsonData.error).to.include(\"Method Not Allowed\");\r",
+              "pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));\r",
+              "pm.test(\"Mensaje de éxito en JSON\", () => {\r",
+              "    const res = pm.response.json();\r",
+              "    pm.expect(res.message).to.contain(\"correctamente\");\r",
               "});"
             ],
             "type": "text/javascript",
@@ -647,13 +640,13 @@
           }
         },
         "url": {
-          "raw": "{{base_url}}/api/v1/ozone-depleting-substance-consumptions/prueba/2015",
+          "raw": "{{base_url}}/api/v2/ozone-depleting-substance-consumptions/prueba/2015",
           "host": [
             "{{base_url}}"
           ],
           "path": [
             "api",
-            "v1",
+            "v2",
             "ozone-depleting-substance-consumptions",
             "prueba",
             "2015"
@@ -663,18 +656,16 @@
       "response": []
     },
     {
-      "name": "PUT IDs no coinciden 405 Method Not Allowed",
+      "name": "PUT IDs no coinciden 400 bad request",
       "event": [
         {
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test(\"Status code is 405\", () => pm.response.to.have.status(405));\r",
-              "\r",
-              "pm.test(\"Devuelve error de método no permitido\", function(){\r",
-              "    const jsonData = pm.response.json();\r",
-              "    pm.expect(jsonData).to.be.an('object');\r",
-              "    pm.expect(jsonData.error).to.include(\"Method Not Allowed\");\r",
+              "pm.test(\"Status code is 400\", () => pm.response.to.have.status(400));\r",
+              "pm.test(\"Error de coincidencia de URL/Body\", () => {\r",
+              "    const res = pm.response.json();\r",
+              "    pm.expect(res.error).to.contain(\"no coinciden\");\r",
               "});"
             ],
             "type": "text/javascript",
@@ -696,13 +687,13 @@
           }
         },
         "url": {
-          "raw": "{{base_url}}/api/v1/ozone-depleting-substance-consumptions/japan/2013",
+          "raw": "{{base_url}}/api/v2/ozone-depleting-substance-consumptions/japan/2013",
           "host": [
             "{{base_url}}"
           ],
           "path": [
             "api",
-            "v1",
+            "v2",
             "ozone-depleting-substance-consumptions",
             "japan",
             "2013"
@@ -712,18 +703,16 @@
       "response": []
     },
     {
-      "name": "PUT a una colección 405 Method Not Allowed",
+      "name": "PUT a una colección 405 method not allowed",
       "event": [
         {
           "listen": "test",
           "script": {
             "exec": [
               "pm.test(\"Status code is 405\", () => pm.response.to.have.status(405));\r",
-              "\r",
-              "pm.test(\"Devuelve error de método no permitido\", function(){\r",
-              "    const jsonData = pm.response.json();\r",
-              "    pm.expect(jsonData).to.be.an('object');\r",
-              "    pm.expect(jsonData.error).to.include(\"Method Not Allowed\");\r",
+              "pm.test(\"Método no permitido detectado\", () => {\r",
+              "    const res = pm.response.json();\r",
+              "    pm.expect(res.error).to.contain(\"Method Not Allowed\");\r",
               "});"
             ],
             "type": "text/javascript",
@@ -745,13 +734,13 @@
           }
         },
         "url": {
-          "raw": "{{base_url}}/api/v1/ozone-depleting-substance-consumptions",
+          "raw": "{{base_url}}/api/v2/ozone-depleting-substance-consumptions",
           "host": [
             "{{base_url}}"
           ],
           "path": [
             "api",
-            "v1",
+            "v2",
             "ozone-depleting-substance-consumptions"
           ]
         }
@@ -766,11 +755,9 @@
           "script": {
             "exec": [
               "pm.test(\"Status code is 405\", () => pm.response.to.have.status(405));\r",
-              "\r",
-              "pm.test(\"Devuelve error de método no permitido\", function(){\r",
-              "    const jsonData = pm.response.json();\r",
-              "    pm.expect(jsonData).to.be.an('object');\r",
-              "    pm.expect(jsonData.error).to.include(\"Method Not Allowed\");\r",
+              "pm.test(\"Método no permitido detectado\", () => {\r",
+              "    const res = pm.response.json();\r",
+              "    pm.expect(res.error).to.contain(\"Method Not Allowed\");\r",
               "});"
             ],
             "type": "text/javascript",
@@ -787,35 +774,33 @@
           "raw": ""
         },
         "url": {
-          "raw": "{{base_url}}/api/v1/ozone-depleting-substance-consumptions/japan/2013",
+          "raw": "{{base_url}}/api/v2/ozone-depleting-substance-consumptions/japan",
           "host": [
             "{{base_url}}"
           ],
           "path": [
             "api",
-            "v1",
+            "v2",
             "ozone-depleting-substance-consumptions",
-            "japan",
-            "2013"
+            "japan"
           ]
         }
       },
       "response": []
     },
     {
-      "name": "DEL recurso creado 405 Method Not Allowed",
+      "name": "DEL recurso creado 200 ok",
       "event": [
         {
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test(\"Status code is 405\", () => pm.response.to.have.status(405));\r",
-              "\r",
-              "pm.test(\"Devuelve error de método no permitido\", function(){\r",
-              "    const jsonData = pm.response.json();\r",
-              "    pm.expect(jsonData).to.be.an('object');\r",
-              "    pm.expect(jsonData.error).to.include(\"Method Not Allowed\");\r",
-              "});"
+              "pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));\r",
+              "pm.test(\"Elemento eliminado\", () => {\r",
+              "    const res = pm.response.json();\r",
+              "    pm.expect(res.message).to.include(\"eliminado\");\r",
+              "});\r",
+              ""
             ],
             "type": "text/javascript",
             "packages": {},
@@ -831,13 +816,13 @@
           "raw": ""
         },
         "url": {
-          "raw": "{{base_url}}/api/v1/ozone-depleting-substance-consumptions/prueba/2015",
+          "raw": "{{base_url}}/api/v2/ozone-depleting-substance-consumptions/prueba/2015",
           "host": [
             "{{base_url}}"
           ],
           "path": [
             "api",
-            "v1",
+            "v2",
             "ozone-depleting-substance-consumptions",
             "prueba",
             "2015"
@@ -876,13 +861,13 @@
           "raw": ""
         },
         "url": {
-          "raw": "{{base_url}}/api/v1/ozone-depleting-substance-consumptions/prueba/2015",
+          "raw": "{{base_url}}/api/v2/ozone-depleting-substance-consumptions/prueba/2015",
           "host": [
             "{{base_url}}"
           ],
           "path": [
             "api",
-            "v1",
+            "v2",
             "ozone-depleting-substance-consumptions",
             "prueba",
             "2015"
@@ -892,18 +877,16 @@
       "response": []
     },
     {
-      "name": "DEL todos los recursos 405 Method Not Allowed",
+      "name": "DEL todos los recursos 200 ok",
       "event": [
         {
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test(\"Status code is 405\", () => pm.response.to.have.status(405));\r",
-              "\r",
-              "pm.test(\"Devuelve error de método no permitido\", function(){\r",
-              "    const jsonData = pm.response.json();\r",
-              "    pm.expect(jsonData).to.be.an('object');\r",
-              "    pm.expect(jsonData.error).to.include(\"Method Not Allowed\");\r",
+              "pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));\r",
+              "pm.test(\"Confirmación de borrado total\", () => {\r",
+              "    const res = pm.response.json();\r",
+              "    pm.expect(res.message).to.contain(\"eliminados\");\r",
               "});"
             ],
             "type": "text/javascript",
@@ -920,13 +903,13 @@
           "raw": ""
         },
         "url": {
-          "raw": "{{base_url}}/api/v1/ozone-depleting-substance-consumptions",
+          "raw": "{{base_url}}/api/v2/ozone-depleting-substance-consumptions",
           "host": [
             "{{base_url}}"
           ],
           "path": [
             "api",
-            "v1",
+            "v2",
             "ozone-depleting-substance-consumptions"
           ]
         }
