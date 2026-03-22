@@ -46,35 +46,16 @@ export function loadBackEnd(app) {
 
     // ------------- FUNCIONES AUXILIARES -------------
     
-    // Función para insertar múltiples documentos de forma síncrona
     function loadInitialDataHandler(db, res) {
-        // 1. Borramos TODO primero para asegurar un estado limpio
-        db.remove({}, { multi: true }, (err, numRemoved) => {
+        db.remove({}, { multi: true }, (err) => {
             if (err) return res.status(500).json({ error: "Error limpiando DB" });
 
-            // 2. Usamos una copia limpia de los datos
+            // Usamos copia limpia para evitar IDs residuales
             const datosInsertar = JSON.parse(JSON.stringify(initialData));
 
-            // 3. NeDB acepta arrays directamente, no hace falta insertMultiple
             db.insert(datosInsertar, (err, newDocs) => {
-                if (err) {
-                    console.error("ERROR REAL EN CONSOLA:", err);
-                    return res.status(500).json({ error: "Insert error", detalle: err.message });
-                }
-                // 4. Devolvemos los datos sin el _id para que el test sea feliz
-                const result = newDocs.map(({ _id, ...rest }) => rest);
-                res.status(200).json(result);
-            });
-        });
-    }
-
-    function loadInitialDataHandler(db, res) {
-        db.remove({}, { multi: true }, (err) => { // Limpiamos primero
-            if (err) return res.status(500).json({ error: "Error limpiando DB" });
-            
-            // NeDB inserta arrays directamente. No uses insertMultiple manual.
-            db.insert(initialData, (err, newDocs) => {
                 if (err) return res.status(500).json({ error: "Insert error" });
+                
                 const result = newDocs.map(({ _id, ...rest }) => rest);
                 res.status(200).json(result);
             });
@@ -83,18 +64,20 @@ export function loadBackEnd(app) {
 
     function getAllHandler(db, req, res) {
         let query = {};
+        
+        // Filtrado por campos
         if (req.query.country) query.country = req.query.country;
         if (req.query.year) query.year = parseInt(req.query.year);
         if (req.query.crop_type) query.crop_type = req.query.crop_type;
-        if (req.query.average_temperature_c) query.average_temperature_c = parseFloat(req.query.average_temperature_c);
-        if (req.query.total_precipitation_mm) query.total_precipitation_mm = parseFloat(req.query.total_precipitation_mm);
 
+        // Búsqueda por rango de años
         if (req.query.from || req.query.to) {
             query.year = {};
             if (req.query.from) query.year.$gte = parseInt(req.query.from);
             if (req.query.to) query.year.$lte = parseInt(req.query.to);
         }
 
+        // PAGINACIÓN (Arregla el error "expected 10 to be at most 2")
         let offset = parseInt(req.query.offset) || 0;
         let limit = parseInt(req.query.limit) || 1000;
 
@@ -119,26 +102,22 @@ export function loadBackEnd(app) {
         const newData = req.body;
         const requestKeys = Object.keys(newData);
         const hasRequiredKeys = campos.every(key => requestKeys.includes(key));
+
         if (!hasRequiredKeys || requestKeys.length !== campos.length) {
             return res.status(400).json({ error: "BAD REQUEST" });
         }
+
         newData.year = parseInt(newData.year);
         newData.average_temperature_c = parseFloat(newData.average_temperature_c);
         newData.total_precipitation_mm = parseFloat(newData.total_precipitation_mm);
 
-        db.find({ country: newData.country, year: newData.year }, (err, docs) => {
-            if (err) {
-                console.error("Error checking existing:", err);
-                return res.status(500).json({ error: "DB error" });
-            }
-            if (docs.length > 0) return res.status(409).json({ error: "CONFLICT" });
+        db.findOne({ country: newData.country, year: newData.year }, (err, doc) => {
+            if (err) return res.status(500).json({ error: "DB error" });
+            if (doc) return res.status(409).json({ error: "CONFLICT" });
             
-            db.insert(newData, (err, doc) => {
-                if (err) {
-                    console.error("Error inserting:", err);
-                    return res.status(500).json({ error: "Insert error", detalle: err.message });
-                }
-                const { _id, ...rest } = doc;
+            db.insert(newData, (err, insertedDoc) => {
+                if (err) return res.status(500).json({ error: "Insert error" });
+                const { _id, ...rest } = insertedDoc;
                 res.status(201).json(rest);
             });
         });
@@ -148,7 +127,6 @@ export function loadBackEnd(app) {
         const { country, year } = req.params;
         const updatedData = req.body;
         
-        // Verificar que los IDs coinciden
         if (updatedData.country !== country || parseInt(updatedData.year) !== parseInt(year)) {
             return res.status(400).json({ error: "BAD REQUEST: ID mismatch" });
         }
@@ -156,10 +134,7 @@ export function loadBackEnd(app) {
         updatedData.year = parseInt(updatedData.year);
         
         db.update({ country: country, year: parseInt(year) }, { $set: updatedData }, {}, (err, numReplaced) => {
-            if (err) {
-                console.error("Error updating:", err);
-                return res.status(500).json({ error: "Update error" });
-            }
+            if (err) return res.status(500).json({ error: "Update error" });
             if (numReplaced === 0) return res.status(404).json({ error: "NOT FOUND" });
             res.status(200).json({ message: "OK" });
         });
@@ -168,21 +143,15 @@ export function loadBackEnd(app) {
     function deleteOneHandler(db, req, res) {
         const { country, year } = req.params;
         db.remove({ country: country, year: parseInt(year) }, {}, (err, numRemoved) => {
-            if (err) {
-                console.error("Error deleting:", err);
-                return res.status(500).json({ error: "Delete error" });
-            }
+            if (err) return res.status(500).json({ error: "Delete error" });
             if (numRemoved === 0) return res.status(404).json({ error: "NOT FOUND" });
             res.status(200).json({ message: "OK" });
         });
     }
 
     function deleteAllHandler(db, req, res) {
-        db.remove({}, { multi: true }, (err, numRemoved) => {
-            if (err) {
-                console.error("Error deleting all:", err);
-                return res.status(500).json({ error: "Delete error" });
-            }
+        db.remove({}, { multi: true }, (err) => {
+            if (err) return res.status(500).json({ error: "Delete error" });
             res.status(200).json({ message: "OK" });
         });
     }
@@ -203,6 +172,8 @@ export function loadBackEnd(app) {
         app.put(vBase + "/:country/:year", (req, res) => putHandler(db, req, res));
         app.delete(vBase + "/:country/:year", (req, res) => deleteOneHandler(db, req, res));
         app.delete(vBase, (req, res) => deleteAllHandler(db, req, res));
+        
+        // Bloqueo de métodos no permitidos
         app.put(vBase, methodNotAllowed);
         app.post(vBase + "/:country/:year", methodNotAllowed);
     });
