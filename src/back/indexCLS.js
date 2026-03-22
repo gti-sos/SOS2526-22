@@ -46,31 +46,26 @@ export function loadBackEnd(app) {
 
     // ------------- FUNCIONES AUXILIARES -------------
     
- function loadInitialDataHandler(db, res) {
-    console.log("--- Intento de carga de datos iniciales ---");
-    
-    // 1. Intentamos limpiar
-    db.remove({}, { multi: true }, (err, numRemoved) => {
-        if (err) {
-            console.error("ERROR AL LIMPIAR DB:", err);
-            return res.status(500).json({ error: "Error limpiando DB", detalle: err.message });
-        }
-        console.log("DB limpia. Registros borrados:", numRemoved);
-
-        // 2. Intentamos insertar
-        const datosInsertar = JSON.parse(JSON.stringify(initialData));
-        db.insert(datosInsertar, (err, newDocs) => {
+    function loadInitialDataHandler(db, res) {
+        db.remove({}, { multi: true }, (err) => {
             if (err) {
-                // AQUÍ VERÁS EL ERROR REAL EN TU TERMINAL
-                console.error("FALTO CRÍTICO AL INSERTAR:", err); 
-                return res.status(500).json({ error: "Insert error", mensaje_real: err.message });
+                console.error("ERROR AL LIMPIAR DB:", err);
+                return res.status(500).json({ error: "Error limpiando DB" });
             }
-            console.log("Inserción exitosa. Documentos cargados:", newDocs.length);
-            const result = newDocs.map(({ _id, ...rest }) => rest);
-            res.status(200).json(result);
+
+            const datosInsertar = JSON.parse(JSON.stringify(initialData));
+
+            db.insert(datosInsertar, (err, newDocs) => {
+                if (err) {
+                    // ESTA LÍNEA TE DIRÁ EL ERROR REAL EN EL CMD
+                    console.error("DETALLE DEL ERROR DE INSERCIÓN:", err); 
+                    return res.status(500).json({ error: "Insert error", mensaje: err.message });
+                }
+                const result = newDocs.map(({ _id, ...rest }) => rest);
+                res.status(200).json(result);
+            });
         });
-    });
-}
+    }
     function getAllHandler(db, req, res) {
         let query = {};
         
