@@ -1,14 +1,15 @@
 <script>
     // @ts-nocheck
     import { dev } from "$app/environment";
+    import { onMount } from 'svelte';
 
-    // --- ESTADOS ---
+    // --- ESTADOS REACTIVOS (Svelte 5) ---
     let recursos = $state([]);
     let loading = $state(false);
     let error = $state(null);
     let successMessage = $state(null);
 
-    // Paginación adaptada a offset/limit
+    // Paginación
     let currentPage = $state(1);
     let itemsPerPage = $state(5);
 
@@ -18,308 +19,255 @@
     let showCreateForm = $state(false);
 
     // Datos creación
-    let newYear = $state('');
-    let newCountry = $state('');
-    let newCropType = $state('');
-    let newAverageTemperatureC = $state('');
-    let newTotalPrecipitationMm = $state('');
+    let newForm = $state({ country: '', year: '', crop_type: '', average_temperature_c: '', total_precipitation_mm: '' });
 
     // Datos edición
-    let editForm = $state({
-        year: '', country: '', crop_type: '', average_temperature_c: '', total_precipitation_mm: ''
-    });
+    let editForm = $state({ country: '', year: '', crop_type: '', average_temperature_c: '', total_precipitation_mm: '' });
 
     // Búsquedas
     let searchField = $state('country');
     let searchValue = $state('');
-    let searchMode = $state(false);
-
-    // Búsqueda por rango
     let fromYear = $state('');
     let toYear = $state('');
+    let searchMode = $state(false);
 
-    let concreteCountry = $state('');
-    let concreteYear = $state('');
-    let concreteMode = $state(false);
-
-    // --- CONFIGURACIÓN API (Apuntando a V2 como dice tu backend) ---
+    // --- CONFIGURACIÓN API ---
     let API_BASE = '/api/v2/global-agriculture-climate-impacts';
-    if (dev) {
-        API_BASE = 'http://localhost:3000' + API_BASE; 
-    }
+    if (dev) { API_BASE = 'http://localhost:3000' + API_BASE; }
 
     function limpiarMensajes() {
         setTimeout(() => { error = null; successMessage = null; }, 5000);
     }
 
-    // --- FUNCIONES CRUD ---
-    async function cargarRecursos(page = 1, forceMessage = false) {
-        searchMode = false; concreteMode = false; showCreateForm = false; 
-        loading = true; error = null; currentPage = page;
-        
+    // --- FUNCIONES CORE ---
+
+    async function cargarRecursos(page = 1) {
+        loading = true; error = null; searchMode = false;
+        currentPage = page;
         let offset = (page - 1) * itemsPerPage;
         
         try {
             const res = await fetch(`${API_BASE}?offset=${offset}&limit=${itemsPerPage}`);
             if (!res.ok) throw new Error(`Error ${res.status}`);
             recursos = await res.json();
-            if (forceMessage) successMessage = 'Lista actualizada.';
-        } catch (e) {
-            error = 'Error de conexión. ¿Está encendido el backend?';
-        } finally {
-            loading = false; limpiarMensajes();
-        }
+        } catch (e) { error = "No se pudo conectar con el servidor."; }
+        finally { loading = false; }
     }
 
     async function cargarEjemplo() {
-        loading = true; error = null;
         try {
-            await fetch(API_BASE, { method: 'DELETE' }); // Limpiamos primero
             const res = await fetch(API_BASE + '/loadInitialData');
-            if (!res.ok) throw new Error('Fallo al cargar ejemplos');
-            successMessage = 'Datos de ejemplo cargados (v2).';
-            await cargarRecursos(1);
-        } catch (e) { error = e.message; } finally { loading = false; limpiarMensajes(); }
+            if (res.ok) {
+                successMessage = "Datos iniciales cargados.";
+                await cargarRecursos(1);
+            }
+        } catch (e) { error = "Error al cargar ejemplos."; }
+        limpiarMensajes();
     }
 
-    async function buscarPorCampo() {
-        if (!searchValue.trim()) { error = 'Introduce un valor para buscar.'; return; }
-        searchMode = true; concreteMode = false; loading = true; error = null;
-        try {
-            const res = await fetch(`${API_BASE}?${searchField}=${encodeURIComponent(searchValue)}`);
-            recursos = await res.json();
-            if (recursos.length === 0) error = `No hay resultados para ${searchField} = "${searchValue}".`;
-        } catch (e) { error = 'Error en la búsqueda.'; recursos = []; } finally { loading = false; limpiarMensajes(); }
-    }
-
-    async function buscarPorRango() {
-        if (!fromYear && !toYear) { error = 'Introduce al menos un año en el rango.'; return; }
-        searchMode = true; concreteMode = false; loading = true; error = null;
-        let query = [];
-        if (fromYear) query.push(`from=${fromYear}`);
-        if (toYear) query.push(`to=${toYear}`);
+    // --- BÚSQUEDAS (GET con Query Params) ---
+    async function ejecutarBusqueda() {
+        loading = true; error = null; searchMode = true;
+        let url = `${API_BASE}?`;
         
+        if (searchValue) url += `${searchField}=${encodeURIComponent(searchValue.toLowerCase())}&`;
+        if (fromYear) url += `from=${fromYear}&`;
+        if (toYear) url += `to=${toYear}&`;
+
         try {
-            const res = await fetch(`${API_BASE}?${query.join('&')}`);
+            const res = await fetch(url);
             recursos = await res.json();
-            if (recursos.length === 0) error = 'No hay resultados en ese rango de años.';
-        } catch (e) { error = 'Error en la búsqueda por rango.'; } finally { loading = false; limpiarMensajes(); }
+            if (recursos.length === 0) error = "No se encontraron resultados.";
+        } catch (e) { error = "Error en la búsqueda."; }
+        finally { loading = false; limpiarMensajes(); }
     }
 
-    async function buscarConcreto() {
-        if (!concreteCountry || !concreteYear) { error = 'Faltan datos.'; return; }
-        concreteMode = true; searchMode = false; loading = true; error = null;
-        try {
-            const res = await fetch(`${API_BASE}/${encodeURIComponent(concreteCountry)}/${concreteYear}`);
-            if (!res.ok) throw new Error('No encontrado');
-            recursos = [await res.json()];
-        } catch (e) { error = 'Recurso no encontrado.'; recursos = []; } finally { loading = false; limpiarMensajes(); }
-    }
-
-    async function crearRecurso(event) {
-        event.preventDefault(); loading = true; error = null;
-        const payload = {
-            country: newCountry, year: parseInt(newYear), crop_type: newCropType,
-            average_temperature_c: parseFloat(newAverageTemperatureC), total_precipitation_mm: parseFloat(newTotalPrecipitationMm)
-        };
+    // --- CRUD OPERACIONES ---
+    async function crearRecurso() {
+        const payload = { ...newForm, year: parseInt(newForm.year), 
+            average_temperature_c: parseFloat(newForm.average_temperature_c), 
+            total_precipitation_mm: parseFloat(newForm.total_precipitation_mm) };
 
         try {
-            const res = await fetch(API_BASE, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-            if (!res.ok) throw new Error('Error al crear: Puede que ya exista o falten datos.');
+            const res = await fetch(API_BASE, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (res.status === 409) throw new Error("El recurso ya existe.");
+            if (!res.ok) throw new Error("Error en el formato de datos.");
             
-            newYear = newCountry = newCropType = newAverageTemperatureC = newTotalPrecipitationMm = '';
-            successMessage = 'Recurso creado correctamente.'; showCreateForm = false; await cargarRecursos(1);
-        } catch (e) { error = e.message; } finally { loading = false; limpiarMensajes(); }
+            successMessage = "Creado con éxito.";
+            showCreateForm = false;
+            newForm = { country: '', year: '', crop_type: '', average_temperature_c: '', total_precipitation_mm: '' };
+            await cargarRecursos(1);
+        } catch (e) { error = e.message; }
+        limpiarMensajes();
     }
 
     function iniciarEdicion(recurso) {
-        editando = recurso; editForm = { ...recurso }; showEditForm = true;
-        setTimeout(() => document.getElementById('edit-form')?.scrollIntoView({ behavior: 'smooth' }), 100);
+        editando = { ...recurso };
+        editForm = { ...recurso };
+        showEditForm = true;
+        showCreateForm = false;
     }
 
-    async function guardarEdicion(event) {
-        event.preventDefault(); loading = true; error = null;
-        const payload = {
-            country: editForm.country, year: parseInt(editForm.year), crop_type: editForm.crop_type,
-            average_temperature_c: parseFloat(editForm.average_temperature_c), total_precipitation_mm: parseFloat(editForm.total_precipitation_mm)
-        };
+    async function guardarEdicion() {
+        const payload = { ...editForm, year: parseInt(editForm.year), 
+            average_temperature_c: parseFloat(editForm.average_temperature_c), 
+            total_precipitation_mm: parseFloat(editForm.total_precipitation_mm) };
 
         try {
-            const res = await fetch(`${API_BASE}/${editando.country}/${editando.year}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-            if (!res.ok) throw new Error('Error al actualizar.');
-            successMessage = 'Recurso actualizado.'; showEditForm = false; editando = null; await cargarRecursos(currentPage);
-        } catch (e) { error = e.message; } finally { loading = false; limpiarMensajes(); }
+            const res = await fetch(`${API_BASE}/${editando.country}/${editando.year}`, {
+                method: 'PUT', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (res.ok) {
+                successMessage = "Actualizado correctamente.";
+                showEditForm = false;
+                await cargarRecursos(currentPage);
+            } else { throw new Error("Error al actualizar."); }
+        } catch (e) { error = e.message; }
+        limpiarMensajes();
     }
 
-    async function eliminarRecurso(recurso) {
-        if (!confirm(`¿Eliminar ${recurso.country} (${recurso.year})?`)) return;
-        loading = true; error = null;
+    async function eliminarUno(recurso) {
+        if (!confirm("¿Borrar este registro?")) return;
         try {
-            await fetch(`${API_BASE}/${recurso.country}/${recurso.year}`, { method: 'DELETE' });
-            successMessage = 'Recurso eliminado.'; await cargarRecursos(currentPage);
-        } catch (e) { error = 'Error al eliminar.'; } finally { loading = false; limpiarMensajes(); }
+            const res = await fetch(`${API_BASE}/${recurso.country}/${recurso.year}`, { method: 'DELETE' });
+            if (res.ok) {
+                successMessage = "Eliminado.";
+                await cargarRecursos(currentPage);
+            }
+        } catch (e) { error = "Error al eliminar."; }
+        limpiarMensajes();
     }
 
-    async function eliminarTodos() {
-        if (!confirm('¿Seguro que quieres eliminar TODOS los recursos de v2?')) return;
+    async function borrarTodo() {
+        if (!confirm("¡Atención! Vas a borrar TODOS los datos de la V2. ¿Continuar?")) return;
         try {
             await fetch(API_BASE, { method: 'DELETE' });
-            successMessage = 'Todos eliminados.'; await cargarRecursos(1);
-        } catch (e) {}
+            successMessage = "Base de datos vaciada.";
+            recursos = [];
+        } catch (e) { error = "Error al vaciar."; }
+        limpiarMensajes();
     }
 
-    cargarRecursos(1);
+    onMount(() => cargarRecursos(1));
 </script>
 
-{#if successMessage} <div class="msg msg-success">{successMessage}</div> {/if}
-{#if error} <div class="msg msg-error">{error}</div> {/if}
-
 <div class="container">
-    <header class="header">
-        <h1>🌱 Panel de Agricultura y Clima</h1>
-        <p class="subtitle">Conectado a API v2</p>
-    </header>
+    <h1>🌾 Gestión de Agricultura v2</h1>
 
-    <section class="card">
-        <h2>🔍 Búsquedas y Filtros</h2>
+    {#if successMessage} <div class="msg success">{successMessage}</div> {/if}
+    {#if error} <div class="msg error">{error}</div> {/if}
+
+    <section class="card search-box">
+        <h3>🔍 Buscador Avanzado</h3>
         <div class="search-grid">
-            <div class="search-item">
-                <label>Búsqueda General</label>
-                <div class="input-group">
-                    <select bind:value={searchField}>
-                        <option value="country">País</option>
-                        <option value="crop_type">Tipo de Cultivo</option>
-                    </select>
-                    <input type="text" bind:value={searchValue} placeholder="Valor" />
-                    <button onclick={buscarPorCampo} class="btn-primary">Buscar</button>
-                </div>
-            </div>
-
-            <div class="search-item">
-                <span style="display:block; margin-bottom: 5px; font-weight: bold;">Filtrar por rango de Años</span>
-                <div class="input-group">
-                    <input type="number" bind:value={fromYear} placeholder="Desde" />
-                    <input type="number" bind:value={toYear} placeholder="Hasta" />
-                    <button onclick={buscarPorRango} class="btn-primary">Filtrar</button>
-                </div>
-            </div>
-
-            <div class="search-item">
-                <label>Recurso Específico</label>
-                <div class="input-group">
-                    <input type="text" bind:value={concreteCountry} placeholder="País" />
-                    <input type="number" bind:value={concreteYear} placeholder="Año" />
-                    <button onclick={buscarConcreto} class="btn-primary">Buscar</button>
-                </div>
-            </div>
+            <select bind:value={searchField}>
+                <option value="country">País</option>
+                <option value="crop_type">Cultivo</option>
+            </select>
+            <input type="text" bind:value={searchValue} placeholder="Escribe aquí...">
+            <input type="number" bind:value={fromYear} placeholder="Año Desde">
+            <input type="number" bind:value={toYear} placeholder="Año Hasta">
+            <button onclick={ejecutarBusqueda} class="btn-search">Buscar</button>
+            {#if searchMode}
+                <button onclick={() => cargarRecursos(1)} class="btn-clear">Limpiar</button>
+            {/if}
         </div>
-        {#if searchMode || concreteMode}
-            <div style="text-align: center; margin-top: 15px;">
-                <button onclick={() => cargarRecursos(1)} class="btn-secondary">🗂️ Quitar filtros y ver todo</button>
-            </div>
-        {/if}
     </section>
 
-    <div class="action-bar">
-        <button onclick={cargarEjemplo} class="btn-sample">📥 Cargar Ejemplos</button>
-        <button onclick={() => { showCreateForm = !showCreateForm; }} class="btn-create">
-            {showCreateForm ? '✖️ Cerrar Formulario' : '➕ Nuevo recurso'}
+    <div class="top-buttons">
+        <button onclick={cargarEjemplo} class="btn-load">Cargar Ejemplos</button>
+        <button onclick={() => {showCreateForm = !showCreateForm; showEditForm = false;}} class="btn-new">
+            {showCreateForm ? 'Cerrar' : 'Nuevo Registro'}
         </button>
-        <button onclick={eliminarTodos} class="btn-danger">🗑️ Borrar Todos</button>
+        <button onclick={borrarTodo} class="btn-delete-all">Borrar Todo</button>
     </div>
 
     {#if showCreateForm}
-        <section class="card create-card">
-            <h2>➕ Añadir Recurso</h2>
-            <form onsubmit={crearRecurso} class="form-grid">
-                <input type="text" bind:value={newCountry} placeholder="País" required />
-                <input type="number" bind:value={newYear} placeholder="Año" required />
-                <input type="text" bind:value={newCropType} placeholder="Cultivo" required />
-                <input type="number" step="any" bind:value={newAverageTemperatureC} placeholder="Temp (°C)" required />
-                <input type="number" step="any" bind:value={newTotalPrecipitationMm} placeholder="Precipitación (mm)" required />
-                <button type="submit" class="btn-submit">Guardar</button>
-            </form>
-        </section>
+        <div class="card form-card">
+            <h3>➕ Nuevo Registro</h3>
+            <div class="form-inputs">
+                <input bind:value={newForm.country} placeholder="País">
+                <input type="number" bind:value={newForm.year} placeholder="Año">
+                <input bind:value={newForm.crop_type} placeholder="Cultivo">
+                <input type="number" step="any" bind:value={newForm.average_temperature_c} placeholder="Temp">
+                <input type="number" step="any" bind:value={newForm.total_precipitation_mm} placeholder="Precip">
+                <button onclick={crearRecurso} class="btn-save">Guardar</button>
+            </div>
+        </div>
     {/if}
 
-    {#if showEditForm && editando}
-        <section id="edit-form" class="card edit-card">
-            <h2>✏️ Editando: {editando.country} ({editando.year})</h2>
-            <form onsubmit={guardarEdicion} class="form-grid">
-                <input type="text" bind:value={editForm.country} disabled title="El país no se puede editar" />
-                <input type="number" bind:value={editForm.year} disabled title="El año no se puede editar" />
-                <input type="text" bind:value={editForm.crop_type} required />
-                <input type="number" step="any" bind:value={editForm.average_temperature_c} required />
-                <input type="number" step="any" bind:value={editForm.total_precipitation_mm} required />
-                <div style="grid-column: 1/-1; display:flex; gap:10px;">
-                    <button type="submit" class="btn-submit" style="flex:1;">Guardar cambios</button>
-                    <button type="button" onclick={() => showEditForm = false} class="btn-secondary" style="flex:1;">Cancelar</button>
-                </div>
-            </form>
-        </section>
+    {#if showEditForm}
+        <div class="card form-card edit">
+            <h3>✏️ Editando: {editando.country}</h3>
+            <div class="form-inputs">
+                <input value={editForm.country} disabled class="locked">
+                <input value={editForm.year} disabled class="locked">
+                <input bind:value={editForm.crop_type} placeholder="Cultivo">
+                <input type="number" step="any" bind:value={editForm.average_temperature_c} placeholder="Temp">
+                <input type="number" step="any" bind:value={editForm.total_precipitation_mm} placeholder="Precip">
+                <button onclick={guardarEdicion} class="btn-save">Actualizar</button>
+                <button onclick={() => showEditForm = false} class="btn-clear">Cancelar</button>
+            </div>
+        </div>
     {/if}
 
     <section class="card">
-        {#if loading} <p>Cargando...</p>
-        {:else if recursos.length === 0} <p class="empty">No hay datos.</p>
-        {:else}
-            <div style="overflow-x: auto;">
-                <table class="table">
-                    <thead><tr><th>País</th><th>Año</th><th>Cultivo</th><th>Temp (°C)</th><th>Precip (mm)</th><th>Acciones</th></tr></thead>
-                    <tbody>
-                        {#each recursos as recurso}
-                            <tr>
-                                <td>{recurso.country}</td><td>{recurso.year}</td><td>{recurso.crop_type}</td>
-                                <td>{recurso.average_temperature_c}</td><td>{recurso.total_precipitation_mm}</td>
-                                <td class="action-cell">
-                                    <button onclick={() => iniciarEdicion(recurso)} class="btn-edit">✏️</button>
-                                    <a href="/global-agriculture-climate-impacts/{recurso.country}/{recurso.year}" class="btn-link">🔗</a>
-                                    <button onclick={() => eliminarRecurso(recurso)} class="btn-delete">❌</button>
-                                </td>
-                            </tr>
-                        {/each}
-                    </tbody>
-                </table>
+        <table>
+            <thead>
+                <tr>
+                    <th>País</th><th>Año</th><th>Cultivo</th><th>Temp</th><th>Precip</th><th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {#each recursos as r}
+                    <tr>
+                        <td>{r.country}</td><td>{r.year}</td><td>{r.crop_type}</td>
+                        <td>{r.average_temperature_c}º</td><td>{r.total_precipitation_mm}mm</td>
+                        <td>
+                            <button onclick={() => iniciarEdicion(r)} class="btn-icon">✏️</button>
+                            <button onclick={() => eliminarUno(r)} class="btn-icon">🗑️</button>
+                        </td>
+                    </tr>
+                {/each}
+            </tbody>
+        </table>
+
+        {#if !searchMode}
+            <div class="pagination">
+                <button disabled={currentPage === 1} onclick={() => cargarRecursos(currentPage - 1)}>Ant.</button>
+                <span>Pág {currentPage}</span>
+                <button disabled={recursos.length < itemsPerPage} onclick={() => cargarRecursos(currentPage + 1)}>Sig.</button>
             </div>
-            {#if !searchMode && !concreteMode}
-                <div class="pagination">
-                    <button disabled={currentPage === 1} onclick={() => cargarRecursos(currentPage - 1)}>Anterior</button>
-                    <span>Página {currentPage}</span>
-                    <button disabled={recursos.length < itemsPerPage} onclick={() => cargarRecursos(currentPage + 1)}>Siguiente</button>
-                </div>
-            {/if}
         {/if}
     </section>
 </div>
 
 <style>
-    :root { --primary: #2c7da0; --secondary: #2a9d8f; --danger: #e63946; }
-    .container { max-width: 1000px; margin: 0 auto; padding: 20px; font-family: sans-serif; }
-    .header { text-align: center; margin-bottom: 20px; }
-    .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
-    .search-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; }
-    .input-group { display: flex; gap: 5px; margin-top: 5px; }
-    .input-group input, .input-group select { flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-    .action-bar { display: flex; gap: 10px; margin-bottom: 20px; justify-content: center; flex-wrap: wrap; }
-    button, .btn-link { padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; color: white; text-decoration: none;}
-    button:hover, .btn-link:hover { opacity: 0.9; }
-    button:disabled { background: #ccc !important; cursor: not-allowed; }
-    .btn-primary, .btn-submit { background: var(--primary); }
-    .btn-secondary { background: #6c757d; }
-    .btn-sample { background: var(--secondary); }
-    .btn-create { background: #4caf50; }
-    .btn-danger, .btn-delete { background: var(--danger); }
-    .btn-edit { background: #ff9800; }
-    .btn-link { background: #8e44ad; padding: 8px 12px; }
-    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; align-items: center; }
-    .form-grid input { padding: 10px; border: 1px solid #ccc; border-radius: 4px; width: 100%; box-sizing: border-box;}
-    .table { width: 100%; border-collapse: collapse; white-space: nowrap; }
-    .table th, .table td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-    .table th { background: var(--primary); color: white; }
-    .table tr:hover { background-color: #f9f9f9; }
-    .action-cell { display: flex; gap: 5px; }
-    .msg { padding: 15px; margin-bottom: 20px; border-radius: 4px; text-align: center; font-weight: bold; }
-    .msg-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-    .msg-error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-    .pagination { display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 15px; }
+    .container { max-width: 900px; margin: auto; padding: 20px; font-family: 'Segoe UI', sans-serif; }
+    .card { background: #fdfdfd; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; border: 1px solid #eee; }
+    .search-grid { display: grid; grid-template-columns: 1fr 2fr 1fr 1fr auto auto; gap: 10px; }
+    .search-grid input, select { padding: 8px; border-radius: 6px; border: 1px solid #ddd; }
+    .top-buttons { display: flex; gap: 10px; margin-bottom: 20px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th { background: #2c7da0; color: white; padding: 12px; text-align: left; }
+    td { padding: 12px; border-bottom: 1px solid #eee; }
+    .form-inputs { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
+    .form-inputs input { padding: 10px; border: 1px solid #ccc; border-radius: 6px; }
+    .locked { background: #eee; cursor: not-allowed; }
+    .msg { padding: 10px; border-radius: 6px; margin-bottom: 10px; text-align: center; font-weight: bold; }
+    .success { background: #d4edda; color: #155724; }
+    .error { background: #f8d7da; color: #721c24; }
+    button { cursor: pointer; border: none; border-radius: 6px; padding: 10px; font-weight: bold; transition: 0.2s; }
+    button:hover { opacity: 0.8; }
+    .btn-search { background: #2c7da0; color: white; }
+    .btn-new { background: #27ae60; color: white; }
+    .btn-load { background: #2a9d8f; color: white; }
+    .btn-delete-all { background: #e63946; color: white; }
+    .btn-save { background: #2c7da0; color: white; }
+    .btn-icon { background: none; font-size: 1.2rem; }
+    .pagination { display: flex; justify-content: center; align-items: center; gap: 20px; margin-top: 20px; }
 </style>
