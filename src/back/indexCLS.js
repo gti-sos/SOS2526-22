@@ -34,18 +34,27 @@ export function loadBackEnd(app) {
     const resourcePath = BASE_URL_API + "/global-agriculture-climate-impacts";
 
     // 1. RECURSO LOAD INITIAL DATA (Corregido para evitar Error 500)
-    app.get(resourcePath + "/loadInitialData", (req, res) => {
-        dbV1.remove({}, { multi: true }, (err) => {
-            if (err) return res.status(500).json({ error: "Error limpiando BD" });
-            
-            // Clonar datos para evitar conflictos de _id si se llama varias veces
+   app.get(resourcePath + "/loadInitialData", (req, res) => {
+        // 1. Vaciamos la base de datos por completo
+        dbV1.remove({}, { multi: true }, (err, numRemoved) => {
+            if (err) return res.status(500).json({ error: "Error al vaciar la base de datos" });
+
+            // 2. Creamos una copia limpia para evitar problemas de referencia
             const dataToInsert = JSON.parse(JSON.stringify(initialData));
-            
+
+            // 3. Insertamos los datos
             dbV1.insert(dataToInsert, (err, newDocs) => {
-                if (err) return res.status(500).json({ error: "Error insertando datos" });
-                // Limpiamos el _id de NeDB para la respuesta
-                const result = newDocs.map(({ _id, ...rest }) => rest);
-                res.status(200).json(result);
+                if (err) {
+                    console.error("DETALLE DEL ERROR EN CONSOLA:", err); // MIRA TU TERMINAL AQUÍ
+                    return res.status(500).json({ error: "Insert error", detalle: err.message });
+                }
+                
+                // 4. Devolvemos los datos sin el _id para que el test no se queje
+                const cleanDocs = newDocs.map(d => {
+                    const { _id, ...rest } = d;
+                    return rest;
+                });
+                res.status(200).json(cleanDocs);
             });
         });
     });
@@ -67,13 +76,20 @@ export function loadBackEnd(app) {
         }
 
         // Paginación (CRÍTICO para que pase el test de limit)
-        let offset = parseInt(req.query.offset) || 0;
-        let limit = parseInt(req.query.limit) || 1000;
+        let offset = parseInt(req.query.offset) || 0; 
+        let limit = parseInt(req.query.limit) || 1000; // Si no hay limit, ponemos uno grande
 
+        // 2. Aplicamos skip y limit en la consulta de NeDB
         dbV1.find(query).skip(offset).limit(limit).exec((err, docs) => {
-            if (err) return res.status(500).json({ error: "Error en BD" });
-            const result = docs.map(({ _id, ...rest }) => rest);
-            res.status(200).json(result);
+            if (err) {
+                return res.status(500).json({ error: "Error en la base de datos" });
+            }
+            
+            // Limpiamos los documentos para quitar el _id
+        const result = docs.map(({ _id, ...rest }) => rest);
+        
+        // 3. Enviamos la respuesta (ahora sí vendrán solo 2 si limit=2)
+        res.status(200).json(result);
         });
     });
 
