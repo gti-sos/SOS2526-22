@@ -2,11 +2,16 @@ import dataStore from 'nedb';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-import fs from 'fs';
 
+import util from 'util';
 
-
-
+// Este parche evita que el servidor explote con NeDB
+if (typeof util.isDate !== 'function') {
+    util.isDate = (obj) => Object.prototype.toString.call(obj) === '[object Date]';
+}
+if (typeof util.isRegExp !== 'function') {
+    util.isRegExp = (obj) => Object.prototype.toString.call(obj) === '[object RegExp]';
+}
 
 
 
@@ -18,11 +23,7 @@ const BASE_URL_API_V2 = "/api/v2";
 
 
 
-// Al inicio de loadBackEnd:
-const dataDir = path.join(__dirname, '../../data');
-if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
-}
+
 
 
 
@@ -64,7 +65,7 @@ export function loadBackEnd(app) {
 
     // ------------- FUNCIONES AUXILIARES -------------
     
- /*   function loadInitialDataHandler(db, res) {
+   function loadInitialDataHandler(db, res) {
         db.remove({}, { multi: true }, (err) => {
             if (err) {
                 console.error("ERROR AL LIMPIAR DB:", err);
@@ -75,7 +76,7 @@ export function loadBackEnd(app) {
 
             const datosInsertar = JSON.parse(JSON.stringify(initialData));
 
-            // 👇 AÑADE ESTO AQUÍ
+            //  AÑADE ESTO AQUÍ
             console.log("TIPO datosInsertar:", typeof datosInsertar);
             console.log("ES ARRAY:", Array.isArray(datosInsertar));
             console.log("LONGITUD:", datosInsertar?.length);
@@ -97,17 +98,7 @@ export function loadBackEnd(app) {
         });
     }
 
-*/
 
-
-    function loadInitialDataHandler(db, res) {
-        return res.status(200).json({
-            prueba: "HANDLER NUEVO OK",
-            initialDataEsArray: Array.isArray(initialData),
-            longitud: initialData.length,
-            primerElemento: initialData[0]
-        });
-    }
 
     function getAllHandler(db, req, res) {
         let query = {};
