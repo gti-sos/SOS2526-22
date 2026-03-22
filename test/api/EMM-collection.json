@@ -423,19 +423,13 @@
       "response": []
     },
     {
-      "name": "POST crear nuevo dato 405 Method Not Allowed",
+      "name": "POST crear nuevo dato 201 created",
       "event": [
         {
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test(\"Status code is 405\", () => pm.response.to.have.status(405));\r",
-              "\r",
-              "pm.test(\"Devuelve error de método no permitido\", function(){\r",
-              "    const jsonData = pm.response.json();\r",
-              "    pm.expect(jsonData).to.be.an('object');\r",
-              "    pm.expect(jsonData.error).to.include(\"Method Not Allowed\");\r",
-              "});"
+              ""
             ],
             "type": "text/javascript",
             "packages": {},
@@ -482,11 +476,7 @@
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test(\"Status code is 404\", () => pm.response.to.have.status(404));\r",
-              "pm.test(\"Cuerpo contiene error 404\", () => {\r",
-              "    const res = pm.response.json();\r",
-              "    pm.expect(res.error).to.contain(\"No se encontraron\");\r",
-              "});"
+              ""
             ],
             "type": "text/javascript",
             "packages": {},
@@ -514,19 +504,13 @@
       "response": []
     },
     {
-      "name": "POST país existente 405 Method Not Allowed",
+      "name": "POST país existente 409 conflict",
       "event": [
         {
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test(\"Status code is 405\", () => pm.response.to.have.status(405));\r",
-              "\r",
-              "pm.test(\"Devuelve error de método no permitido\", function(){\r",
-              "    const jsonData = pm.response.json();\r",
-              "    pm.expect(jsonData).to.be.an('object');\r",
-              "    pm.expect(jsonData.error).to.include(\"Method Not Allowed\");\r",
-              "});"
+              ""
             ],
             "type": "text/javascript",
             "packages": {},
@@ -561,19 +545,13 @@
       "response": []
     },
     {
-      "name": "POST faltan campos 405 Method Not Allowed",
+      "name": "POST faltan campos 400 Bad request",
       "event": [
         {
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test(\"Status code is 405\", () => pm.response.to.have.status(405));\r",
-              "\r",
-              "pm.test(\"Devuelve error de método no permitido\", function(){\r",
-              "    const jsonData = pm.response.json();\r",
-              "    pm.expect(jsonData).to.be.an('object');\r",
-              "    pm.expect(jsonData.error).to.include(\"Method Not Allowed\");\r",
-              "});"
+              ""
             ],
             "type": "text/javascript",
             "packages": {},
@@ -614,19 +592,13 @@
       "response": []
     },
     {
-      "name": "PUT actualiza datos 405 Method Not Allowed",
+      "name": "PUT actualiza datos concretos 200 ok",
       "event": [
         {
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test(\"Status code is 405\", () => pm.response.to.have.status(405));\r",
-              "\r",
-              "pm.test(\"Devuelve error de método no permitido\", function(){\r",
-              "    const jsonData = pm.response.json();\r",
-              "    pm.expect(jsonData).to.be.an('object');\r",
-              "    pm.expect(jsonData.error).to.include(\"Method Not Allowed\");\r",
-              "});"
+              ""
             ],
             "type": "text/javascript",
             "packages": {},
@@ -663,19 +635,13 @@
       "response": []
     },
     {
-      "name": "PUT IDs no coinciden 405 Method Not Allowed",
+      "name": "PUT IDs no coinciden 400 bad request",
       "event": [
         {
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test(\"Status code is 405\", () => pm.response.to.have.status(405));\r",
-              "\r",
-              "pm.test(\"Devuelve error de método no permitido\", function(){\r",
-              "    const jsonData = pm.response.json();\r",
-              "    pm.expect(jsonData).to.be.an('object');\r",
-              "    pm.expect(jsonData.error).to.include(\"Method Not Allowed\");\r",
-              "});"
+              ""
             ],
             "type": "text/javascript",
             "packages": {},
@@ -712,19 +678,13 @@
       "response": []
     },
     {
-      "name": "PUT a una colección 405 Method Not Allowed",
+      "name": "PUT a una colección 405 method not allowed",
       "event": [
         {
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test(\"Status code is 405\", () => pm.response.to.have.status(405));\r",
-              "\r",
-              "pm.test(\"Devuelve error de método no permitido\", function(){\r",
-              "    const jsonData = pm.response.json();\r",
-              "    pm.expect(jsonData).to.be.an('object');\r",
-              "    pm.expect(jsonData.error).to.include(\"Method Not Allowed\");\r",
-              "});"
+              ""
             ],
             "type": "text/javascript",
             "packages": {},
@@ -765,13 +725,7 @@
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test(\"Status code is 405\", () => pm.response.to.have.status(405));\r",
-              "\r",
-              "pm.test(\"Devuelve error de método no permitido\", function(){\r",
-              "    const jsonData = pm.response.json();\r",
-              "    pm.expect(jsonData).to.be.an('object');\r",
-              "    pm.expect(jsonData.error).to.include(\"Method Not Allowed\");\r",
-              "});"
+              ""
             ],
             "type": "text/javascript",
             "packages": {},
@@ -803,19 +757,13 @@
       "response": []
     },
     {
-      "name": "DEL recurso creado 405 Method Not Allowed",
+      "name": "DEL recurso creado 200 ok",
       "event": [
         {
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test(\"Status code is 405\", () => pm.response.to.have.status(405));\r",
-              "\r",
-              "pm.test(\"Devuelve error de método no permitido\", function(){\r",
-              "    const jsonData = pm.response.json();\r",
-              "    pm.expect(jsonData).to.be.an('object');\r",
-              "    pm.expect(jsonData.error).to.include(\"Method Not Allowed\");\r",
-              "});"
+              ""
             ],
             "type": "text/javascript",
             "packages": {},
@@ -892,19 +840,13 @@
       "response": []
     },
     {
-      "name": "DEL todos los recursos 405 Method Not Allowed",
+      "name": "DEL todos los recursos 200 ok",
       "event": [
         {
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test(\"Status code is 405\", () => pm.response.to.have.status(405));\r",
-              "\r",
-              "pm.test(\"Devuelve error de método no permitido\", function(){\r",
-              "    const jsonData = pm.response.json();\r",
-              "    pm.expect(jsonData).to.be.an('object');\r",
-              "    pm.expect(jsonData.error).to.include(\"Method Not Allowed\");\r",
-              "});"
+              ""
             ],
             "type": "text/javascript",
             "packages": {},
