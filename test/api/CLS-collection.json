@@ -15,14 +15,16 @@
           "script": {
             "exec": [
               "pm.test(\"Status 200\", function () {\r",
+              "    // Si te da 500, este test fallará y es correcto, porque el servidor tiene un error.\r",
               "    pm.response.to.have.status(200);\r",
               "});\r",
               "\r",
               "pm.test(\"Initial data loaded\", function () {\r",
-              "    var jsonData = pm.response.json();\r",
-              "    // Verificamos que sea un array y que tenga datos\r",
-              "    pm.expect(jsonData).to.be.an('array');\r",
-              "    pm.expect(jsonData.length).to.be.above(0);\r",
+              "    if (pm.response.code === 200) {\r",
+              "        var jsonData = pm.response.json();\r",
+              "        pm.expect(jsonData).to.be.an('array');\r",
+              "        pm.expect(jsonData.length).to.be.above(0);\r",
+              "    }\r",
               "});"
             ],
             "type": "text/javascript",
