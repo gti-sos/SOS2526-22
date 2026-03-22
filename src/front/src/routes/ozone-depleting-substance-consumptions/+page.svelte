@@ -2,60 +2,36 @@
     // @ts-nocheck
     import { dev } from "$app/environment";
 
-    // Estados reactivos
+    const FIELDS = ['country','code','year','methyl_chloroform','methyl_bromide','hcfc','carbon_tetrachloride','halon','cfc'];
+    const API_BASE = dev ? 'http://localhost:3000/api/v2/ozone-depleting-substance-consumptions' : '/api/v2/ozone-depleting-substance-consumptions';
+    const ITEMS_PER_PAGE = 5;
+
     let recursos = $state([]);
     let loading = $state(false);
     let message = $state({ type: null, text: null });
     let currentPage = $state(1);
-    let itemsPerPage = $state(5);
     let totalItems = $state(0);
     let totalPages = $state(1);
-
-    // Formularios
     let showCreateForm = $state(false);
-    let newData = $state({
-        country: '', code: '', year: '', methyl_chloroform: '', methyl_bromide: '',
-        hcfc: '', carbon_tetrachloride: '', halon: '', cfc: ''
-    });
+    let newData = $state(Object.fromEntries(FIELDS.map(f => [f, ''])));
     let editando = $state(null);
-    let editForm = $state({
-        country: '', code: '', year: '', methyl_chloroform: '', methyl_bromide: '',
-        hcfc: '', carbon_tetrachloride: '', halon: '', cfc: ''
-    });
-
-    // Búsquedas
-    let activeSearch = $state({ type: null, params: {} }); 
+    // svelte-ignore state_referenced_locally
+    let editForm = $state({ ...newData });
+    let activeSearch = $state({ type: null, params: {} });
     let searchResults = $state(null);
     let searchLoading = $state(false);
+    let searchParams = $state({ country: '', code: '', exactYear: '', from: '', to: '', field: 'country', fieldValue: '' });
 
-    // Parámetros de búsqueda unificada
-    let searchParams = $state({
-        country: '',
-        code: '',
-        exactYear: '',
-        from: '',
-        to: '',
-        field: 'country',
-        fieldValue: ''
-    });
-
-    // API base
-    let API_BASE = dev ? 'http://localhost:3000/api/v2/ozone-depleting-substance-consumptions' : '/api/v2/ozone-depleting-substance-consumptions';
-
-    // Funciones auxiliares
     function setMessage(text, type = 'success') {
         message = { text, type };
-        setTimeout(() => {
-            if (message.text === text) message = { type: null, text: null };
-        }, 5000);
+        setTimeout(() => { if (message.text === text) message = { type: null, text: null }; }, 5000);
     }
 
-    // Carga principal con paginación
     async function cargarRecursos(page = currentPage, showSuccess = false) {
         activeSearch = { type: null, params: {} };
         loading = true;
         try {
-            const res = await fetch(`${API_BASE}?page=${page}&items=${itemsPerPage}&t=${Date.now()}`);
+            const res = await fetch(`${API_BASE}?page=${page}&items=${ITEMS_PER_PAGE}&t=${Date.now()}`);
             if (!res.ok) throw new Error();
             const data = await res.json();
             recursos = data.data || [];
@@ -63,184 +39,99 @@
             totalPages = data.total_paginas;
             currentPage = data.pagina_actual;
             if (showSuccess) setMessage('Lista actualizada correctamente.');
-        } catch {
-            setMessage('Error al cargar datos.', 'error');
-        } finally {
-            loading = false;
-        }
+        } catch { setMessage('Error al cargar datos.', 'error'); }
+        finally { loading = false; }
     }
 
-    // Búsqueda unificada 
     async function buscarUnificado() {
         activeSearch = { type: null, params: {} };
         searchResults = null;
-
-        const hasAny = searchParams.country || searchParams.code || searchParams.exactYear ||
-                       searchParams.from || searchParams.to ||
-                       (searchParams.fieldValue && searchParams.field);
-        if (!hasAny) {
-            setMessage('Debes rellenar al menos un filtro.', 'error');
-            return;
-        }
+        const hasAny = searchParams.country || searchParams.code || searchParams.exactYear || searchParams.from || searchParams.to || (searchParams.fieldValue && searchParams.field);
+        if (!hasAny) return setMessage('Debes rellenar al menos un filtro.', 'error');
 
         const from = searchParams.from ? parseInt(searchParams.from) : null;
         const to = searchParams.to ? parseInt(searchParams.to) : null;
         const exactYear = searchParams.exactYear ? parseInt(searchParams.exactYear) : null;
+        if (from !== null && to !== null && from > to) return setMessage('El año "Desde" no puede ser mayor que el año "Hasta".', 'error');
+        if (exactYear !== null && from !== null && exactYear < from) return setMessage(`El año exacto (${exactYear}) es menor que el año "Desde" (${from}).`, 'error');
+        if (exactYear !== null && to !== null && exactYear > to) return setMessage(`El año exacto (${exactYear}) es mayor que el año "Hasta" (${to}).`, 'error');
 
-        if (from !== null && to !== null && from > to) {
-            setMessage('El año "Desde" no puede ser mayor que el año "Hasta".', 'error');
-            return;
-        }
-        if (exactYear !== null && from !== null && exactYear < from) {
-            setMessage(`El año exacto (${exactYear}) es menor que el año "Desde" (${from}).`, 'error');
-            return;
-        }
-        if (exactYear !== null && to !== null && exactYear > to) {
-            setMessage(`El año exacto (${exactYear}) es mayor que el año "Hasta" (${to}).`, 'error');
-            return;
-        }
-        
-        /* eslint-disable-next-line */
+        // eslint-disable-next-line svelte/prefer-svelte-reactivity
         const params = new URLSearchParams();
         if (searchParams.country) params.append('country', searchParams.country.toLowerCase());
         if (searchParams.code) params.append('code', searchParams.code.toLowerCase());
         if (searchParams.exactYear) params.append('year', searchParams.exactYear);
         if (searchParams.from) params.append('from', searchParams.from);
         if (searchParams.to) params.append('to', searchParams.to);
-        if (searchParams.fieldValue && searchParams.field) {
-            params.append(searchParams.field, searchParams.fieldValue);
-        }
-
-        const queryString = params.toString();
-        const url = `${API_BASE}?${queryString}`;
+        if (searchParams.fieldValue && searchParams.field) params.append(searchParams.field, searchParams.fieldValue);
 
         searchLoading = true;
         try {
-            const res = await fetch(url);
-            if (!res.ok) {
-                if (res.status === 404) searchResults = [];
-                else throw new Error();
-            } else {
-                searchResults = await res.json();
-            }
+            const res = await fetch(`${API_BASE}?${params.toString()}`);
+            if (!res.ok) { if (res.status === 404) searchResults = []; else throw new Error(); }
+            else searchResults = await res.json();
             activeSearch = { type: 'unified', params: {} };
-            if (Array.isArray(searchResults) && searchResults.length === 0) {
-                setMessage('No hay resultados.', 'error');
-            } else {
-                setMessage(`Se encontraron ${searchResults.length} resultados.`, 'success');
-            }
-        } catch {
-            setMessage('Error en la búsqueda.', 'error');
-        } finally {
-            searchLoading = false;
-        }
+            if (Array.isArray(searchResults) && searchResults.length === 0) setMessage('No hay resultados.', 'error');
+            else setMessage(`Se encontraron ${searchResults.length} resultados.`, 'success');
+        } catch { setMessage('Error en la búsqueda.', 'error'); }
+        finally { searchLoading = false; }
     }
 
     function limpiarFiltros() {
-        searchParams = {
-            country: '', code: '', exactYear: '', from: '', to: '',
-            field: 'country', fieldValue: ''
-        };
+        searchParams = { country: '', code: '', exactYear: '', from: '', to: '', field: 'country', fieldValue: '' };
         activeSearch = { type: null, params: {} };
         searchResults = null;
         setMessage('Filtros limpiados.', 'success');
     }
 
-    // Crear recurso
     async function crearRecurso(e) {
         e.preventDefault();
-        if (!newData.country || !newData.code || !newData.year) {
-            setMessage('Los campos País, Código y Año son obligatorios.', 'error');
-            return;
-        }
+        if (!newData.country || !newData.code || !newData.year) return setMessage('Los campos País, Código y Año son obligatorios.', 'error');
         loading = true;
-        const payload = {
-            ...newData,
-            year: parseInt(newData.year),
-            methyl_chloroform: parseFloat(newData.methyl_chloroform) || 0,
-            methyl_bromide: parseFloat(newData.methyl_bromide) || 0,
-            hcfc: parseFloat(newData.hcfc) || 0,
-            carbon_tetrachloride: parseFloat(newData.carbon_tetrachloride) || 0,
-            halon: parseFloat(newData.halon) || 0,
-            cfc: parseFloat(newData.cfc) || 0
-        };
+        const payload = { ...newData, year: parseInt(newData.year), ...Object.fromEntries(FIELDS.filter(f => f.includes('_')).map(f => [f, parseFloat(newData[f]) || 0])) };
         try {
-            const res = await fetch(API_BASE, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
+            const res = await fetch(API_BASE, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
             if (res.status === 409) throw new Error(`Ya existe recurso con país "${newData.country}" y año ${newData.year}.`);
             if (!res.ok) throw new Error();
             setMessage('Recurso creado correctamente.');
-            newData = { country: '', code: '', year: '', methyl_chloroform: '', methyl_bromide: '', hcfc: '', carbon_tetrachloride: '', halon: '', cfc: '' };
+            newData = Object.fromEntries(FIELDS.map(f => [f, '']));
             showCreateForm = false;
             await cargarRecursos(1);
-        } catch (e) {
-            setMessage(e.message || 'Error al crear.', 'error');
-        } finally {
-            loading = false;
-        }
+        } catch (e) { setMessage(e.message || 'Error al crear.', 'error'); }
+        finally { loading = false; }
     }
 
-    // Editar
-    function iniciarEdicion(r) {
-        editando = r;
-        editForm = { ...r };
-    }
-    function cancelarEdicion() {
-        editando = null;
-    }
+    function iniciarEdicion(r) { editando = r; editForm = { ...r }; }
+    function cancelarEdicion() { editando = null; }
     async function guardarEdicion(e) {
         e.preventDefault();
         if (!editando) return;
         loading = true;
-        const payload = {
-            ...editForm,
-            year: parseInt(editForm.year),
-            methyl_chloroform: parseFloat(editForm.methyl_chloroform) || 0,
-            methyl_bromide: parseFloat(editForm.methyl_bromide) || 0,
-            hcfc: parseFloat(editForm.hcfc) || 0,
-            carbon_tetrachloride: parseFloat(editForm.carbon_tetrachloride) || 0,
-            halon: parseFloat(editForm.halon) || 0,
-            cfc: parseFloat(editForm.cfc) || 0
-        };
+        const payload = { ...editForm, year: parseInt(editForm.year), ...Object.fromEntries(FIELDS.filter(f => f.includes('_')).map(f => [f, parseFloat(editForm[f]) || 0])) };
         try {
-            const res = await fetch(`${API_BASE}/${editando.country}/${editando.year}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
+            const res = await fetch(`${API_BASE}/${editando.country}/${editando.year}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
             if (res.status === 404) throw new Error(`Recurso ${editando.country}/${editando.year} no encontrado.`);
             if (!res.ok) throw new Error();
             setMessage('Recurso actualizado correctamente.');
             cancelarEdicion();
             await cargarRecursos(currentPage);
-        } catch (e) {
-            setMessage(e.message || 'Error al actualizar.', 'error');
-        } finally {
-            loading = false;
-        }
+        } catch (e) { setMessage(e.message || 'Error al actualizar.', 'error'); }
+        finally { loading = false; }
     }
 
-    // Eliminar recurso individual
     async function eliminarRecurso(r) {
         if (!confirm(`¿Eliminar ${r.country} (${r.year})?`)) return;
         loading = true;
         try {
             const res = await fetch(`${API_BASE}/${r.country}/${r.year}`, { method: 'DELETE' });
-            if (res.status === 404) throw new Error(`Recurso no encontrado.`);
+            if (res.status === 404) throw new Error('Recurso no encontrado.');
             if (!res.ok) throw new Error();
             setMessage('Recurso eliminado.');
             await cargarRecursos(currentPage);
-        } catch (e) {
-            setMessage(e.message || 'Error al eliminar.', 'error');
-        } finally {
-            loading = false;
-        }
+        } catch (e) { setMessage(e.message || 'Error al eliminar.', 'error'); }
+        finally { loading = false; }
     }
 
-    // Eliminar todos los recursos
     async function eliminarTodos() {
         if (!confirm('¿Eliminar TODOS los recursos? No se puede deshacer.')) return;
         loading = true;
@@ -249,14 +140,10 @@
             if (!res.ok) throw new Error();
             setMessage('Todos los recursos eliminados.');
             await cargarRecursos(1);
-        } catch {
-            setMessage('Error al eliminar todo.', 'error');
-        } finally {
-            loading = false;
-        }
+        } catch { setMessage('Error al eliminar todo.', 'error'); }
+        finally { loading = false; }
     }
 
-    // Cargar datos iniciales
     async function cargarDatosEjemplo() {
         loading = true;
         try {
@@ -265,65 +152,36 @@
             if (!res.ok) throw new Error();
             setMessage('Datos iniciales cargados correctamente.');
             await cargarRecursos(1);
-        } catch {
-            setMessage('Error al cargar datos iniciales.', 'error');
-        } finally {
-            loading = false;
-        }
+        } catch { setMessage('Error al cargar datos iniciales.', 'error'); }
+        finally { loading = false; }
     }
+
     cargarRecursos(1);
 </script>
 
-<!-- Mensajes -->
-{#if message.text}
-    <div class="msg msg-{message.type}">{message.text}</div>
-{/if}
+{#if message.text}<div class="msg msg-{message.type}">{message.text}</div>{/if}
 
 <div class="container">
     <header><h1>Gestión de consumo de sustancias (v2)</h1></header>
 
-    <!-- SECCIÓN DE BÚSQUEDA  -->
-     <!-- svelte-ignore a11y_label_has_associated_control -->
     <section class="card">
         <h2>Búsqueda avanzada</h2>
+        <!-- svelte-ignore a11y_label_has_associated_control -->
         <div class="search-form">
             <div class="search-row">
-                <div class="search-field">
-                    
-                    <label>País</label>
-                    <input type="text" bind:value={searchParams.country} placeholder="Ej. japan" />
-                </div>
-                <div class="search-field">
-                    <label>Código</label>
-                    <input type="text" bind:value={searchParams.code} placeholder="Ej. jpn" />
-                </div>
-                <div class="search-field">
-                    <label>Año exacto</label>
-                    <input type="number" bind:value={searchParams.exactYear} placeholder="Ej. 2013" />
-                </div>
+                <div class="search-field"><label>País</label><input type="text" bind:value={searchParams.country} placeholder="Ej. japan" /></div>
+                <div class="search-field"><label>Código</label><input type="text" bind:value={searchParams.code} placeholder="Ej. jpn" /></div>
+                <div class="search-field"><label>Año exacto</label><input type="number" bind:value={searchParams.exactYear} placeholder="Ej. 2013" /></div>
             </div>
             <div class="search-row">
-                <div class="search-field">
-                    <label>Desde año</label>
-                    <input type="number" bind:value={searchParams.from} placeholder="Ej. 2010" />
-                </div>
-                <div class="search-field">
-                    <label>Hasta año</label>
-                    <input type="number" bind:value={searchParams.to} placeholder="Ej. 2020" />
-                </div>
+                <div class="search-field"><label>Desde año</label><input type="number" bind:value={searchParams.from} placeholder="Ej. 2010" /></div>
+                <div class="search-field"><label>Hasta año</label><input type="number" bind:value={searchParams.to} placeholder="Ej. 2020" /></div>
                 <div class="search-field">
                     <label>Buscar por campo específico</label>
                     <div class="input-group">
                         <select bind:value={searchParams.field}>
-                            <option value="country">País</option>
-                            <option value="code">Código</option>
-                            <option value="year">Año</option>
-                            <option value="methyl_chloroform">Metilcloroformo</option>
-                            <option value="methyl_bromide">Bromuro de metilo</option>
-                            <option value="hcfc">HCFC</option>
-                            <option value="carbon_tetrachloride">Tetracloruro de carbono</option>
-                            <option value="halon">Halon</option>
-                            <option value="cfc">CFC</option>
+                            // eslint-disable-next-line svelte/require-each-key
+                            {#each FIELDS as f (f)}<option value={f}>{f.replace(/_/g,' ').toUpperCase()}</option>{/each}
                         </select>
                         <input type="text" bind:value={searchParams.fieldValue} placeholder="Valor" />
                     </div>
@@ -336,30 +194,21 @@
         </div>
     </section>
 
-    <!-- Botones de acción global -->
     <div class="action-bar">
         <button onclick={cargarDatosEjemplo} class="btn-sample">Cargar datos iniciales</button>
-        <button onclick={() => showCreateForm = !showCreateForm} class="btn-create">{showCreateForm ? ' Cerrar' : 'Nuevo recurso'}</button>
+        <button onclick={() => showCreateForm = !showCreateForm} class="btn-create">{showCreateForm ? 'Cerrar' : 'Nuevo recurso'}</button>
         <button onclick={eliminarTodos} class="btn-danger">Eliminar todo</button>
         <button onclick={() => cargarRecursos(currentPage, true)} class="btn-refresh">Actualizar lista</button>
     </div>
 
-    <!-- Formulario de creación -->
     {#if showCreateForm}
         <section class="card create-card">
             <h2>Crear nuevo recurso</h2>
             <form onsubmit={crearRecurso}>
                 <div class="form-grid">
-                        {#each ['country','code','year','methyl_chloroform','methyl_bromide','hcfc','carbon_tetrachloride','halon','cfc'] as field (field)}
-    <input
-        type={field === 'year' ? 'number' : field.includes('_') ? 'number' : 'text'}
-        step={field.includes('_') ? 'any' : undefined}
-        bind:value={newData[field]}
-        placeholder={field.replace(/_/g, ' ').toUpperCase()}
-        required={field === 'country' || field === 'code' || field === 'year'}
-    />
-{/each}
-
+                    {#each FIELDS as f (f)}
+                        <input type={f === 'year' ? 'number' : f.includes('_') ? 'number' : 'text'} step={f.includes('_') ? 'any' : undefined} bind:value={newData[f]} placeholder={f.replace(/_/g,' ').toUpperCase()} required={f === 'country' || f === 'code' || f === 'year'} />
+                    {/each}
                 </div>
                 <div class="form-actions">
                     <button type="submit" disabled={loading} class="btn-submit">Guardar recurso</button>
@@ -369,25 +218,19 @@
         </section>
     {/if}
 
-    <!-- Formulario de edición -->
     {#if editando}
-        <!-- svelte-ignore a11y_label_has_associated_control -->
-        <section id="edit-form" class="card edit-card">
+        <section class="card edit-card">
+        
             <h2>Editando: {editando.country} ({editando.year})</h2>
             <form onsubmit={guardarEdicion}>
+            <!-- svelte-ignore a11y_label_has_associated_control -->
                 <div class="form-grid">
                     <div class="readonly-field"><label>País:</label><input type="text" bind:value={editForm.country} readonly disabled /></div>
                     <div><label>Código:</label><input type="text" bind:value={editForm.code} required /></div>
                     <div class="readonly-field"><label>Año:</label><input type="number" bind:value={editForm.year} readonly disabled /></div>
-                    {#each ['country','code','year','methyl_chloroform','methyl_bromide','hcfc','carbon_tetrachloride','halon','cfc'] as field (field)}
-    <input
-        type={field === 'year' ? 'number' : field.includes('_') ? 'number' : 'text'}
-        step={field.includes('_') ? 'any' : undefined}
-        bind:value={newData[field]}
-        placeholder={field.replace(/_/g, ' ').toUpperCase()}
-        required={field === 'country' || field === 'code' || field === 'year'}
-    />
-{/each}
+                    {#each FIELDS.filter(f => f.includes('_')) as f (f)}
+                        <div><label>{f.replace(/_/g,' ')}:</label><input type="number" step="any" bind:value={editForm[f]} /></div>
+                    {/each}
                 </div>
                 <div class="form-actions">
                     <button type="submit" disabled={loading} class="btn-submit">Guardar cambios</button>
@@ -397,83 +240,32 @@
         </section>
     {/if}
 
-    <!-- Mostrar resultados de búsqueda -->
     {#if activeSearch.type}
         <section class="card results-card">
             <h3>Resultados</h3>
-            {#if searchLoading}
-                <p class="loading">Buscando...</p>
-            {:else if searchResults !== null}
+            {#if searchLoading}<p class="loading">Buscando...</p>{:else if searchResults !== null}
                 {#if Array.isArray(searchResults) && searchResults.length > 0}
                     <table class="table">
-                        <thead>
-                            <tr>
-                                <th>País</th><th>Código</th><th>Año</th>
-                                <th>Metilcloroformo</th><th>Bromuro de metilo</th>
-                                <th>HCFC</th><th>Tetracloruro de carbono</th>
-                                <th>Halon</th><th>CFC</th>
-                            </tr>
-                        </thead>
+                        <thead><tr><th>País</th><th>Código</th><th>Año</th><th>Metilcloroformo</th><th>Bromuro de metilo</th><th>HCFC</th><th>Tetracloruro de carbono</th><th>Halon</th><th>CFC</th></tr></thead>
                         <tbody>
                             {#each searchResults as item (item.country + item.year)}
-                                <tr>
-                                    <td>{item.country}</td>
-                                    <td>{item.code}</td>
-                                    <td>{item.year}</td>
-                                    <td>{item.methyl_chloroform}</td>
-                                    <td>{item.methyl_bromide}</td>
-                                    <td>{item.hcfc}</td>
-                                    <td>{item.carbon_tetrachloride}</td>
-                                    <td>{item.halon}</td>
-                                    <td>{item.cfc}</td>
-                                </tr>
+                                <tr><td>{item.country}</td><td>{item.code}</td><td>{item.year}</td><td>{item.methyl_chloroform}</td><td>{item.methyl_bromide}</td><td>{item.hcfc}</td><td>{item.carbon_tetrachloride}</td><td>{item.halon}</td><td>{item.cfc}</td></tr>
                             {/each}
                         </tbody>
                     </table>
                 {:else if !Array.isArray(searchResults) && searchResults}
                     <table class="table">
-                        <thead>
-                            <tr>
-                                <th>País</th><th>Código</th><th>Año</th>
-                                <th>Metilcloroformo</th><th>Bromuro de metilo</th>
-                                <th>HCFC</th><th>Tetracloruro de carbono</th>
-                                <th>Halon</th><th>CFC</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>{searchResults.country}</td>
-                                <td>{searchResults.code}</td>
-                                <td>{searchResults.year}</td>
-                                <td>{searchResults.methyl_chloroform}</td>
-                                <td>{searchResults.methyl_bromide}</td>
-                                <td>{searchResults.hcfc}</td>
-                                <td>{searchResults.carbon_tetrachloride}</td>
-                                <td>{searchResults.halon}</td>
-                                <td>{searchResults.cfc}</td>
-                            </tr>
-                        </tbody>
+                        <thead><tr><th>País</th><th>Código</th><th>Año</th><th>Metilcloroformo</th><th>Bromuro de metilo</th><th>HCFC</th><th>Tetracloruro de carbono</th><th>Halon</th><th>CFC</th></tr></thead>
+                        <tbody><tr><td>{searchResults.country}</td><td>{searchResults.code}</td><td>{searchResults.year}</td><td>{searchResults.methyl_chloroform}</td><td>{searchResults.methyl_bromide}</td><td>{searchResults.hcfc}</td><td>{searchResults.carbon_tetrachloride}</td><td>{searchResults.halon}</td><td>{searchResults.cfc}</td></tr></tbody>
                     </table>
-                {:else}
-                    <p>No hay resultados.</p>
-                {/if}
+                {:else}<p>No hay resultados.</p>{/if}
             {/if}
         </section>
     {/if}
 
-    <!-- Listado normal paginado -->
     {#if !activeSearch.type}
         {#if recursos.length > 0}
             <div class="pagination-bar">
-                <div class="pagination-left">
-                    <!-- svelte-ignore a11y_label_has_associated_control -->
-                    <label>Mostrar:</label>
-                    <select bind:value={itemsPerPage} onchange={() => { currentPage=1; cargarRecursos(1); }}>
-                        <option value={5}>5</option><option value={10}>10</option>
-                        <option value={20}>20</option><option value={50}>50</option>
-                    </select>
-                    <span>por página</span>
-                </div>
                 <div class="pagination-right">
                     <button onclick={() => cargarRecursos(1)} disabled={currentPage===1} class="btn-page">⏮️</button>
                     <button onclick={() => cargarRecursos(currentPage-1)} disabled={currentPage===1} class="btn-page">◀</button>
@@ -485,70 +277,40 @@
         {/if}
 
         <section class="card">
-            {#if loading}
-                <p class="loading">Cargando...</p>
-            {:else if recursos.length === 0}
-                <p class="empty">No hay recursos. Puedes cargar datos iniciales o crear uno nuevo.</p>
+            {#if loading}<p class="loading">Cargando...</p>
+            {:else if recursos.length === 0}<p class="empty">No hay recursos. Puedes cargar datos iniciales o crear uno nuevo.</p>
             {:else}
                 <table class="table">
-                    <thead>
-                        <tr>
-                            <th>País</th><th>Código</th><th>Año</th>
-                            <th>Metilcloroformo</th><th>Bromuro de metilo</th>
-                            <th>HCFC</th><th>Tetracloruro de carbono</th>
-                            <th>Halon</th><th>CFC</th><th>Acciones</th>
-                        </tr>
-                    </thead>
+                    <thead><tr><th>País</th><th>Código</th><th>Año</th><th>Metilcloroformo</th><th>Bromuro de metilo</th><th>HCFC</th><th>Tetracloruro de carbono</th><th>Halon</th><th>CFC</th><th>Acciones</th></tr></thead>
                     <tbody>
                         {#each recursos as r (r.country + r.year)}
-                        <tr>
-                            <td>{r.country}</td>
-                            <td>{r.code}</td>
-                            <td>{r.year}</td>
-                            <td>{r.methyl_chloroform}</td>
-                            <td>{r.methyl_bromide}</td>
-                            <td>{r.hcfc}</td>
-                            <td>{r.carbon_tetrachloride}</td>
-                            <td>{r.halon}</td>
-                            <td>{r.cfc}</td>
-                            <td class="action-cell">
-                                <button onclick={() => iniciarEdicion(r)} class="btn-icon btn-edit" title="Editar">Editar</button>
-                                <button onclick={() => eliminarRecurso(r)} class="btn-icon btn-delete" title="Eliminar">Borrar</button>
-                            </td>
-                        </tr>
-                    {/each}
+                            <tr>
+                                <td>{r.country}</td><td>{r.code}</td><td>{r.year}</td><td>{r.methyl_chloroform}</td><td>{r.methyl_bromide}</td><td>{r.hcfc}</td><td>{r.carbon_tetrachloride}</td><td>{r.halon}</td><td>{r.cfc}</td>
+                                <td class="action-cell"><button onclick={() => iniciarEdicion(r)} class="btn-icon btn-edit" title="Editar">Editar</button><button onclick={() => eliminarRecurso(r)} class="btn-icon btn-delete" title="Eliminar">Borrar</button></td>
+                            </tr>
+                        {/each}
                     </tbody>
                 </table>
             {/if}
         </section>
-
-        {#if recursos.length > 0}
-            <div class="pagination-bar bottom">
-                <div class="pagination-right">
-                    <button onclick={() => cargarRecursos(1)} disabled={currentPage===1} class="btn-page">⏮️</button>
-                    <button onclick={() => cargarRecursos(currentPage-1)} disabled={currentPage===1} class="btn-page">◀</button>
-                    <span class="page-info">{currentPage}/{totalPages}</span>
-                    <button onclick={() => cargarRecursos(currentPage+1)} disabled={currentPage===totalPages} class="btn-page">▶</button>
-                    <button onclick={() => cargarRecursos(totalPages)} disabled={currentPage===totalPages} class="btn-page">⏭️</button>
-                </div>
-            </div>
-        {/if}
     {/if}
 </div>
 
+
 <style>
-    /* Variables de color mejoradas */
     :root {
-        --primary: #2c7da0;
-        --primary-light: #61a5c2;
-        --primary-dark: #1f5e7a;
-        --secondary: #2a9d8f;
-        --secondary-light: #6cbfaf;
-        --danger: #e76f51;
-        --danger-light: #f4a261;
-        --warning: #e9c46a;
-        --light: #f8f9fa;
-        --dark: #264653;
+        --primary: #1e88e5;
+        --primary-dark: #0b5e9e;
+        --primary-light: #6ab0f5;
+        --secondary: #0288d1;
+        --secondary-light: #81d4fa;
+        --danger: #e53935;
+        --danger-dark: #c62828;
+        --warning: #fb8c00;
+        --warning-dark: #ef6c00;
+        --success: #10b981;          /* Verde para mensajes de éxito */
+        --light: #f5f5f5;
+        --dark: #263238;
         --gray: #6c757d;
         --gray-light: #e9ecef;
         --border: #dee2e6;
@@ -628,13 +390,13 @@
     }
 
     .msg-success {
-        background: rgba(42, 157, 143, 0.15);
-        color: var(--secondary);
-        border-left: 4px solid var(--secondary);
+        background: rgba(16, 185, 129, 0.15);
+        color: var(--success);
+        border-left: 4px solid var(--success);
     }
 
     .msg-error {
-        background: rgba(231, 111, 81, 0.15);
+        background: rgba(229, 57, 53, 0.15);
         color: var(--danger);
         border-left: 4px solid var(--danger);
     }
@@ -695,7 +457,7 @@
         color: white;
     }
     .btn-sample:hover:not(:disabled) {
-        background: #21867a;
+        background: #0277bd;
     }
 
     .btn-create {
@@ -708,7 +470,7 @@
         color: white;
     }
     .btn-danger:hover:not(:disabled) {
-        background: #d45c3e;
+        background: var(--danger-dark);
     }
 
     .btn-refresh {
@@ -719,6 +481,9 @@
     .btn-submit {
         background: var(--secondary);
         color: white;
+    }
+    .btn-submit:hover:not(:disabled) {
+        background: #0277bd;
     }
 
     .btn-cancel {
@@ -791,7 +556,7 @@
     .search-field select:focus {
         outline: none;
         border-color: var(--primary);
-        box-shadow: 0 0 0 3px rgba(44, 125, 160, 0.2);
+        box-shadow: 0 0 0 3px rgba(30, 136, 229, 0.2);
     }
     .search-actions {
         display: flex;
@@ -832,7 +597,7 @@
     .form-grid input:focus {
         outline: none;
         border-color: var(--primary);
-        box-shadow: 0 0 0 3px rgba(44, 125, 160, 0.2);
+        box-shadow: 0 0 0 3px rgba(30, 136, 229, 0.2);
     }
     .readonly-field input {
         background: var(--gray-light);
@@ -875,7 +640,7 @@
         background-color: rgba(0, 0, 0, 0.01);
     }
     .table tbody tr:hover {
-        background-color: rgba(44, 125, 160, 0.05);
+        background-color: rgba(30, 136, 229, 0.05);
     }
     .action-cell {
         display: flex;
@@ -886,7 +651,7 @@
     /* Paginación */
     .pagination-bar {
         display: flex;
-        justify-content: space-between;
+        justify-content: center;
         align-items: center;
         margin: 1rem 0;
         flex-wrap: wrap;
@@ -896,7 +661,6 @@
         border-radius: 2rem;
         box-shadow: var(--shadow);
     }
-    .pagination-left,
     .pagination-right {
         display: flex;
         align-items: center;
@@ -908,9 +672,6 @@
         border-radius: 2rem;
         font-weight: 500;
         font-size: 0.9rem;
-    }
-    .bottom {
-        justify-content: center;
     }
 
     /* Estados */
@@ -939,7 +700,6 @@
             align-items: stretch;
             text-align: center;
         }
-        .pagination-left,
         .pagination-right {
             justify-content: center;
         }

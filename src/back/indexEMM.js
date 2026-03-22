@@ -148,6 +148,7 @@ export function loadBackEnd(app) {
         });
     }
 
+    // Obtener recursos con filtros combinados (país, año, rango de años)
     function getFiltersHandler(db, req, res) {
         const { country, year, from, to } = req.query;
         let query = {};
@@ -163,6 +164,7 @@ export function loadBackEnd(app) {
         });
     }
 
+    // Obtener un campo específico de todos los recursos
     function getFieldHandler(db, req, res) {
         const field = req.params.field;
         db.find({}, (err, docs) => {
@@ -188,7 +190,7 @@ export function loadBackEnd(app) {
         if (campos.includes(req.params.field)) {
             return getFieldHandler(dbV1, req, res);
         } else {
-            next(); // pasa a la siguiente ruta (país)
+            next(); 
         }
     });
 
