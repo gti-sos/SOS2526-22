@@ -39,22 +39,23 @@ export function loadBackEnd(app) {
 
     const campos = ["country", "year", "crop_type", "average_temperature_c", "total_precipitation_mm"];
 
-    // 1. CORRECCIÓN LOAD INITIAL DATA (Evita el Error 500 del test)
+    // 1. RECURSO LOAD INITIAL DATA
     function loadInitialDataHandler(db, res) {
         db.remove({}, { multi: true }, (err) => {
             if (err) return res.status(500).json({ error: "Error clearing BD" });
             
-            // IMPORTANTE: Usamos JSON.parse(JSON.stringify()) para crear una copia limpia
-            // sin los campos _id que NeDB añade automáticamente.
+            // CLONAMOS para evitar error de duplicados en NeDB
             const dataToInsert = JSON.parse(JSON.stringify(initialData));
             
             db.insert(dataToInsert, (err, newDocs) => {
                 if (err) return res.status(500).json({ error: "Insert error" });
-                res.sendStatus(200); // Newman suele esperar solo el OK
+                const result = newDocs.map(({ _id, ...rest }) => rest);
+                res.status(200).json(result);
             });
         });
     }
 
+    // 2. GET ALL con Filtros y Paginación
     function getAllHandler(db, req, res) {
         let query = {};
         if (req.query.country) query.country = req.query.country;
@@ -77,12 +78,11 @@ export function loadBackEnd(app) {
         });
     }
 
-    // 2. CORRECCIÓN GET ONE (Búsqueda insensible a mayúsculas)
+    // 3. GET ONE (Recurso específico)
     function getOneHandler(db, req, res) {
         const country = req.params.country;
         const year = parseInt(req.params.year);
         
-        // Usamos RegExp para que "spain" y "Spain" funcionen igual
         db.findOne({ country: new RegExp("^" + country + "$", "i"), year: year }, (err, doc) => {
             if (err) return res.status(500).json({ error: "Error en BD" });
             if (!doc) return res.status(404).json({ error: "NOT FOUND" });
@@ -91,45 +91,46 @@ export function loadBackEnd(app) {
         });
     }
 
+    // 4. POST (Añadir recurso)
     function postHandler(db, req, res) {
         const newData = req.body;
         const requestKeys = Object.keys(newData);
         
         if (requestKeys.length !== campos.length || !campos.every(key => requestKeys.includes(key))) {
-            return res.status(400).json({ error: "BAD REQUEST" });
+            return res.status(400).json({ error: "BAD REQUEST: Missing or extra fields" });
         }
 
         newData.year = parseInt(newData.year);
-        // Comprobar si ya existe
         db.findOne({ country: newData.country, year: newData.year }, (err, doc) => {
             if (err) return res.status(500).json({ error: "DB error" });
             if (doc) return res.status(409).json({ error: "CONFLICT" });
             
-            db.insert(newData, (err, doc) => {
+            db.insert(newData, (err, insertedDoc) => {
                 if (err) return res.status(500).json({ error: "Insert error" });
-                const { _id, ...rest } = doc;
+                const { _id, ...rest } = insertedDoc;
                 res.status(201).json(rest);
             });
         });
     }
 
-    // 3. CORRECCIÓN PUT (Debe devolver el objeto o mensaje que el test espera)
-   function putHandler(db, req, res) {
+    // 5. PUT (Actualizar recurso)
+    function putHandler(db, req, res) {
         const country = req.params.country;
         const year = parseInt(req.params.year);
         const updatedData = req.body;
         
-        // Verificación de consistencia (evita el 400 Bad Request erróneo)
-        if (!updatedData.country || !updatedData.year || 
-            updatedData.country !== country || parseInt(updatedData.year) !== year) {
+        // El test de Newman suele fallar aquí si los tipos o el ID no coinciden
+        if (updatedData.country !== country || parseInt(updatedData.year) !== year) {
             return res.status(400).json({ error: "BAD REQUEST: ID mismatch" });
         }
+        
+        updatedData.year = parseInt(updatedData.year);
         
         db.update({ country: country, year: year }, { $set: updatedData }, {}, (err, numReplaced) => {
             if (err) return res.status(500).json({ error: "Update error" });
             if (numReplaced === 0) return res.status(404).json({ error: "NOT FOUND" });
             
-            res.status(200).json(updatedData); 
+            res.status(200).json(updatedData);
         });
     }
 
@@ -143,7 +144,7 @@ export function loadBackEnd(app) {
     }
 
     function deleteAllHandler(db, req, res) {
-        db.remove({}, { multi: true }, (err, numRemoved) => {
+        db.remove({}, { multi: true }, (err) => {
             if (err) return res.status(500).json({ error: "Delete error" });
             res.status(200).json({ message: "OK" });
         });
