@@ -41,14 +41,16 @@ export function loadBackEnd(app) {
 
     // 1. CORRECCIÓN LOAD INITIAL DATA (Evita el Error 500 del test)
     function loadInitialDataHandler(db, res) {
-        db.remove({}, { multi: true }, (err) => { // Limpiamos antes para evitar conflictos
+        db.remove({}, { multi: true }, (err) => {
             if (err) return res.status(500).json({ error: "Error clearing BD" });
             
-            db.insert(initialData, (err, newDocs) => {
+            // IMPORTANTE: Usamos JSON.parse(JSON.stringify()) para crear una copia limpia
+            // sin los campos _id que NeDB añade automáticamente.
+            const dataToInsert = JSON.parse(JSON.stringify(initialData));
+            
+            db.insert(dataToInsert, (err, newDocs) => {
                 if (err) return res.status(500).json({ error: "Insert error" });
-                // Limpiamos los _id para el test
-                const result = newDocs.map(({ _id, ...rest }) => rest);
-                res.status(200).json(result);
+                res.sendStatus(200); // Newman suele esperar solo el OK
             });
         });
     }
@@ -112,22 +114,22 @@ export function loadBackEnd(app) {
     }
 
     // 3. CORRECCIÓN PUT (Debe devolver el objeto o mensaje que el test espera)
-    function putHandler(db, req, res) {
-        const { country, year } = req.params;
+   function putHandler(db, req, res) {
+        const country = req.params.country;
+        const year = parseInt(req.params.year);
         const updatedData = req.body;
         
-        if (updatedData.country !== country || parseInt(updatedData.year) !== parseInt(year)) {
+        // Verificación de consistencia (evita el 400 Bad Request erróneo)
+        if (!updatedData.country || !updatedData.year || 
+            updatedData.country !== country || parseInt(updatedData.year) !== year) {
             return res.status(400).json({ error: "BAD REQUEST: ID mismatch" });
         }
         
-        updatedData.year = parseInt(updatedData.year);
-        
-        db.update({ country: country, year: parseInt(year) }, { $set: updatedData }, {}, (err, numReplaced) => {
+        db.update({ country: country, year: year }, { $set: updatedData }, {}, (err, numReplaced) => {
             if (err) return res.status(500).json({ error: "Update error" });
             if (numReplaced === 0) return res.status(404).json({ error: "NOT FOUND" });
             
-            // IMPORTANTE: Devolvemos el objeto actualizado para que el test no de "undefined"
-            res.status(200).json(updatedData);
+            res.status(200).json(updatedData); 
         });
     }
 
