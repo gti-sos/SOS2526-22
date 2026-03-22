@@ -4,13 +4,6 @@ import { fileURLToPath } from 'url';
 
 import fs from 'fs';
 
-// Al inicio de loadBackEnd:
-const dataDir = path.join(__dirname, '../../data');
-if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
-}
-
-
 
 
 
@@ -22,6 +15,16 @@ const __dirname = path.dirname(__filename);
 
 const BASE_URL_API = "/api/v1";
 const BASE_URL_API_V2 = "/api/v2";
+
+
+
+// Al inicio de loadBackEnd:
+const dataDir = path.join(__dirname, '../../data');
+if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
+}
+
+
 
 // Base de datos (NeDB original)
 const dbV1 = new dataStore({ 
