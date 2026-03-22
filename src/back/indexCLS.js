@@ -64,7 +64,7 @@ export function loadBackEnd(app) {
 
     // ------------- FUNCIONES AUXILIARES -------------
     
-    function loadInitialDataHandler(db, res) {
+ /*   function loadInitialDataHandler(db, res) {
         db.remove({}, { multi: true }, (err) => {
             if (err) {
                 console.error("ERROR AL LIMPIAR DB:", err);
@@ -97,7 +97,17 @@ export function loadBackEnd(app) {
         });
     }
 
+*/
 
+
+    function loadInitialDataHandler(db, res) {
+        return res.status(200).json({
+            prueba: "HANDLER NUEVO OK",
+            initialDataEsArray: Array.isArray(initialData),
+            longitud: initialData.length,
+            primerElemento: initialData[0]
+        });
+    }
 
     function getAllHandler(db, req, res) {
         let query = {};
