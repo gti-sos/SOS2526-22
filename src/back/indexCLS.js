@@ -75,11 +75,20 @@ export function loadBackEnd(app) {
 
             const datosInsertar = JSON.parse(JSON.stringify(initialData));
 
+            // 👇 AÑADE ESTO AQUÍ
+            console.log("TIPO datosInsertar:", typeof datosInsertar);
+            console.log("ES ARRAY:", Array.isArray(datosInsertar));
+            console.log("LONGITUD:", datosInsertar?.length);
+            console.log("PRIMER ELEMENTO:", datosInsertar?.[0]);
+
             setTimeout(() => {
                 db.insert(datosInsertar, (err, newDocs) => {
                     if (err) {
                         console.error("DETALLE DEL ERROR DE INSERCIÓN:", err);
-                        return res.status(500).json({ error: "Insert error", mensaje: err.message });
+                        return res.status(500).json({ 
+                            error: "Insert error", 
+                            mensaje: err.message 
+                        });
                     }
                     const result = newDocs.map(({ _id, ...rest }) => rest);
                     res.status(200).json(result);
