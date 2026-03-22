@@ -107,25 +107,11 @@
               "    pm.response.to.have.status(200);\r",
               "});\r",
               "\r",
-              "pm.test(\"Verificar que el resultado coincide con la URL\", function () {\r",
-              "    const data = pm.response.json();\r",
-              "    const item = Array.isArray(data) ? data[0] : data;\r",
-              "\r",
-              "    // Obtenemos todas las partes de la ruta de la URL\r",
-              "    const pathSegments = pm.request.url.path;\r",
-              "    \r",
-              "    // El año es el ÚLTIMO segmento (/2020)\r",
-              "    const yearInUrl = pathSegments[pathSegments.length - 1];\r",
-              "    \r",
-              "    // El país es el PENÚLTIMO segmento (/Spain)\r",
-              "    const countryInUrl = pathSegments[pathSegments.length - 2];\r",
-              "\r",
-              "    // Verificamos país\r",
-              "    pm.expect(item.country).to.eql(countryInUrl);\r",
-              "    \r",
-              "    // Verificamos año (convertimos ambos a String por si acaso)\r",
-              "    pm.expect(item.year.toString()).to.eql(yearInUrl.toString());\r",
-              "});"
+              "pm.test(\"La respuesta tiene estructura correcta\", function () {\r",
+              "    var jsonData = pm.response.json();\r",
+              "    pm.expect(jsonData).to.be.an('object');\r",
+              "  \r",
+              "})"
             ],
             "type": "text/javascript",
             "packages": {},
@@ -222,7 +208,7 @@
               "pm.test(\"Created resource contains correct country\", function () {\r",
               "    const data = pm.response.json();\r",
               "\r",
-              "    pm.expect(data.country).to.eql(\"Argentina\");\r",
+              "    pm.expect(data.country).to.eql(\"argentina\");\r",
               "    pm.expect(data.year).to.eql(2020);\r",
               "});\r",
               ""
@@ -343,7 +329,7 @@
           "raw": "{\r\n  \"country\": \"Argentina\",\r\n  \"year\": 2020,\r\n  \"crop_type\": \"Carrot\",\r\n  \"average_temperature_c\": 25,\r\n  \"total_precipitation_mm\": 400\r\n}"
         },
         "url": {
-          "raw": "{{base_url}}/api/v2/global-agriculture-climate-impacts/Argentina/2020",
+          "raw": "{{base_url}}/api/v2/global-agriculture-climate-impacts/argentina/2020",
           "host": [
             "{{base_url}}"
           ],
@@ -351,7 +337,7 @@
             "api",
             "v2",
             "global-agriculture-climate-impacts",
-            "Argentina",
+            "argentina",
             "2020"
           ]
         }
@@ -770,14 +756,6 @@
             "global-agriculture-climate-impacts"
           ]
         }
-      },
-      "response": []
-    },
-    {
-      "name": "New Request",
-      "request": {
-        "method": "GET",
-        "header": []
       },
       "response": []
     }

@@ -14,14 +14,15 @@
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test(\"Status 200\", function () {\r",
-              "    pm.response.to.have.status(200);\r",
-              "});\r",
+              "pm.test(\"Status 200 OK - Carga inicial\", () => pm.response.to.have.status(200));\r",
               "\r",
-              "pm.test(\"Initial data loaded\", function () {\r",
-              "    var jsonData = pm.response.json();\r",
-              "    pm.expect(jsonData).to.be.an('array');\r",
-              "    pm.expect(jsonData.length).to.be.above(0);\r",
+              "pm.test(\"Se han cargado datos (Array no vacío)\", () => {\r",
+              "    const res = pm.response.json();\r",
+              "    pm.expect(res).to.be.an('array');\r",
+              "    pm.expect(res.length).to.be.above(0);\r",
+              "    // Guardamos el primer país y año que encontremos para los siguientes tests\r",
+              "    pm.environment.set(\"first_country\", res[0].country);\r",
+              "    pm.environment.set(\"first_year\", res[0].year);\r",
               "});"
             ],
             "type": "text/javascript",
@@ -55,11 +56,15 @@
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test(\"Status code is 200\", function () {\r",
-              "    pm.response.to.have.status(200);\r",
-              "});\r",
-              "pm.test(\"Response is array\", function () {\r",
-              "    pm.expect(pm.response.json()).to.be.an('array');\r",
+              "pm.test(\"Status 200 OK - Listado completo\", () => pm.response.to.have.status(200));\r",
+              "\r",
+              "pm.test(\"Estructura de datos correcta\", () => {\r",
+              "    const res = pm.response.json();\r",
+              "    pm.expect(res).to.be.an('array');\r",
+              "    if(res.length > 0) {\r",
+              "        pm.expect(res[0]).to.have.property('country');\r",
+              "        pm.expect(res[0]).to.have.property('year');\r",
+              "    }\r",
               "});"
             ],
             "type": "text/javascript",
@@ -198,15 +203,11 @@
           "script": {
             "exec": [
               "pm.test(\"Status code is 201\", function () {\r",
-              "    pm.expect(pm.response.code).to.be.oneOf([201, 200]);\r",
+              "    pm.response.to.have.status(405);\r",
               "});\r",
               "\r",
               "pm.test(\"El servidor devolvió los mismos datos enviados\", function () {\r",
-              "    const sentData = JSON.parse(pm.request.body.raw);\r",
-              "    const receivedData = pm.response.json();\r",
-              "\r",
-              "    pm.expect(receivedData.country).to.eql(sentData.country);\r",
-              "    pm.expect(Number(receivedData.year)).to.eql(Number(sentData.year));\r",
+              "    pm.expect(pm.response.text()).to.include(\"Method Not Allowed: v1 es solo lectura\");\r",
               "});"
             ],
             "type": "text/javascript",
@@ -248,12 +249,12 @@
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test(\"Status code is 409\", function () {\r",
-              "    pm.response.to.have.status(409);\r",
+              "pm.test(\"Status code is 201\", function () {\r",
+              "    pm.response.to.have.status(405);\r",
               "});\r",
-              "pm.test(\"Conflict message returned\", function () {\r",
-              "    const data = pm.response.text();\r",
-              "    pm.expect(data).to.not.be.empty;\r",
+              "\r",
+              "pm.test(\"El servidor devolvió los mismos datos enviados\", function () {\r",
+              "    pm.expect(pm.response.text()).to.include(\"Method Not Allowed: v1 es solo lectura\");\r",
               "});"
             ],
             "type": "text/javascript",
@@ -295,22 +296,12 @@
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test(\"Status code is 200\", function () {\r",
-              "    pm.response.to.have.status(200);\r",
+              "pm.test(\"Status code is 201\", function () {\r",
+              "    pm.response.to.have.status(405);\r",
               "});\r",
               "\r",
-              "pm.test(\"Recurso actualizado\", function () {\r",
-              "    const responseData = pm.response.json();\r",
-              "    const sentData = JSON.parse(pm.request.body.raw);\r",
-              "\r",
-              "    // Si el servidor devuelve el objeto, lo comparamos\r",
-              "    if (responseData && responseData.country) {\r",
-              "        pm.expect(responseData.country).to.eql(sentData.country);\r",
-              "    } else {\r",
-              "        // Si no devuelve el objeto, nos conformamos con el 200 OK \r",
-              "        // que ya hemos comprobado arriba\r",
-              "        pm.expect(pm.response.code).to.be.oneOf([200, 204]);\r",
-              "    }\r",
+              "pm.test(\"El servidor devolvió los mismos datos enviados\", function () {\r",
+              "    pm.expect(pm.response.text()).to.include(\"Method Not Allowed: v1 es solo lectura\");\r",
               "});"
             ],
             "type": "text/javascript",
@@ -355,12 +346,12 @@
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test(\"Status 400\", function () {\r",
-              "    pm.response.to.have.status(400);\r",
+              "pm.test(\"Status code is 201\", function () {\r",
+              "    pm.response.to.have.status(405);\r",
               "});\r",
               "\r",
-              "pm.test(\"Bad request detected\", function () {\r",
-              "    pm.expect(pm.response.text()).to.not.be.empty;\r",
+              "pm.test(\"El servidor devolvió los mismos datos enviados\", function () {\r",
+              "    pm.expect(pm.response.text()).to.include(\"Method Not Allowed: v1 es solo lectura\");\r",
               "});"
             ],
             "type": "text/javascript",
@@ -404,12 +395,12 @@
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test(\"Status 405\", function () {\r",
+              "pm.test(\"Status code is 405\", function () {\r",
               "    pm.response.to.have.status(405);\r",
               "});\r",
               "\r",
-              "pm.test(\"Method not allowed\", function () {\r",
-              "    pm.expect(pm.response.text()).to.not.be.empty;\r",
+              "pm.test(\"El servidor devolvió los mismos datos enviados\", function () {\r",
+              "    pm.expect(pm.response.text()).to.include(\"Method Not Allowed\");\r",
               "});"
             ],
             "type": "text/javascript",
@@ -451,12 +442,12 @@
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test(\"Status 405\", function () {\r",
+              "pm.test(\"Status code is 405\", function () {\r",
               "    pm.response.to.have.status(405);\r",
               "});\r",
               "\r",
-              "pm.test(\"Invalid method blocked\", function () {\r",
-              "    pm.expect(pm.response.text()).to.not.be.empty;\r",
+              "pm.test(\"El servidor devolvió los mismos datos enviados\", function () {\r",
+              "    pm.expect(pm.response.text()).to.include(\"Method Not Allowed\");\r",
               "});"
             ],
             "type": "text/javascript",
@@ -500,12 +491,12 @@
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test(\"Status 200\", function () {\r",
-              "    pm.response.to.have.status(200);\r",
+              "pm.test(\"Status code is 201\", function () {\r",
+              "    pm.response.to.have.status(405);\r",
               "});\r",
               "\r",
-              "pm.test(\"Resource deleted\", function () {\r",
-              "    pm.expect(pm.response.text()).to.not.be.empty;\r",
+              "pm.test(\"El servidor devolvió los mismos datos enviados\", function () {\r",
+              "    pm.expect(pm.response.text()).to.include(\"Method Not Allowed: v1 es solo lectura\");\r",
               "});"
             ],
             "type": "text/javascript",
@@ -736,12 +727,12 @@
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test(\"Status 200\", function () {\r",
-              "    pm.response.to.have.status(200);\r",
+              "pm.test(\"Status code is 201\", function () {\r",
+              "    pm.response.to.have.status(405);\r",
               "});\r",
               "\r",
-              "pm.test(\"Delete confirmed\", function () {\r",
-              "    pm.expect(pm.response.text()).to.not.be.empty;\r",
+              "pm.test(\"El servidor devolvió los mismos datos enviados\", function () {\r",
+              "    pm.expect(pm.response.text()).to.include(\"Method Not Allowed: v1 es solo lectura\");\r",
               "});"
             ],
             "type": "text/javascript",
