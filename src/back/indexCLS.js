@@ -2,6 +2,21 @@ import dataStore from 'nedb';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
+import fs from 'fs';
+
+// Al inicio de loadBackEnd:
+const dataDir = path.join(__dirname, '../../data');
+if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
+}
+
+
+
+
+
+
+
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -53,19 +68,25 @@ export function loadBackEnd(app) {
                 return res.status(500).json({ error: "Error limpiando DB" });
             }
 
+            db.persistence.compactDatafile();
+
             const datosInsertar = JSON.parse(JSON.stringify(initialData));
 
-            db.insert(datosInsertar, (err, newDocs) => {
-                if (err) {
-                    // ESTA LÍNEA TE DIRÁ EL ERROR REAL EN EL CMD
-                    console.error("DETALLE DEL ERROR DE INSERCIÓN:", err); 
-                    return res.status(500).json({ error: "Insert error", mensaje: err.message });
-                }
-                const result = newDocs.map(({ _id, ...rest }) => rest);
-                res.status(200).json(result);
-            });
+            setTimeout(() => {
+                db.insert(datosInsertar, (err, newDocs) => {
+                    if (err) {
+                        console.error("DETALLE DEL ERROR DE INSERCIÓN:", err);
+                        return res.status(500).json({ error: "Insert error", mensaje: err.message });
+                    }
+                    const result = newDocs.map(({ _id, ...rest }) => rest);
+                    res.status(200).json(result);
+                });
+            }, 100);
         });
     }
+
+
+
     function getAllHandler(db, req, res) {
         let query = {};
         
