@@ -31,7 +31,7 @@ export function loadBackEnd(app) {
         res.redirect("https://documenter.getpostman.com/view/52404851/2sBXihrYaP"); 
     });
 
-    // Datos iniciales (iguales para ambas)
+    // Datos iniciales 
     const initialDataElena = [
         { country: "bangladesh", code: "bgd", year: 1994, methyl_chloroform: 4, methyl_bromide: 0, hcfc: 38, carbon_tetrachloride: 71, halon: 35, cfc: 1806 },
         { country: "mexico", code: "mex", year: 2010, methyl_chloroform: 0, methyl_bromide: 6679, hcfc: 11717, carbon_tetrachloride: 1, halon: 0, cfc: -2408 },
@@ -89,7 +89,7 @@ export function loadBackEnd(app) {
         db.find(query, (err, docs) => {
             if (err) return res.status(500).json({ error: "Error en la base de datos" });
 
-            // Aplicar filtros de rango en memoria
+            // Filtros de rango de tiempo
             let filtered = docs;
             if (from !== null) filtered = filtered.filter(d => d.year >= from);
             if (to !== null) filtered = filtered.filter(d => d.year <= to);
@@ -116,6 +116,7 @@ export function loadBackEnd(app) {
         });
     }
 
+    // Obtener un recurso concreto por país y año
     function getOneHandler(db, req, res) {
         const { country, year } = req.params;
         db.find({ country: country, year: parseInt(year) }, (err, docs) => {
@@ -129,6 +130,7 @@ export function loadBackEnd(app) {
         });
     }
 
+    // Obtener recursos por país (con filtros de tiempo opcionales)
     function getByCountryHandler(db, req, res) {
         const country = req.params.country.toLowerCase();
         const from = req.query.from ? parseInt(req.query.from) : null;
