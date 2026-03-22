@@ -69,35 +69,15 @@ export function loadBackEnd(app) {
     }
 
     function loadInitialDataHandler(db, res) {
-        db.find({}, (err, docs) => {
-            if (err) {
-                console.error("Error al buscar en DB:", err);
-                return res.status(500).json({ error: "DB error", detalle: err.message });
-            }
+        db.remove({}, { multi: true }, (err) => { // Limpiamos primero
+            if (err) return res.status(500).json({ error: "Error limpiando DB" });
             
-            if (docs.length === 0) {
-                // Insertar datos iniciales
-                const datosInsertar = JSON.parse(JSON.stringify(initialData));
-                
-                insertMultiple(db, datosInsertar, (err, result) => {
-                    if (err) {
-                        console.error("Error inserting initial data:", err);
-                        return res.status(500).json({ error: "Insert error", detalle: err.message });
-                    }
-                    
-                    // Recuperar todos los datos insertados
-                    db.find({}, (err, allDocs) => {
-                        if (err) {
-                            return res.status(500).json({ error: "Error al recuperar datos" });
-                        }
-                        const result = allDocs.map(({ _id, ...rest }) => rest);
-                        res.status(200).json(result);
-                    });
-                });
-            } else {
-                const result = docs.map(({ _id, ...rest }) => rest);
+            // NeDB inserta arrays directamente. No uses insertMultiple manual.
+            db.insert(initialData, (err, newDocs) => {
+                if (err) return res.status(500).json({ error: "Insert error" });
+                const result = newDocs.map(({ _id, ...rest }) => rest);
                 res.status(200).json(result);
-            }
+            });
         });
     }
 
