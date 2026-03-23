@@ -1,0 +1,613 @@
+{
+  "info": {
+    "_postman_id": "36812bf9-0bab-4a39-b244-26eede4577e4",
+    "name": "SOS2526-22-JMV v2",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "52411427",
+    "_collection_link": "https://go.postman.co/collection/52411427-36812bf9-0bab-4a39-b244-26eede4577e4?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Delete all",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () { \r",
+              "    pm.response.to.have.status(200); \r",
+              "});\r",
+              "pm.test(\"El cuerpo de la respuesta es OK\", function () { \r",
+              "    pm.expect(pm.response.text()).to.include(\"OK\"); \r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/v2/co2-emission-gap-among-countries-clustering-pca",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "v2",
+            "co2-emission-gap-among-countries-clustering-pca"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Cargar datos iniciales",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () { \r",
+              "    pm.response.to.have.status(200); \r",
+              "});\r",
+              "pm.test(\"Devuelve exactamente 10 elementos\", function () {\r",
+              "    var jsonData = pm.response.json();\r",
+              "    pm.expect(jsonData).to.be.an('array');\r",
+              "    pm.expect(jsonData.length).to.eql(10);\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/v2/co2-emission-gap-among-countries-clustering-pca/loadInitialData",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "v2",
+            "co2-emission-gap-among-countries-clustering-pca",
+            "loadInitialData"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get all",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Debe devolver un array\", function () {\r",
+              "    var jsonData = pm.response.json();\r",
+              "    pm.expect(jsonData).to.be.an('array');\r",
+              "});\r",
+              "\r",
+              "pm.test(\"El array debe tener datos\", function () {\r",
+              "    var jsonData = pm.response.json();\r",
+              "    pm.expect(jsonData.length).to.be.above(0);\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/v2/co2-emission-gap-among-countries-clustering-pca",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "v2",
+            "co2-emission-gap-among-countries-clustering-pca"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Post new",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 201 Created\", function () { \r",
+              "    pm.response.to.have.status(201); \r",
+              "});\r",
+              "pm.test(\"El cuerpo de la respuesta indica Created\", function () { \r",
+              "    pm.expect(pm.response.text()).to.include(\"Created\"); \r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"country\": \"Spain\",\r\n    \"year\": 1990,\r\n    \"savanna_fire\": 20.5,\r\n    \"forest_fire\": 1.5,\r\n    \"crop_residues\": 210.0,\r\n    \"rice_cultivation\": 700,\r\n    \"drained_organic\": 0,\r\n    \"pesticides_manufacturing\": 15,\r\n    \"food_transport\": 890\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/v2/co2-emission-gap-among-countries-clustering-pca",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "v2",
+            "co2-emission-gap-among-countries-clustering-pca"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Post duplicate",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 409 Conflict\", function () { \r",
+              "    pm.response.to.have.status(409); \r",
+              "});\r",
+              "pm.test(\"Mensaje de error correcto (CONFLICT)\", function () { \r",
+              "    pm.expect(pm.response.text()).to.include(\"CONFLICT\"); \r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"country\": \"Spain\",\r\n    \"year\": 1990,\r\n    \"savanna_fire\": 20.5,\r\n    \"forest_fire\": 1.5,\r\n    \"crop_residues\": 210.0,\r\n    \"rice_cultivation\": 700,\r\n    \"drained_organic\": 0,\r\n    \"pesticides_manufacturing\": 15,\r\n    \"food_transport\": 890\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/v2/co2-emission-gap-among-countries-clustering-pca",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "v2",
+            "co2-emission-gap-among-countries-clustering-pca"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Fallo 400",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status de respuesta es 400 (Bad Request)\", function () {\r",
+              "    pm.response.to.have.status(400);\r",
+              "});\r",
+              "\r",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"country\": \"France\",\r\n    \"year\": 2020,\r\n    \"savanna_fire\": 10,\r\n    \"forest_fire\": 5,\r\n    \"crop_residues\": 20,\r\n    \"rice_cultivation\": 0,\r\n    \"drained_organic\": 0,\r\n    \"pesticides_manufacturing\": 0,\r\n    \"food_transport\": 100\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/v2/co2-emission-gap-among-countries-clustering-pca/Spain/2020",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "v2",
+            "co2-emission-gap-among-countries-clustering-pca",
+            "Spain",
+            "2020"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Put coleccion fallo",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status de respuesta es 405 (Method Not Allowed)\", function () {\r",
+              "    pm.response.to.have.status(405);\r",
+              "});\r",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"country\": \"Afghanistan\",\r\n    \"year\": 1990,\r\n    \"savanna_fire\": 20.5,\r\n    \"forest_fire\": 1.5,\r\n    \"crop_residues\": 210.0,\r\n    \"rice_cultivation\": 700,\r\n    \"drained_organic\": 0,\r\n    \"pesticides_manufacturing\": 15,\r\n    \"food_transport\": 70\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/v2/co2-emission-gap-among-countries-clustering-pca",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "v2",
+            "co2-emission-gap-among-countries-clustering-pca"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get single",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Debe devolver un objeto\", function () {\r",
+              "    var jsonData = pm.response.json();\r",
+              "    pm.expect(jsonData).to.be.an('object');\r",
+              "    pm.expect(jsonData).to.have.property('country');\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/v2/co2-emission-gap-among-countries-clustering-pca/Afghanistan/1990",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "v2",
+            "co2-emission-gap-among-countries-clustering-pca",
+            "Afghanistan",
+            "1990"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Put especifico",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () { \r",
+              "    pm.response.to.have.status(200); \r",
+              "});\r",
+              "pm.test(\"El cuerpo de la respuesta es OK\", function () { \r",
+              "    pm.expect(pm.response.text()).to.include(\"OK\"); \r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"country\": \"Afghanistan\",\r\n    \"year\": 1990,\r\n    \"savanna_fire\": 20.5,\r\n    \"forest_fire\": 1.5,\r\n    \"crop_residues\": 210.0,\r\n    \"rice_cultivation\": 700,\r\n    \"drained_organic\": 0,\r\n    \"pesticides_manufacturing\": 15,\r\n    \"food_transport\": 70\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/v2/co2-emission-gap-among-countries-clustering-pca/Afghanistan/1990",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "v2",
+            "co2-emission-gap-among-countries-clustering-pca",
+            "Afghanistan",
+            "1990"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Delete single",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () { \r",
+              "    pm.response.to.have.status(200); \r",
+              "});\r",
+              "pm.test(\"El cuerpo de la respuesta es OK\", function () { \r",
+              "    pm.expect(pm.response.text()).to.include(\"OK\"); \r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/v2/co2-emission-gap-among-countries-clustering-pca/Afghanistan/1990",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "v2",
+            "co2-emission-gap-among-countries-clustering-pca",
+            "Afghanistan",
+            "1990"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get inexistente",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 404 Not Found\", function () { \r",
+              "    pm.response.to.have.status(404); \r",
+              "});\r",
+              "pm.test(\"Mensaje de error correcto (NOT FOUND)\", function () { \r",
+              "    pm.expect(pm.response.text()).to.include(\"NOT FOUND\"); \r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/v2/co2-emission-gap-among-countries-clustering-pca/Inexistente/2026",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "v2",
+            "co2-emission-gap-among-countries-clustering-pca",
+            "Inexistente",
+            "2026"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Post individual(fallo)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 405 Method Not Allowed\", function () { \r",
+              "    pm.response.to.have.status(405); \r",
+              "});\r",
+              "pm.test(\"Mensaje de error correcto (Method Not Allowed)\", function () { \r",
+              "    pm.expect(pm.response.text()).to.include(\"Method Not Allowed\"); \r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"country\": \"Afghanistan\",\r\n    \"year\": 1990,\r\n    \"savanna_fire\": 20.5,\r\n    \"forest_fire\": 1.5,\r\n    \"crop_residues\": 210.0,\r\n    \"rice_cultivation\": 700,\r\n    \"drained_organic\": 0,\r\n    \"pesticides_manufacturing\": 15,\r\n    \"food_transport\": 70\r\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/v2/co2-emission-gap-among-countries-clustering-pca/Afghanistan/1990",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "v2",
+            "co2-emission-gap-among-countries-clustering-pca",
+            "Afghanistan",
+            "1990"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Delete all Copy",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () { \r",
+              "    pm.response.to.have.status(200); \r",
+              "});\r",
+              "pm.test(\"El cuerpo de la respuesta es OK\", function () { \r",
+              "    pm.expect(pm.response.text()).to.include(\"OK\"); \r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/v2/co2-emission-gap-among-countries-clustering-pca",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "v2",
+            "co2-emission-gap-among-countries-clustering-pca"
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ]
+}
