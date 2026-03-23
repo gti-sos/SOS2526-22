@@ -154,7 +154,7 @@
                 <input bind:value={newForm.crop_type} placeholder="Cultivo">
                 <input type="number" step="any" bind:value={newForm.average_temperature_c} placeholder="Temp">
                 <input type="number" step="any" bind:value={newForm.total_precipitation_mm} placeholder="Prec">
-                <button onclick={crearRecurso} class="btn-save">Guardar POST</button>
+                <button onclick={crearRecurso} class="btn-save">Guardar</button>
             </div>
         </div>
     {/if}
