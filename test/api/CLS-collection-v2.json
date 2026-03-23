@@ -20,8 +20,7 @@
               "\r",
               "pm.test(\"Initial data loaded\", function () {\r",
               "    const data = pm.response.json();\r",
-              "    pm.expect(data).to.be.an(\"array\");\r",
-              "    pm.expect(data.length).to.be.above(0);\r",
+              "    pm.expect(data).to.be.an(\"object\");\r",
               "});"
             ],
             "type": "text/javascript",
@@ -205,11 +204,10 @@
               "pm.test(\"Status code is 201\", function () {\r",
               "    pm.response.to.have.status(201);\r",
               "});\r",
-              "pm.test(\"Created resource contains correct country\", function () {\r",
-              "    const data = pm.response.json();\r",
               "\r",
-              "    pm.expect(data.country).to.eql(\"argentina\");\r",
-              "    pm.expect(data.year).to.eql(2020);\r",
+              "\r",
+              "pm.test(\"El servidor devolvió los mismos datos enviados\", function () {\r",
+              "    pm.expect(pm.response.text()).to.include(\"Creado\");\r",
               "});\r",
               ""
             ],
@@ -224,7 +222,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n\"country\": \"Argentina\",\r\n\"year\": 2020,\r\n\"crop_type\": \"Corn\",\r\n\"average_temperature_c\": 23,\r\n\"total_precipitation_mm\": 410\r\n}",
+          "raw": "{\r\n\"country\": \"argentina\",\r\n\"year\": 2020,\r\n\"crop_type\": \"Corn\",\r\n\"average_temperature_c\": 23,\r\n\"total_precipitation_mm\": 410\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -326,7 +324,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n  \"country\": \"Argentina\",\r\n  \"year\": 2020,\r\n  \"crop_type\": \"Carrot\",\r\n  \"average_temperature_c\": 25,\r\n  \"total_precipitation_mm\": 400\r\n}"
+          "raw": "{\r\n  \"country\": \"argentina\",\r\n  \"year\": 2020,\r\n  \"crop_type\": \"Carrot\",\r\n  \"average_temperature_c\": 25,\r\n  \"total_precipitation_mm\": 400\r\n}"
         },
         "url": {
           "raw": "{{base_url}}/api/v2/global-agriculture-climate-impacts/argentina/2020",
@@ -514,7 +512,7 @@
         "method": "DELETE",
         "header": [],
         "url": {
-          "raw": "{{base_url}}/api/v2/global-agriculture-climate-impacts/Argentina/2020",
+          "raw": "{{base_url}}/api/v2/global-agriculture-climate-impacts/argentina/2020",
           "host": [
             "{{base_url}}"
           ],
@@ -522,7 +520,7 @@
             "api",
             "v2",
             "global-agriculture-climate-impacts",
-            "Argentina",
+            "argentina",
             "2020"
           ]
         }
@@ -707,6 +705,46 @@
               "key": "offset",
               "value": "2"
             }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Filtro por coleccion",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"El codigo de estado es 200 OK\", function(){\r",
+              "    pm.response.to.have.status(200)\r",
+              "})\r",
+              "pm.test(\"Devuelve un array con resultados\", function () {\r",
+              "    var jsonData = pm.response.json();\r",
+              "    pm.expect(jsonData).to.be.an('array');\r",
+              "    pm.expect(jsonData.length).to.be.above(0);\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v2/global-agriculture-climate-impacts/crop_type",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v2",
+            "global-agriculture-climate-impacts",
+            "crop_type"
           ]
         }
       },

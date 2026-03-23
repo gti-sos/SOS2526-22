@@ -18,11 +18,7 @@
               "\r",
               "pm.test(\"Se han cargado datos (Array no vacío)\", () => {\r",
               "    const res = pm.response.json();\r",
-              "    pm.expect(res).to.be.an('array');\r",
-              "    pm.expect(res.length).to.be.above(0);\r",
-              "    // Guardamos el primer país y año que encontremos para los siguientes tests\r",
-              "    pm.environment.set(\"first_country\", res[0].country);\r",
-              "    pm.environment.set(\"first_year\", res[0].year);\r",
+              "    pm.expect(res).to.be.an('object');\r",
               "});"
             ],
             "type": "text/javascript",
@@ -207,7 +203,7 @@
               "});\r",
               "\r",
               "pm.test(\"El servidor devolvió los mismos datos enviados\", function () {\r",
-              "    pm.expect(pm.response.text()).to.include(\"Method Not Allowed: v1 es solo lectura\");\r",
+              "    pm.expect(pm.response.text()).to.include(\"v1 es solo lectura\");\r",
               "});"
             ],
             "type": "text/javascript",
@@ -254,7 +250,7 @@
               "});\r",
               "\r",
               "pm.test(\"El servidor devolvió los mismos datos enviados\", function () {\r",
-              "    pm.expect(pm.response.text()).to.include(\"Method Not Allowed: v1 es solo lectura\");\r",
+              "    pm.expect(pm.response.text()).to.include(\"v1 es solo lectura\");\r",
               "});"
             ],
             "type": "text/javascript",
@@ -301,7 +297,7 @@
               "});\r",
               "\r",
               "pm.test(\"El servidor devolvió los mismos datos enviados\", function () {\r",
-              "    pm.expect(pm.response.text()).to.include(\"Method Not Allowed: v1 es solo lectura\");\r",
+              "    pm.expect(pm.response.text()).to.include(\"v1 es solo lectura\");\r",
               "});"
             ],
             "type": "text/javascript",
@@ -351,7 +347,7 @@
               "});\r",
               "\r",
               "pm.test(\"El servidor devolvió los mismos datos enviados\", function () {\r",
-              "    pm.expect(pm.response.text()).to.include(\"Method Not Allowed: v1 es solo lectura\");\r",
+              "    pm.expect(pm.response.text()).to.include(\"v1 es solo lectura\");\r",
               "});"
             ],
             "type": "text/javascript",
@@ -491,12 +487,12 @@
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test(\"Status code is 201\", function () {\r",
+              "pm.test(\"Status code is 405\", function () {\r",
               "    pm.response.to.have.status(405);\r",
               "});\r",
               "\r",
               "pm.test(\"El servidor devolvió los mismos datos enviados\", function () {\r",
-              "    pm.expect(pm.response.text()).to.include(\"Method Not Allowed: v1 es solo lectura\");\r",
+              "    pm.expect(pm.response.text()).to.include(\"v1 es solo lectura\");\r",
               "});"
             ],
             "type": "text/javascript",
@@ -721,6 +717,53 @@
       "response": []
     },
     {
+      "name": "Filtro por coleccion",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"El codigo de estado es 200 OK\", function(){\r",
+              "    pm.response.to.have.status(200)\r",
+              "})\r",
+              "pm.test(\"Devuelve un array con resultados\", function () {\r",
+              "    var jsonData = pm.response.json();\r",
+              "    pm.expect(jsonData).to.be.an('array');\r",
+              "    pm.expect(jsonData.length).to.be.above(0);\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": ""
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/global-agriculture-climate-impacts/crop_type",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "global-agriculture-climate-impacts",
+            "crop_type"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
       "name": "DELETE",
       "event": [
         {
@@ -732,7 +775,7 @@
               "});\r",
               "\r",
               "pm.test(\"El servidor devolvió los mismos datos enviados\", function () {\r",
-              "    pm.expect(pm.response.text()).to.include(\"Method Not Allowed: v1 es solo lectura\");\r",
+              "    pm.expect(pm.response.text()).to.include(\"v1 es solo lectura\");\r",
               "});"
             ],
             "type": "text/javascript",

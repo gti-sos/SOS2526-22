@@ -30,14 +30,6 @@ const dbV2 = new dataStore({
 
 export function loadBackEnd(app) {
 
-    // ------------- DOCUMENTACIÓN -------------
-    app.get(BASE_URL_API + "/global-agriculture-climate-impacts/docs", (req, res) => {
-        res.redirect("https://documenter.getpostman.com/view/52404852/2sBXiesEcp"); 
-    });
-    app.get(BASE_URL_API_V2 + "/global-agriculture-climate-impacts/docs", (req, res) => {
-        res.redirect("https://documenter.getpostman.com/view/52404852/2sBXijHrA5"); 
-    });
-
     const initialData = [
         { country: "spain", year: 2020, crop_type: "wheat", average_temperature_c: 20, total_precipitation_mm: 500 },
         { country: "france", year: 2020, crop_type: "corn", average_temperature_c: 19, total_precipitation_mm: 450 },
@@ -53,17 +45,27 @@ export function loadBackEnd(app) {
 
     const campos = ["country", "year", "crop_type", "average_temperature_c", "total_precipitation_mm"];
 
-    // ------------- FUNCIONES AUXILIARES (Lógica compartida) -------------
-    
+    // ------------- FUNCIONES AUXILIARES -------------
+
+    // Devuelve array de valores únicos para un campo (Búsqueda por colecciones)
+    function getFieldHandler(db, fieldName, res) {
+        db.find({}, { [fieldName]: 1, _id: 0 }, (err, docs) => {
+            if (err) return res.status(500).json({ error: "Error en BD" });
+            const values = docs
+                .map(d => d[fieldName])
+                .filter(v => v !== undefined && v !== null);
+            const uniqueValues = [...new Set(values)];
+            res.status(200).json(uniqueValues);
+        });
+    }
+
     function loadInitialDataHandler(db, res) {
         db.remove({}, { multi: true }, (err) => {
             if (err) return res.status(500).json({ error: "Error limpiando DB" });
-            db.persistence.compactDatafile();
-            const datosInsertar = JSON.parse(JSON.stringify(initialData));
-            db.insert(datosInsertar, (err, newDocs) => {
-                if (err) return res.status(500).json({ error: "Insert error", mensaje: err.message });
-                const result = newDocs.map(({ _id, ...rest }) => rest);
-                res.status(200).json(result);
+            db.insert(JSON.parse(JSON.stringify(initialData)), (err) => {
+                if (err) return res.status(500).json({ error: "Insert error" });
+                db.persistence.compactDatafile();
+                res.status(200).json({ message: "Datos cargados correctamente" });
             });
         });
     }
@@ -80,119 +82,100 @@ export function loadBackEnd(app) {
             if (req.query.to) query.year.$lte = parseInt(req.query.to);
         }
 
-        // Paginación (Arregla error "expected 10 to be at most 2")
         let offset = parseInt(req.query.offset) || 0;
         let limit = parseInt(req.query.limit) || 1000;
 
         db.find(query).skip(offset).limit(limit).exec((err, docs) => {
             if (err) return res.status(500).json({ error: "Error en BD" });
-            const result = docs.map(({ _id, ...rest }) => rest);
-            res.status(200).json(result); 
+            res.status(200).json(docs.map(({ _id, ...rest }) => rest)); 
         });
     }
 
-    function getOneHandler(db, req, res) {
-        const { country, year } = req.params;
-        db.findOne({ country: country.toLowerCase(), year: parseInt(year) }, (err, doc) => {
-            if (err) return res.status(500).json({ error: "Error en BD" });
-            if (!doc) return res.status(404).json({ error: "NOT FOUND" });
-            const { _id, ...rest } = doc;
-            res.status(200).json(rest);
-        });
-    }
-
-    function postHandler(db, req, res) {
-        const newData = req.body;
-        const requestKeys = Object.keys(newData);
-        const hasRequiredKeys = campos.every(key => requestKeys.includes(key));
-
-        if (!hasRequiredKeys || requestKeys.length !== campos.length) {
-            return res.status(400).json({ error: "BAD REQUEST: Estructura incorrecta" });
-        }
-
-        newData.country = newData.country.toLowerCase();
-        newData.year = parseInt(newData.year);
-        newData.average_temperature_c = parseFloat(newData.average_temperature_c);
-        newData.total_precipitation_mm = parseFloat(newData.total_precipitation_mm);
-
-        db.findOne({ country: newData.country, year: newData.year }, (err, doc) => {
-            if (doc) return res.status(409).json({ error: "CONFLICT: Ya existe" });
-            db.insert(newData, (err, insertedDoc) => {
-                if (err) return res.status(500).json({ error: "Insert error" });
-                const { _id, ...rest } = insertedDoc;
-                res.status(201).json(rest);
-            });
-        });
-    }
-
-    function putHandler(db, req, res) {
-        const { country, year } = req.params;
-        const updatedData = req.body;
-        
-        // Validación de seguridad para que el cuerpo coincida con la URL
-        if (!updatedData.country || updatedData.country.toLowerCase() !== country.toLowerCase() || parseInt(updatedData.year) !== parseInt(year)) {
-            return res.status(400).json({ error: "BAD REQUEST: ID mismatch" });
-        }
-        
-        // Aseguramos tipos de datos correctos antes de actualizar
-        updatedData.country = updatedData.country.toLowerCase();
-        updatedData.year = parseInt(updatedData.year);
-        if(updatedData.average_temperature_c) updatedData.average_temperature_c = parseFloat(updatedData.average_temperature_c);
-        if(updatedData.total_precipitation_mm) updatedData.total_precipitation_mm = parseFloat(updatedData.total_precipitation_mm);
-
-        db.update({ country: country.toLowerCase(), year: parseInt(year) }, { $set: updatedData }, {}, (err, numReplaced) => {
-            if (err) return res.status(500).json({ error: "Internal Server Error" });
-            
-            if (numReplaced === 0) {
-                return res.status(404).json({ error: "NOT FOUND" });
-            } else {
-                // FORZAR ESCRITURA EN DISCO (Esto soluciona el fallo en el test)
-                db.persistence.compactDatafile();
-                res.status(200).json({ message: "OK actualizado" });
-            }
-        });
-    }
-
-    function deleteOneHandler(db, req, res) {
-        const { country, year } = req.params;
-        db.remove({ country: country.toLowerCase(), year: parseInt(year) }, {}, (err, numRemoved) => {
-            if (numRemoved === 0) return res.status(404).json({ error: "NOT FOUND" });
-            res.status(200).json({ message: "OK borrado" });
-        });
-    }
-
-    function deleteAllHandler(db, req, res) {
-        db.remove({}, { multi: true }, (err) => {
-            res.status(200).json({ message: "OK todos borrados" });
-        });
-    }
-
-    // ------------- ENRUTAMIENTO V1 Y V2 -------------
+    // ------------- ENRUTAMIENTO -------------
     [BASE_URL_API, BASE_URL_API_V2].forEach(base => {
         const vBase = base + "/global-agriculture-climate-impacts";
         const db = (base === BASE_URL_API) ? dbV1 : dbV2;
 
-        // Rutas GET (Ambas versiones)
+        // 1. CARGA INICIAL
         app.get(vBase + "/loadInitialData", (req, res) => loadInitialDataHandler(db, res));
-        app.get(vBase, (req, res) => getAllHandler(db, req, res));
-        app.get(vBase + "/:country/:year", (req, res) => getOneHandler(db, req, res));
 
-        // Lógica de independencia: V2 es escritura, V1 es SOLO LECTURA
+        // 2. BUSQUEDA POR COLECCIONES (Ej: /api/v1/.../year)
+        // Crítico: Estas rutas van ANTES de los parámetros dinámicos :country
+        campos.forEach(campo => {
+            app.get(`${vBase}/${campo}`, (req, res) => getFieldHandler(db, campo, res));
+        });
+
+        // 3. GET GENERAL (Colección completa con filtrado/paginación)
+        app.get(vBase, (req, res) => getAllHandler(db, req, res));
+
+        // 4. GET RECURSO ESPECÍFICO
+        app.get(vBase + "/:country/:year", (req, res) => {
+            const { country, year } = req.params;
+            db.findOne({ country: country.toLowerCase(), year: parseInt(year) }, (err, doc) => {
+                if (err) return res.status(500).json({ error: "Error en BD" });
+                if (!doc) return res.status(404).json({ error: "NOT FOUND" });
+                const { _id, ...rest } = doc;
+                res.status(200).json(rest);
+            });
+        });
+
+        // 5. LÓGICA DE ESCRITURA (POST, PUT, DELETE)
         if (base === BASE_URL_API_V2) {
-            app.post(vBase, (req, res) => postHandler(db, req, res));
-            app.put(vBase + "/:country/:year", (req, res) => putHandler(db, req, res));
-            app.delete(vBase + "/:country/:year", (req, res) => deleteOneHandler(db, req, res));
-            app.delete(vBase, (req, res) => deleteAllHandler(db, req, res));
+            app.post(vBase, (req, res) => {
+                const newData = req.body;
+                if (!campos.every(key => Object.keys(newData).includes(key))) {
+                    return res.status(400).json({ error: "BAD REQUEST: Estructura incorrecta" });
+                }
+                newData.country = newData.country.toLowerCase();
+                newData.year = parseInt(newData.year);
+                db.findOne({ country: newData.country, year: newData.year }, (err, doc) => {
+                    if (doc) return res.status(409).json({ error: "CONFLICT: Ya existe" });
+                    db.insert(newData, (err) => res.status(201).json({ message: "Creado" }));
+                });
+            });
+
+            app.put(vBase + "/:country/:year", (req, res) => {
+                const { country, year } = req.params;
+                const updatedData = req.body;
+                if (!updatedData.country || updatedData.country.toLowerCase() !== country.toLowerCase() || parseInt(updatedData.year) !== parseInt(year)) {
+                    return res.status(400).json({ error: "BAD REQUEST: ID mismatch" });
+                }
+                db.update({ country: country.toLowerCase(), year: parseInt(year) }, { $set: updatedData }, {}, (err, num) => {
+                    if (num === 0) return res.status(404).json({ error: "NOT FOUND" });
+                    db.persistence.compactDatafile();
+                    res.status(200).json({ message: "OK actualizado" });
+                });
+            });
+
+            app.delete(vBase + "/:country/:year", (req, res) => {
+                const { country, year } = req.params;
+                db.remove({ country: country.toLowerCase(), year: parseInt(year) }, {}, (err, num) => {
+                    if (num === 0) return res.status(404).json({ error: "NOT FOUND" });
+                    db.persistence.compactDatafile(); // Forzar persistencia para tests
+                    res.status(200).json({ message: "OK borrado" });
+                });
+            });
+
+            app.delete(vBase, (req, res) => {
+                db.remove({}, { multi: true }, () => {
+                    db.persistence.compactDatafile();
+                    res.status(200).json({ message: "OK todos borrados" });
+                });
+            });
         } else {
-            // Bloqueo v1
-            const error405 = (req, res) => res.status(405).json({ error: "Method Not Allowed: v1 es solo lectura" });
+            // Respuestas para v1 (Lectura)
+            const error405 = (req, res) => res.status(405).json({ error: "v1 es solo lectura" });
             app.post(vBase, error405);
             app.put(vBase + "/:country/:year", error405);
             app.delete(vBase + "/:country/:year", error405);
             app.delete(vBase, error405);
         }
-        
-        // Bloqueos de seguridad generales
+
+        // 6. DOCUMENTACIÓN Y BLOQUEOS EXTRAS
+        app.get(base + "/global-agriculture-climate-impacts/docs", (req, res) => {
+            const url = base === BASE_URL_API ? "https://documenter.getpostman.com/view/52404852/2sBXiesEcp" : "https://documenter.getpostman.com/view/52404852/2sBXijHrA5";
+            res.redirect(url);
+        });
         app.put(vBase, (req, res) => res.status(405).json({ error: "Method Not Allowed" }));
         app.post(vBase + "/:country/:year", (req, res) => res.status(405).json({ error: "Method Not Allowed" }));
     });
