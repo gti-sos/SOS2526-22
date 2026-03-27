@@ -1,3 +1,8 @@
+
+<svelte:head>
+    <title>SOS2526</title>
+</svelte:head>
+
 <main class="container">
     <header class="header">
         <h1>🚀 Proyecto SOS2526 - Grupo 22</h1>
