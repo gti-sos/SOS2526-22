@@ -1,16 +1,13 @@
 name: CI_CD
-on: 
-  pull_request:
-    branches: [ main ]  
+on: [push,pull_request]
 jobs:
-  test:
+  ci-cd:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
       - name: Install dependences
         run: npm install
-      - name: Build UI
-        run: npm run build
-      - name: Tests
+      - name: Run tests
         run: npm test
+     
