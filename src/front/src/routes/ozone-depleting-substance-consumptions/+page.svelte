@@ -22,6 +22,7 @@
     let searchResults = $state(null);
     let searchLoading = $state(false);
     let searchParams = $state({ country: '', code: '', exactYear: '', from: '', to: '', field: 'country', fieldValue: '' });
+    
 
     function setMessage(text, type = 'success') {
         message = { text, type };
@@ -201,7 +202,6 @@ onMount(() => {
         <button onclick={cargarDatosEjemplo} class="btn-sample">Cargar datos iniciales</button>
         <button onclick={() => showCreateForm = !showCreateForm} class="btn-create">{showCreateForm ? 'Cerrar' : 'Nuevo recurso'}</button>
         <button onclick={eliminarTodos} class="btn-danger">Eliminar todo</button>
-        <button onclick={() => cargarRecursos(currentPage, true)} class="btn-refresh">Actualizar lista</button>
     </div>
 
     {#if showCreateForm}
