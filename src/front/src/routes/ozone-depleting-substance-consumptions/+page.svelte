@@ -1,6 +1,7 @@
 <script>
     // @ts-nocheck
     import { dev } from "$app/environment";
+    import {onMount} from "svelte";
 
     const FIELDS = ['country','code','year','methyl_chloroform','methyl_bromide','hcfc','carbon_tetrachloride','halon','cfc'];
     const API_BASE = dev ? 'http://localhost:3000/api/v2/ozone-depleting-substance-consumptions' : '/api/v2/ozone-depleting-substance-consumptions';
@@ -21,6 +22,7 @@
     let searchResults = $state(null);
     let searchLoading = $state(false);
     let searchParams = $state({ country: '', code: '', exactYear: '', from: '', to: '', field: 'country', fieldValue: '' });
+    
 
     function setMessage(text, type = 'success') {
         message = { text, type };
@@ -156,7 +158,9 @@
         finally { loading = false; }
     }
 
+onMount(() => {
     cargarRecursos(1);
+});
 </script>
 
 {#if message.text}<div class="msg msg-{message.type}">{message.text}</div>{/if}
@@ -198,7 +202,6 @@
         <button onclick={cargarDatosEjemplo} class="btn-sample">Cargar datos iniciales</button>
         <button onclick={() => showCreateForm = !showCreateForm} class="btn-create">{showCreateForm ? 'Cerrar' : 'Nuevo recurso'}</button>
         <button onclick={eliminarTodos} class="btn-danger">Eliminar todo</button>
-        <button onclick={() => cargarRecursos(currentPage, true)} class="btn-refresh">Actualizar lista</button>
     </div>
 
     {#if showCreateForm}
