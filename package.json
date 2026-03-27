@@ -27,12 +27,10 @@
     "test-CLS-render": "newman run test/api/CLS-collection.json -e test/api/CLS-render.json --bail",
     "NVM-EMM-local": "newman run test/api/EMM-collection.json -e test/api/EMM-local.json",
     "NVM-EMM-local-v2": "newman run test/api/EMM-collection-v2.json -e test/api/EMM-local.json",
-
     "test-EMM-local": "start-server-and-test start http://localhost:3000 NVM-EMM-local",
     "test-EMM-local-v2": "start-server-and-test start http://localhost:3000 NVM-EMM-local-v2",
     "test-ozone-depleting-substance-consumptions": "npm run test-EMM-local & npm run test-EMM-local-v2 & npx kill-port 3000",
     "test-EMM-render": "newman run test/api/EMM-collection.json -e test/api/EMM-render.json --bail",
-
     "NVM-JMV-local": "newman run test/api/JMV-collection.json -e test/api/JMV-local.json --bail",
     "test-JMV-local": "start-server-and-test start http://localhost:3000 NVM-JMV-local",
     "test-JMV-render": "newman run test/api/JMV-collection.json -e test/api/JMV-render.json --bail",
@@ -46,6 +44,8 @@
     "start-server-and-test": "^2.1.5"
   },
   "devDependencies": {
-    "@sveltejs/adapter-node": "^5.5.4"
+    "@playwright/test": "^1.58.2",
+    "@sveltejs/adapter-node": "^5.5.4",
+    "@types/node": "^25.5.0"
   }
 }

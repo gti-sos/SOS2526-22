@@ -48,16 +48,30 @@ export function loadBackEnd(app) {
     // ------------- FUNCIONES AUXILIARES -------------
 
     // Devuelve array de valores únicos para un campo (Búsqueda por colecciones)
-    function getFieldHandler(db, fieldName, res) {
+    function getFieldHandler(db, fieldName, req, res) {
+        // Si req no existe por algún motivo, evitamos el crash
+        if (!req || !req.query) {
+            return res.status(500).json({ error: "Objeto Request no recibido" });
+        }
+
+        const from = req.query.from ? parseFloat(req.query.from) : null;
+        const to = req.query.to ? parseFloat(req.query.to) : null;
+
         db.find({}, { [fieldName]: 1, _id: 0 }, (err, docs) => {
             if (err) return res.status(500).json({ error: "Error en BD" });
-            const values = docs
+            
+            let values = docs
                 .map(d => d[fieldName])
                 .filter(v => v !== undefined && v !== null);
+
+            if (from !== null) values = values.filter(v => v >= from);
+            if (to !== null) values = values.filter(v => v <= to);
+
             const uniqueValues = [...new Set(values)];
             res.status(200).json(uniqueValues);
         });
     }
+
 
     function loadInitialDataHandler(db, res) {
         db.remove({}, { multi: true }, (err) => {
@@ -76,18 +90,34 @@ export function loadBackEnd(app) {
         if (req.query.year) query.year = parseInt(req.query.year);
         if (req.query.crop_type) query.crop_type = req.query.crop_type.toLowerCase();
 
-        if (req.query.from || req.query.to) {
-            query.year = {};
-            if (req.query.from) query.year.$gte = parseInt(req.query.from);
-            if (req.query.to) query.year.$lte = parseInt(req.query.to);
-        }
+        // Parámetros de rango genéricos
+        const from = req.query.from ? parseFloat(req.query.from) : null;
+        const to = req.query.to ? parseFloat(req.query.to) : null;
 
-        let offset = parseInt(req.query.offset) || 0;
-        let limit = parseInt(req.query.limit) || 1000;
-
-        db.find(query).skip(offset).limit(limit).exec((err, docs) => {
+        db.find(query, (err, docs) => {
             if (err) return res.status(500).json({ error: "Error en BD" });
-            res.status(200).json(docs.map(({ _id, ...rest }) => rest)); 
+
+            let results = docs;
+
+            // Filtramos por rango. 
+            // Si la consulta viene de una columna numérica, filtramos por esa columna.
+            // Por defecto, lo aplicamos a precipitación o temperatura si están presentes.
+            if (from !== null) {
+                results = results.filter(d => 
+                    (d.total_precipitation_mm >= from) || (d.average_temperature_c >= from)
+                );
+            }
+            if (to !== null) {
+                results = results.filter(d => 
+                    (d.total_precipitation_mm <= to) || (d.average_temperature_c <= to)
+                );
+            }
+
+            let offset = parseInt(req.query.offset) || 0;
+            let limit = parseInt(req.query.limit) || 1000;
+            const paginated = results.slice(offset, offset + limit);
+
+            res.status(200).json(paginated.map(({ _id, ...rest }) => rest)); 
         });
     }
 
@@ -99,10 +129,10 @@ export function loadBackEnd(app) {
         // 1. CARGA INICIAL
         app.get(vBase + "/loadInitialData", (req, res) => loadInitialDataHandler(db, res));
 
-        // 2. BUSQUEDA POR COLECCIONES (Ej: /api/v1/.../year)
-        // Crítico: Estas rutas van ANTES de los parámetros dinámicos :country
+       // 2. BUSQUEDA POR COLECCIONES (Ej: /api/v1/.../average_temperature_c)
         campos.forEach(campo => {
-            app.get(`${vBase}/${campo}`, (req, res) => getFieldHandler(db, campo, res));
+            // Fíjate que ahora pasamos (req, res) y se los damos a getFieldHandler
+            app.get(`${vBase}/${campo}`, (req, res) => getFieldHandler(db, campo, req, res));
         });
 
         // 3. GET GENERAL (Colección completa con filtrado/paginación)
