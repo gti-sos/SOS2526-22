@@ -37,7 +37,8 @@
     "NVM-JMV-local-v2": "newman run test/api/JMV-collection-v2.json --bail",
     "test-JMV-local-v2": "start-server-and-test start http://localhost:3000 NVM-JMV-local-v2",
     "test-JMV-render-v2": "newman run test/api/JMV-collection-v2.json -e test/api/JMV-render.json --bail",
-    "test-co2-emission-gap-among-countries-clustering-pca": "npm run test-JMV-local && npm run test-JMV-local-v2 & npx kill-port 3000"
+    "test-co2-emission-gap-among-countries-clustering-pca": "npm run test-JMV-local && npm run test-JMV-local-v2 & npx kill-port 3000",
+    "test:e2e": "start-server-and-test start http://localhost:3000 'npx playwright test'"
   },
   "dependencies": {
     "cors": "^2.8.6",
