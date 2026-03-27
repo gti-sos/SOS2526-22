@@ -1,6 +1,7 @@
 <script>
     // @ts-nocheck
     import { dev } from "$app/environment";
+    import {onMount} from "svelte";
 
     const FIELDS = ['country','code','year','methyl_chloroform','methyl_bromide','hcfc','carbon_tetrachloride','halon','cfc'];
     const API_BASE = dev ? 'http://localhost:3000/api/v2/ozone-depleting-substance-consumptions' : '/api/v2/ozone-depleting-substance-consumptions';
@@ -156,7 +157,9 @@
         finally { loading = false; }
     }
 
+onMount(() => {
     cargarRecursos(1);
+});
 </script>
 
 {#if message.text}<div class="msg msg-{message.type}">{message.text}</div>{/if}
