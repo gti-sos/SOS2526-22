@@ -1,10 +1,11 @@
 <script>
     // @ts-nocheck
-    import { dev } from "$app/environment";
     import {onMount} from "svelte";
 
     const FIELDS = ['country','code','year','methyl_chloroform','methyl_bromide','hcfc','carbon_tetrachloride','halon','cfc'];
-    const API_BASE = dev ? 'http://localhost:3000/api/v2/ozone-depleting-substance-consumptions' : '/api/v2/ozone-depleting-substance-consumptions';
+    const FIELD_NAMES_ES = { country: 'País', code: 'Código', year: 'Año', methyl_chloroform: 'Metilcloroformo', methyl_bromide: 'Bromuro de metilo', hcfc: 'HCFC', carbon_tetrachloride: 'Tetracloruro de carbono', halon: 'Halón', cfc: 'CFC'
+};
+    const API_BASE = '/api/v2/ozone-depleting-substance-consumptions';
     const ITEMS_PER_PAGE = 5;
 
     let recursos = $state([]);
@@ -23,6 +24,10 @@
     let searchLoading = $state(false);
     let searchParams = $state({ country: '', code: '', exactYear: '', from: '', to: '', field: 'country', fieldValue: '' });
     
+    // Variables para listar valores
+    let campoSeleccionadoLista = $state('country');
+    let valoresCampo = $state([]);
+    let cargandoListaValores = $state(false);
 
     function setMessage(text, type = 'success') {
         message = { text, type };
@@ -158,16 +163,37 @@
         finally { loading = false; }
     }
 
-onMount(async () => {
-    // 1. Cargar los recursos existentes (paginados)
-    await cargarRecursos(1);
-
-    // 2. Si no hay ningún recurso, cargar los datos iniciales
-    if (recursos.length === 0) {
-        await cargarDatosEjemplo();
+    async function listarValoresCampo() {
+        cargandoListaValores = true;
+        valoresCampo = [];
+        try {
+            // Usa el endpoint correcto: /:field
+            const res = await fetch(`${API_BASE}/${campoSeleccionadoLista}`);
+            if (!res.ok) throw new Error();
+            const data = await res.json();
+            
+            // Si la respuesta es un array simple, lo usamos directamente
+            if (Array.isArray(data)) {
+                valoresCampo = data;
+            } else {
+                // Si por alguna razón llega un objeto, lo convertimos
+                valoresCampo = [data];
+            }
+            
+            if (valoresCampo.length === 0) setMessage('No se encontraron valores.', 'error');
+        } catch {
+            setMessage('Error al obtener los valores del campo.', 'error');
+        } finally {
+            cargandoListaValores = false;
+        }
     }
-});
 
+    onMount(async () => {
+        await cargarRecursos(1);
+        if (recursos.length === 0) {
+            await cargarDatosEjemplo();
+        }
+    });
 </script>
 
 {#if message.text}<div class="msg msg-{message.type}">{message.text}</div>{/if}
@@ -191,7 +217,6 @@ onMount(async () => {
                     <label>Buscar por campo específico</label>
                     <div class="input-group">
                         <select bind:value={searchParams.field}>
-                            // eslint-disable-next-line svelte/require-each-key
                             {#each FIELDS as f (f)}<option value={f}>{f.replace(/_/g,' ').toUpperCase()}</option>{/each}
                         </select>
                         <input type="text" bind:value={searchParams.fieldValue} placeholder="Valor" />
@@ -202,6 +227,32 @@ onMount(async () => {
                 <button onclick={buscarUnificado} class="btn-primary">Buscar</button>
                 <button onclick={limpiarFiltros} class="btn-secondary">Limpiar filtros</button>
             </div>
+
+            <div class="search-row" style="margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 1rem;">
+                <div class="search-field">
+                    <label>Listar todos los valores de un campo</label>
+                    <div class="input-group">
+                        <select bind:value={campoSeleccionadoLista}>
+                        {#each FIELDS as f (f)}
+                            <option value={f}>{f.replace(/_/g,' ').toUpperCase()}</option>
+                        {/each}
+                    </select>
+                        <button onclick={listarValoresCampo} class="btn-primary" disabled={cargandoListaValores}>
+                            {cargandoListaValores ? 'Cargando...' : 'Listar'}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resultados de la lista de valores -->
+            {#if valoresCampo.length > 0}
+            <div class="values-container">
+                {#each valoresCampo as valor, index (index)}
+                    <span class="value-tag">{valor}</span>
+                {/each}
+            </div>
+            <p class="total-info">Total: {valoresCampo.length} valores</p>
+        {/if}
         </div>
     </section>
 
@@ -230,15 +281,14 @@ onMount(async () => {
 
     {#if editando}
         <section class="card edit-card">
-        
             <h2>Editando: {editando.country} ({editando.year})</h2>
             <form onsubmit={guardarEdicion}>
-            <!-- svelte-ignore a11y_label_has_associated_control -->
+                <!-- svelte-ignore a11y_label_has_associated_control -->
                 <div class="form-grid">
                     <div class="readonly-field"><label>País:</label><input type="text" bind:value={editForm.country} readonly disabled /></div>
                     <div><label>Código:</label><input type="text" bind:value={editForm.code} required /></div>
                     <div class="readonly-field"><label>Año:</label><input type="number" bind:value={editForm.year} readonly disabled /></div>
-                    {#each FIELDS.filter(f => f.includes('_')) as f (f)}
+                    {#each FIELDS.filter(f => f !== 'country' && f !== 'code' && f !== 'year') as f (f)}
                         <div><label>{f.replace(/_/g,' ')}:</label><input type="number" step="any" bind:value={editForm[f]} /></div>
                     {/each}
                 </div>
@@ -259,14 +309,36 @@ onMount(async () => {
                         <thead><tr><th>País</th><th>Código</th><th>Año</th><th>Metilcloroformo</th><th>Bromuro de metilo</th><th>HCFC</th><th>Tetracloruro de carbono</th><th>Halon</th><th>CFC</th></tr></thead>
                         <tbody>
                             {#each searchResults as item (item.country + item.year)}
-                                <tr><td>{item.country}</td><td>{item.code}</td><td>{item.year}</td><td>{item.methyl_chloroform}</td><td>{item.methyl_bromide}</td><td>{item.hcfc}</td><td>{item.carbon_tetrachloride}</td><td>{item.halon}</td><td>{item.cfc}</td></tr>
+                                <tr>
+                                    <td>{item.country}</td>
+                                    <td>{item.code}</td>
+                                    <td>{item.year}</td>
+                                    <td>{item.methyl_chloroform}</td>
+                                    <td>{item.methyl_bromide}</td>
+                                    <td>{item.hcfc}</td>
+                                    <td>{item.carbon_tetrachloride}</td>
+                                    <td>{item.halon}</td>
+                                    <td>{item.cfc}</td>
+                                </tr>
                             {/each}
                         </tbody>
                     </table>
                 {:else if !Array.isArray(searchResults) && searchResults}
                     <table class="table">
                         <thead><tr><th>País</th><th>Código</th><th>Año</th><th>Metilcloroformo</th><th>Bromuro de metilo</th><th>HCFC</th><th>Tetracloruro de carbono</th><th>Halon</th><th>CFC</th></tr></thead>
-                        <tbody><tr><td>{searchResults.country}</td><td>{searchResults.code}</td><td>{searchResults.year}</td><td>{searchResults.methyl_chloroform}</td><td>{searchResults.methyl_bromide}</td><td>{searchResults.hcfc}</td><td>{searchResults.carbon_tetrachloride}</td><td>{searchResults.halon}</td><td>{searchResults.cfc}</td></tr></tbody>
+                        <tbody>
+                            <tr>
+                                <td>{searchResults.country}</td>
+                                <td>{searchResults.code}</td>
+                                <td>{searchResults.year}</td>
+                                <td>{searchResults.methyl_chloroform}</td>
+                                <td>{searchResults.methyl_bromide}</td>
+                                <td>{searchResults.hcfc}</td>
+                                <td>{searchResults.carbon_tetrachloride}</td>
+                                <td>{searchResults.halon}</td>
+                                <td>{searchResults.cfc}</td>
+                            </tr>
+                        </tbody>
                     </table>
                 {:else}<p>No hay resultados.</p>{/if}
             {/if}
@@ -295,7 +367,15 @@ onMount(async () => {
                     <tbody>
                         {#each recursos as r (r.country + r.year)}
                             <tr>
-                                <td>{r.country}</td><td>{r.code}</td><td>{r.year}</td><td>{r.methyl_chloroform}</td><td>{r.methyl_bromide}</td><td>{r.hcfc}</td><td>{r.carbon_tetrachloride}</td><td>{r.halon}</td><td>{r.cfc}</td>
+                                <td>{r.country}</td>
+                                <td>{r.code}</td>
+                                <td>{r.year}</td>
+                                <td>{r.methyl_chloroform}</td>
+                                <td>{r.methyl_bromide}</td>
+                                <td>{r.hcfc}</td>
+                                <td>{r.carbon_tetrachloride}</td>
+                                <td>{r.halon}</td>
+                                <td>{r.cfc}</td>
                                 <td class="action-cell"><button onclick={() => iniciarEdicion(r)} class="btn-icon btn-edit" title="Editar">Editar</button><button onclick={() => eliminarRecurso(r)} class="btn-icon btn-delete" title="Eliminar">Borrar</button></td>
                             </tr>
                         {/each}
@@ -305,7 +385,6 @@ onMount(async () => {
         </section>
     {/if}
 </div>
-
 
 <style>
     :root {
@@ -318,7 +397,7 @@ onMount(async () => {
         --danger-dark: #c62828;
         --warning: #fb8c00;
         --warning-dark: #ef6c00;
-        --success: #10b981;          /* Verde para mensajes de éxito */
+        --success: #10b981;
         --light: #f5f5f5;
         --dark: #263238;
         --gray: #6c757d;
@@ -349,7 +428,6 @@ onMount(async () => {
         text-align: center;
     }
 
-    /* Tarjetas */
     .card {
         background: rgba(255, 255, 255, 0.9);
         backdrop-filter: blur(2px);
@@ -378,7 +456,6 @@ onMount(async () => {
         border-left: 6px solid var(--primary);
     }
 
-    /* Mensajes */
     .msg {
         padding: 1rem 1.5rem;
         border-radius: 1rem;
@@ -411,7 +488,6 @@ onMount(async () => {
         border-left: 4px solid var(--danger);
     }
 
-    /* Barra de acciones */
     .action-bar {
         display: flex;
         gap: 1rem;
@@ -420,7 +496,6 @@ onMount(async () => {
         justify-content: center;
     }
 
-    /* Botones */
     button {
         padding: 0.7rem 1.4rem;
         border: none;
@@ -527,7 +602,6 @@ onMount(async () => {
         border-radius: 0.75rem;
     }
 
-    /* Formularios de búsqueda */
     .search-form {
         display: flex;
         flex-direction: column;
@@ -588,7 +662,6 @@ onMount(async () => {
         border-radius: 1rem;
     }
 
-    /* Formularios de creación/edición */
     .form-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -619,7 +692,6 @@ onMount(async () => {
         justify-content: flex-end;
     }
 
-    /* Tablas */
     .table {
         width: 100%;
         border-collapse: collapse;
@@ -658,7 +730,6 @@ onMount(async () => {
         justify-content: center;
     }
 
-    /* Paginación */
     .pagination-bar {
         display: flex;
         justify-content: center;
@@ -684,7 +755,38 @@ onMount(async () => {
         font-size: 0.9rem;
     }
 
-    /* Estados */
+    /* Estilos para la lista de valores */
+    .values-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 1.5rem;
+        max-height: 200px;
+        overflow-y: auto;
+        padding: 10px;
+        background: #fdfdfd;
+        border-radius: 1rem;
+        border: 1px solid var(--border);
+    }
+
+    .value-tag {
+        background: var(--gray-light);
+        padding: 0.4rem 1rem;
+        border-radius: 0.5rem;
+        font-size: 0.85rem;
+        border: 1px solid var(--border);
+        color: var(--dark);
+        min-width: 60px;
+        text-align: center;
+    }
+
+    .total-info {
+        font-size: 0.8rem;
+        color: var(--gray);
+        margin-top: 10px;
+        font-style: italic;
+    }
+
     .loading,
     .empty {
         text-align: center;
@@ -693,7 +795,6 @@ onMount(async () => {
         font-style: italic;
     }
 
-    /* Responsive */
     @media (max-width: 768px) {
         .form-grid {
             grid-template-columns: 1fr;
