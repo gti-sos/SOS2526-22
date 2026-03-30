@@ -158,9 +158,16 @@
         finally { loading = false; }
     }
 
-onMount(() => {
-    cargarRecursos(1);
+onMount(async () => {
+    // 1. Cargar los recursos existentes (paginados)
+    await cargarRecursos(1);
+
+    // 2. Si no hay ningún recurso, cargar los datos iniciales
+    if (recursos.length === 0) {
+        await cargarDatosEjemplo();
+    }
 });
+
 </script>
 
 {#if message.text}<div class="msg msg-{message.type}">{message.text}</div>{/if}
