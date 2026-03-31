@@ -86,11 +86,27 @@ export function loadBackEnd(app) {
 
     function getAllHandler(db, req, res) {
         let query = {};
+        
+        // Filtros de texto exactos
         if (req.query.country) query.country = req.query.country.toLowerCase();
         if (req.query.year) query.year = parseInt(req.query.year);
         if (req.query.crop_type) query.crop_type = req.query.crop_type.toLowerCase();
 
-        // Parámetros de rango genéricos
+        // --- SOLUCIÓN APLICADA: Filtros de Temperatura para NeDB ---
+        if (req.query.temp_min || req.query.temp_max) {
+            query.average_temperature_c = {};
+            if (req.query.temp_min) query.average_temperature_c.$gte = parseFloat(req.query.temp_min);
+            if (req.query.temp_max) query.average_temperature_c.$lte = parseFloat(req.query.temp_max);
+        }
+
+        // --- SOLUCIÓN APLICADA: Filtros de Precipitación para NeDB ---
+        if (req.query.prec_min || req.query.prec_max) {
+            query.total_precipitation_mm = {};
+            if (req.query.prec_min) query.total_precipitation_mm.$gte = parseFloat(req.query.prec_min);
+            if (req.query.prec_max) query.total_precipitation_mm.$lte = parseFloat(req.query.prec_max);
+        }
+
+        // Parámetros de rango genéricos (los mantengo por si otra parte de tu app los usa)
         const from = req.query.from ? parseFloat(req.query.from) : null;
         const to = req.query.to ? parseFloat(req.query.to) : null;
 
@@ -99,9 +115,7 @@ export function loadBackEnd(app) {
 
             let results = docs;
 
-            // Filtramos por rango. 
-            // Si la consulta viene de una columna numérica, filtramos por esa columna.
-            // Por defecto, lo aplicamos a precipitación o temperatura si están presentes.
+            // Mantenemos el filtro antiguo por si dependes de "from" y "to"
             if (from !== null) {
                 results = results.filter(d => 
                     (d.total_precipitation_mm >= from) || (d.average_temperature_c >= from)
@@ -131,7 +145,6 @@ export function loadBackEnd(app) {
 
        // 2. BUSQUEDA POR COLECCIONES (Ej: /api/v1/.../average_temperature_c)
         campos.forEach(campo => {
-            // Fíjate que ahora pasamos (req, res) y se los damos a getFieldHandler
             app.get(`${vBase}/${campo}`, (req, res) => getFieldHandler(db, campo, req, res));
         });
 
