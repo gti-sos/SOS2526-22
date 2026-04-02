@@ -1,4 +1,4 @@
-///// INDIVIDUAL ELENA 
+/// INDIVIDUAL ELENA 
 import dataStore from 'nedb';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -9,21 +9,15 @@ const __dirname = path.dirname(__filename);
 const BASE_URL_API = "/api/v1";
 const BASE_URL_API_V2 = "/api/v2";
 
-// Base de datos para v1 (solo lectura)
-const dbV1 = new dataStore({ 
-    filename: path.join(__dirname, '../../data/dataEMM-v1.db'), 
-    autoload: true 
-});
-
-// Base de datos para v2 (lectura/escritura)
-const dbV2 = new dataStore({ 
-    filename: path.join(__dirname, '../../data/dataEMM-v2.db'), 
+// Base de datos compartida entre v1 y v2
+const db = new dataStore({ 
+    filename: path.join(__dirname, '../../data/dataEMM.db'), 
     autoload: true 
 });
 
 export function loadBackEnd(app) {
 
-    // ------------- DOCS (ambas versiones) -------------
+    // ------------- DOCS -------------
     app.get(BASE_URL_API + "/ozone-depleting-substance-consumptions/docs", (req, res) => {
         res.redirect("https://documenter.getpostman.com/view/52404851/2sBXiertqM"); 
     });
@@ -53,7 +47,7 @@ export function loadBackEnd(app) {
     ];
 
     // ------------- FUNCIONES AUXILIARES -------------
-    function loadInitialDataHandler(db, res) {
+    function loadInitialDataHandler(res) {
         db.find({}, (err, docs) => {
             if (docs.length === 0) {
                 db.insert(initialDataElena, (err, newDocs) => {
@@ -67,9 +61,8 @@ export function loadBackEnd(app) {
             }
         });
     }
-    
 
-    function getAllHandler(db, req, res) {
+    function getAllHandler(req, res) {
         const query = {};
         if (req.query.country) query.country = req.query.country.toLowerCase();
         if (req.query.code) query.code = req.query.code.toLowerCase();
@@ -89,7 +82,6 @@ export function loadBackEnd(app) {
         db.find(query, (err, docs) => {
             if (err) return res.status(500).json({ error: "Error en la base de datos" });
 
-            // Filtros de rango de tiempo
             let filtered = docs;
             if (from !== null) filtered = filtered.filter(d => d.year >= from);
             if (to !== null) filtered = filtered.filter(d => d.year <= to);
@@ -97,10 +89,8 @@ export function loadBackEnd(app) {
             const results = filtered.map(({ _id, ...rest }) => rest);
 
             if (isNaN(page) || isNaN(items)) {
-                // Sin paginación
                 res.status(200).json(results);
             } else {
-                // Con paginación
                 const pageNum = Math.max(1, page);
                 const limitNum = Math.max(1, items);
                 const skipNum = (pageNum - 1) * limitNum;
@@ -116,8 +106,7 @@ export function loadBackEnd(app) {
         });
     }
 
-    // Obtener un recurso concreto por país y año
-    function getOneHandler(db, req, res) {
+    function getOneHandler(req, res) {
         const { country, year } = req.params;
         db.find({ country: country, year: parseInt(year) }, (err, docs) => {
             if (docs.length === 0) {
@@ -130,8 +119,7 @@ export function loadBackEnd(app) {
         });
     }
 
-    // Obtener recursos por país (con filtros de tiempo opcionales)
-    function getByCountryHandler(db, req, res) {
+    function getByCountryHandler(req, res) {
         const country = req.params.country.toLowerCase();
         const from = req.query.from ? parseInt(req.query.from) : null;
         const to = req.query.to ? parseInt(req.query.to) : null;
@@ -148,8 +136,7 @@ export function loadBackEnd(app) {
         });
     }
 
-    // Obtener recursos con filtros combinados (país, año, rango de años)
-    function getFiltersHandler(db, req, res) {
+    function getFiltersHandler(req, res) {
         const { country, year, from, to } = req.query;
         let query = {};
         if (country) query.country = country.toLowerCase();
@@ -164,8 +151,7 @@ export function loadBackEnd(app) {
         });
     }
 
-    // Obtener un campo específico de todos los recursos
-    function getFieldHandler(db, req, res) {
+    function getFieldHandler(req, res) {
         const field = req.params.field;
         db.find({}, (err, docs) => {
             if (docs.length === 0) return res.status(200).json([]);
@@ -177,71 +163,47 @@ export function loadBackEnd(app) {
         });
     }
 
-    // ------------- RUTAS PARA V1 (solo lectura) -------------
+    // ------------- RUTAS V1 (solo lectura, misma BD) -------------
     const v1Base = BASE_URL_API + "/ozone-depleting-substance-consumptions";
 
-    app.get(v1Base + "/loadInitialData", (req, res) => loadInitialDataHandler(dbV1, res));
-    app.get(v1Base, (req, res) => getAllHandler(dbV1, req, res));
-    app.get(v1Base + "/filters", (req, res) => getFiltersHandler(dbV1, req, res));
-    app.get(v1Base + "/:country/:year", (req, res) => getOneHandler(dbV1, req, res));
+    app.get(v1Base + "/loadInitialData", (req, res) => loadInitialDataHandler(res));
+    app.get(v1Base, (req, res) => getAllHandler(req, res));
+    app.get(v1Base + "/filters", (req, res) => getFiltersHandler(req, res));
+    app.get(v1Base + "/:country/:year", (req, res) => getOneHandler(req, res));
 
-    // PRIMERO la ruta de campo, pero solo si el parámetro es un campo conocido
     app.get(v1Base + "/:field", (req, res, next) => {
         if (campos.includes(req.params.field)) {
-            return getFieldHandler(dbV1, req, res);
+            return getFieldHandler(req, res);
         } else {
-            next(); 
+            next();
         }
     });
 
-    // DESPUÉS la ruta de país
-    app.get(v1Base + "/:country", (req, res) => getByCountryHandler(dbV1, req, res));
+    app.get(v1Base + "/:country", (req, res) => getByCountryHandler(req, res));
 
-    // Bloquear métodos de escritura en v1
+    // V1 bloquea escritura
     app.post(v1Base, (req, res) => res.status(405).json({ error: "Method Not Allowed: v1 es solo lectura" }));
     app.put(v1Base + "/:country/:year", (req, res) => res.status(405).json({ error: "Method Not Allowed: v1 es solo lectura" }));
     app.delete(v1Base + "/:country/:year", (req, res) => res.status(405).json({ error: "Method Not Allowed: v1 es solo lectura" }));
     app.delete(v1Base, (req, res) => res.status(405).json({ error: "Method Not Allowed: v1 es solo lectura" }));
 
-    // Control de métodos no permitidos en v1 (solo GET)
-    app.all(v1Base, (req, res, next) => {
-        if (!['GET'].includes(req.method)) {
-            return res.status(405).json({ error: "Method Not Allowed (solo GET en v1)" });
-        }
-        next();
-    });
-    app.all(v1Base + "/:country/:year", (req, res, next) => {
-        if (!['GET'].includes(req.method)) {
-            return res.status(405).json({ error: "Method Not Allowed (solo GET en v1)" });
-        }
-        next();
-    });
-    app.all(v1Base + "/:country", (req, res, next) => {
-        if (!['GET'].includes(req.method)) {
-            return res.status(405).json({ error: "Method Not Allowed (solo GET en v1)" });
-        }
-        next();
-    });
-
-    // ------------- RUTAS PARA V2 (lectura/escritura) -------------
+    // ------------- RUTAS V2 (CRUD completo, misma BD) -------------
     const v2Base = BASE_URL_API_V2 + "/ozone-depleting-substance-consumptions";
 
-    app.get(v2Base + "/loadInitialData", (req, res) => loadInitialDataHandler(dbV2, res));
-    app.get(v2Base, (req, res) => getAllHandler(dbV2, req, res));
-    app.get(v2Base + "/filters", (req, res) => getFiltersHandler(dbV2, req, res));
-    app.get(v2Base + "/:country/:year", (req, res) => getOneHandler(dbV2, req, res));
+    app.get(v2Base + "/loadInitialData", (req, res) => loadInitialDataHandler(res));
+    app.get(v2Base, (req, res) => getAllHandler(req, res));
+    app.get(v2Base + "/filters", (req, res) => getFiltersHandler(req, res));
+    app.get(v2Base + "/:country/:year", (req, res) => getOneHandler(req, res));
 
-    // PRIMERO la ruta de campo, pero solo si el parámetro es un campo conocido
     app.get(v2Base + "/:field", (req, res, next) => {
         if (campos.includes(req.params.field)) {
-            return getFieldHandler(dbV2, req, res);
+            return getFieldHandler(req, res);
         } else {
-            next(); // pasa a la siguiente ruta (país)
+            next();
         }
     });
 
-    // DESPUÉS la ruta de país
-    app.get(v2Base + "/:country", (req, res) => getByCountryHandler(dbV2, req, res));
+    app.get(v2Base + "/:country", (req, res) => getByCountryHandler(req, res));
 
     // POST crear
     app.post(v2Base, (req, res) => {
@@ -262,13 +224,13 @@ export function loadBackEnd(app) {
         newData.halon = Number(newData.halon);
         newData.cfc = Number(newData.cfc);
 
-        dbV2.find({ country: newData.country, year: newData.year }, (err, docs) => {
+        db.find({ country: newData.country, year: newData.year }, (err, docs) => {
             if (docs.length > 0) {
                 return res.status(409).json({ error: "CONFLICT: El recurso ya existe para ese país y año" });
             } else {
-                dbV2.insert(newData, (err, doc) => {
+                db.insert(newData, (err, doc) => {
                     if (err) return res.status(500).json({ error: err.message });
-                        res.status(201).json({ message: "Recurso creado correctamente" });
+                    res.status(201).json({ message: "Recurso creado correctamente" });
                 });
             }
         });
@@ -291,7 +253,7 @@ export function loadBackEnd(app) {
             return res.status(400).json({ error: "BAD REQUEST: El país o el año no coinciden con la URL" });
         }
 
-        dbV2.update(
+        db.update(
             { country: country, year: parseInt(year) },
             { $set: updatedData },
             {},
@@ -308,7 +270,7 @@ export function loadBackEnd(app) {
     // DELETE individual
     app.delete(v2Base + "/:country/:year", (req, res) => {
         const { country, year } = req.params;
-        dbV2.remove({ country: country, year: parseInt(year) }, {}, (err, numRemoved) => {
+        db.remove({ country: country, year: parseInt(year) }, {}, (err, numRemoved) => {
             if (numRemoved === 0) {
                 res.status(404).json({ error: "NOT FOUND: No se encuentra el recurso a borrar" });
             } else {
@@ -319,30 +281,23 @@ export function loadBackEnd(app) {
 
     // DELETE todos
     app.delete(v2Base, (req, res) => {
-        dbV2.remove({}, { multi: true }, (err, numRemoved) => {
+        db.remove({}, { multi: true }, (err, numRemoved) => {
             res.status(200).json({ message: "OK: Todos los datos han sido eliminados" });
         });
     });
 
-    // Control de métodos no permitidos en v2
+    // Control métodos no permitidos v2
     app.all(v2Base, (req, res, next) => {
         const allowed = ["GET", "POST", "DELETE"];
         if (!allowed.includes(req.method)) {
-            return res.status(405).json({ error: "Method Not Allowed (No se permite PUT sobre la lista)" });
+            return res.status(405).json({ error: "Method Not Allowed" });
         }
         next();
     });
     app.all(v2Base + "/:country/:year", (req, res, next) => {
         const allowed = ["GET", "PUT", "DELETE"];
         if (!allowed.includes(req.method)) {
-            return res.status(405).json({ error: "Method Not Allowed (No se permite POST sobre un recurso concreto)" });
-        }
-        next();
-    });
-    app.all(v2Base + "/:country", (req, res, next) => {
-        const allowed = ["GET"];
-        if (!allowed.includes(req.method)) {
-            return res.status(405).json({ error: "Method Not Allowed (solo GET en /:country)" });
+            return res.status(405).json({ error: "Method Not Allowed" });
         }
         next();
     });
