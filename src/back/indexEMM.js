@@ -1,4 +1,4 @@
-/// INDIVIDUAL ELENA 
+///// INDIVIDUAL ELENA - VERSIÓN CON BASE DE DATOS ÚNICA COMPARTIDA (v1 solo lectura, v2 lectura/escritura)
 import dataStore from 'nedb';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -9,7 +9,7 @@ const __dirname = path.dirname(__filename);
 const BASE_URL_API = "/api/v1";
 const BASE_URL_API_V2 = "/api/v2";
 
-// Base de datos compartida entre v1 y v2
+// Base de datos única (compartida entre v1 y v2)
 const db = new dataStore({ 
     filename: path.join(__dirname, '../../data/dataEMM.db'), 
     autoload: true 
@@ -17,7 +17,7 @@ const db = new dataStore({
 
 export function loadBackEnd(app) {
 
-    // ------------- DOCS -------------
+    // ------------- DOCS (ambas versiones) -------------
     app.get(BASE_URL_API + "/ozone-depleting-substance-consumptions/docs", (req, res) => {
         res.redirect("https://documenter.getpostman.com/view/52404851/2sBXiertqM"); 
     });
@@ -25,7 +25,7 @@ export function loadBackEnd(app) {
         res.redirect("https://documenter.getpostman.com/view/52404851/2sBXihrYaP"); 
     });
 
-    // Datos iniciales 
+    // Datos iniciales (los mismos que tenías)
     const initialDataElena = [
         { country: "bangladesh", code: "bgd", year: 1994, methyl_chloroform: 4, methyl_bromide: 0, hcfc: 38, carbon_tetrachloride: 71, halon: 35, cfc: 1806 },
         { country: "mexico", code: "mex", year: 2010, methyl_chloroform: 0, methyl_bromide: 6679, hcfc: 11717, carbon_tetrachloride: 1, halon: 0, cfc: -2408 },
@@ -47,8 +47,10 @@ export function loadBackEnd(app) {
     ];
 
     // ------------- FUNCIONES AUXILIARES -------------
-    function loadInitialDataHandler(res) {
+    // Nota: ahora todas usan la misma base de datos 'db'
+    function loadInitialDataHandler(req, res) {
         db.find({}, (err, docs) => {
+            if (err) return res.status(500).json({ error: "Error en la base de datos" });
             if (docs.length === 0) {
                 db.insert(initialDataElena, (err, newDocs) => {
                     if (err) return res.status(500).json({ error: err.message });
@@ -109,6 +111,7 @@ export function loadBackEnd(app) {
     function getOneHandler(req, res) {
         const { country, year } = req.params;
         db.find({ country: country, year: parseInt(year) }, (err, docs) => {
+            if (err) return res.status(500).json({ error: "Error en la base de datos" });
             if (docs.length === 0) {
                 res.status(404).json({ error: "NOT FOUND: No se encontraron recursos" });
             } else {
@@ -143,6 +146,7 @@ export function loadBackEnd(app) {
         if (year) query.year = parseInt(year);
 
         db.find(query, (err, docs) => {
+            if (err) return res.status(500).json({ error: "Error en la base de datos" });
             let results = docs;
             if (from) results = results.filter(d => d.year >= parseInt(from));
             if (to) results = results.filter(d => d.year <= parseInt(to));
@@ -154,6 +158,7 @@ export function loadBackEnd(app) {
     function getFieldHandler(req, res) {
         const field = req.params.field;
         db.find({}, (err, docs) => {
+            if (err) return res.status(500).json({ error: "Error en la base de datos" });
             if (docs.length === 0) return res.status(200).json([]);
             if (!docs[0].hasOwnProperty(field)) {
                 return res.status(404).json({ error: "NOT FOUND: Field not found" });
@@ -163,14 +168,15 @@ export function loadBackEnd(app) {
         });
     }
 
-    // ------------- RUTAS V1 (solo lectura, misma BD) -------------
+    // ------------- RUTAS PARA V1 (solo lectura) -------------
     const v1Base = BASE_URL_API + "/ozone-depleting-substance-consumptions";
 
-    app.get(v1Base + "/loadInitialData", (req, res) => loadInitialDataHandler(res));
-    app.get(v1Base, (req, res) => getAllHandler(req, res));
-    app.get(v1Base + "/filters", (req, res) => getFiltersHandler(req, res));
-    app.get(v1Base + "/:country/:year", (req, res) => getOneHandler(req, res));
+    app.get(v1Base + "/loadInitialData", loadInitialDataHandler);
+    app.get(v1Base, getAllHandler);
+    app.get(v1Base + "/filters", getFiltersHandler);
+    app.get(v1Base + "/:country/:year", getOneHandler);
 
+    // PRIMERO la ruta de campo, pero solo si el parámetro es un campo conocido
     app.get(v1Base + "/:field", (req, res, next) => {
         if (campos.includes(req.params.field)) {
             return getFieldHandler(req, res);
@@ -179,22 +185,45 @@ export function loadBackEnd(app) {
         }
     });
 
-    app.get(v1Base + "/:country", (req, res) => getByCountryHandler(req, res));
+    // DESPUÉS la ruta de país
+    app.get(v1Base + "/:country", getByCountryHandler);
 
-    // V1 bloquea escritura
+    // Bloquear métodos de escritura en v1
     app.post(v1Base, (req, res) => res.status(405).json({ error: "Method Not Allowed: v1 es solo lectura" }));
     app.put(v1Base + "/:country/:year", (req, res) => res.status(405).json({ error: "Method Not Allowed: v1 es solo lectura" }));
     app.delete(v1Base + "/:country/:year", (req, res) => res.status(405).json({ error: "Method Not Allowed: v1 es solo lectura" }));
     app.delete(v1Base, (req, res) => res.status(405).json({ error: "Method Not Allowed: v1 es solo lectura" }));
 
-    // ------------- RUTAS V2 (CRUD completo, misma BD) -------------
+    // Control de métodos no permitidos en v1 (solo GET)
+    app.all(v1Base, (req, res, next) => {
+        if (!['GET'].includes(req.method)) {
+            return res.status(405).json({ error: "Method Not Allowed (solo GET en v1)" });
+        }
+        next();
+    });
+    app.all(v1Base + "/:country/:year", (req, res, next) => {
+        if (!['GET'].includes(req.method)) {
+            return res.status(405).json({ error: "Method Not Allowed (solo GET en v1)" });
+        }
+        next();
+    });
+    app.all(v1Base + "/:country", (req, res, next) => {
+        if (!['GET'].includes(req.method)) {
+            return res.status(405).json({ error: "Method Not Allowed (solo GET en v1)" });
+        }
+        next();
+    });
+
+    // ------------- RUTAS PARA V2 (lectura/escritura) -------------
     const v2Base = BASE_URL_API_V2 + "/ozone-depleting-substance-consumptions";
 
-    app.get(v2Base + "/loadInitialData", (req, res) => loadInitialDataHandler(res));
-    app.get(v2Base, (req, res) => getAllHandler(req, res));
-    app.get(v2Base + "/filters", (req, res) => getFiltersHandler(req, res));
-    app.get(v2Base + "/:country/:year", (req, res) => getOneHandler(req, res));
+    // Las rutas GET de v2 son iguales que las de v1 pero apuntan a la misma base de datos
+    app.get(v2Base + "/loadInitialData", loadInitialDataHandler);
+    app.get(v2Base, getAllHandler);
+    app.get(v2Base + "/filters", getFiltersHandler);
+    app.get(v2Base + "/:country/:year", getOneHandler);
 
+    // Ruta de campo para v2
     app.get(v2Base + "/:field", (req, res, next) => {
         if (campos.includes(req.params.field)) {
             return getFieldHandler(req, res);
@@ -203,9 +232,10 @@ export function loadBackEnd(app) {
         }
     });
 
-    app.get(v2Base + "/:country", (req, res) => getByCountryHandler(req, res));
+    // Ruta de país para v2
+    app.get(v2Base + "/:country", getByCountryHandler);
 
-    // POST crear
+    // POST crear (v2)
     app.post(v2Base, (req, res) => {
         const newData = req.body;
         const requestKeys = Object.keys(newData);
@@ -225,6 +255,7 @@ export function loadBackEnd(app) {
         newData.cfc = Number(newData.cfc);
 
         db.find({ country: newData.country, year: newData.year }, (err, docs) => {
+            if (err) return res.status(500).json({ error: "Error en la base de datos" });
             if (docs.length > 0) {
                 return res.status(409).json({ error: "CONFLICT: El recurso ya existe para ese país y año" });
             } else {
@@ -236,7 +267,7 @@ export function loadBackEnd(app) {
         });
     });
 
-    // PUT actualizar
+    // PUT actualizar (v2)
     app.put(v2Base + "/:country/:year", (req, res) => {
         const { country, year } = req.params;
         const updatedData = req.body;
@@ -258,6 +289,7 @@ export function loadBackEnd(app) {
             { $set: updatedData },
             {},
             (err, numReplaced) => {
+                if (err) return res.status(500).json({ error: "Error en la base de datos" });
                 if (numReplaced === 0) {
                     return res.status(404).json({ error: "NOT FOUND: No existe el recurso" });
                 } else {
@@ -267,10 +299,11 @@ export function loadBackEnd(app) {
         );
     });
 
-    // DELETE individual
+    // DELETE individual (v2)
     app.delete(v2Base + "/:country/:year", (req, res) => {
         const { country, year } = req.params;
         db.remove({ country: country, year: parseInt(year) }, {}, (err, numRemoved) => {
+            if (err) return res.status(500).json({ error: "Error en la base de datos" });
             if (numRemoved === 0) {
                 res.status(404).json({ error: "NOT FOUND: No se encuentra el recurso a borrar" });
             } else {
@@ -279,25 +312,33 @@ export function loadBackEnd(app) {
         });
     });
 
-    // DELETE todos
+    // DELETE todos (v2)
     app.delete(v2Base, (req, res) => {
         db.remove({}, { multi: true }, (err, numRemoved) => {
+            if (err) return res.status(500).json({ error: "Error al eliminar todos los datos" });
             res.status(200).json({ message: "OK: Todos los datos han sido eliminados" });
         });
     });
 
-    // Control métodos no permitidos v2
+    // Control de métodos no permitidos en v2
     app.all(v2Base, (req, res, next) => {
         const allowed = ["GET", "POST", "DELETE"];
         if (!allowed.includes(req.method)) {
-            return res.status(405).json({ error: "Method Not Allowed" });
+            return res.status(405).json({ error: "Method Not Allowed (No se permite PUT sobre la lista)" });
         }
         next();
     });
     app.all(v2Base + "/:country/:year", (req, res, next) => {
         const allowed = ["GET", "PUT", "DELETE"];
         if (!allowed.includes(req.method)) {
-            return res.status(405).json({ error: "Method Not Allowed" });
+            return res.status(405).json({ error: "Method Not Allowed (No se permite POST sobre un recurso concreto)" });
+        }
+        next();
+    });
+    app.all(v2Base + "/:country", (req, res, next) => {
+        const allowed = ["GET"];
+        if (!allowed.includes(req.method)) {
+            return res.status(405).json({ error: "Method Not Allowed (solo GET en /:country)" });
         }
         next();
     });
