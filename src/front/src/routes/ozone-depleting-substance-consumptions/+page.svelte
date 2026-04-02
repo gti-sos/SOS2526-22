@@ -98,8 +98,9 @@
         const payload = { ...newData, year: parseInt(newData.year), ...Object.fromEntries(FIELDS.filter(f => f.includes('_')).map(f => [f, parseFloat(newData[f]) || 0])) };
         try {
             const res = await fetch(API_BASE, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-            if (res.status === 409) throw new Error(`Ya existe recurso con país "${newData.country}" y año ${newData.year}.`);
-            if (!res.ok) throw new Error();
+            if (res.status === 409) throw new Error(`Ya existe un recurso con país "${newData.country}" y año ${newData.year}.`);
+            if (res.status === 400) throw new Error('Los datos introducidos no son válidos. Revisa los campos e inténtalo de nuevo.');
+            if (!res.ok) throw new Error('Error al crear el recurso. Inténtalo de nuevo.');
             setMessage('Recurso creado correctamente.');
             newData = Object.fromEntries(FIELDS.map(f => [f, '']));
             showCreateForm = false;
@@ -117,8 +118,9 @@
         const payload = { ...editForm, year: parseInt(editForm.year), ...Object.fromEntries(FIELDS.filter(f => f.includes('_')).map(f => [f, parseFloat(editForm[f]) || 0])) };
         try {
             const res = await fetch(`${API_BASE}/${editando.country}/${editando.year}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-            if (res.status === 404) throw new Error(`Recurso ${editando.country}/${editando.year} no encontrado.`);
-            if (!res.ok) throw new Error();
+            if (res.status === 404) throw new Error(`No existe el recurso "${editando.country}" del año ${editando.year}.`);
+            if (res.status === 400) throw new Error('Los datos introducidos no son válidos. Revisa los campos e inténtalo de nuevo.');
+            if (!res.ok) throw new Error('Error al actualizar el recurso. Inténtalo de nuevo.');
             setMessage('Recurso actualizado correctamente.');
             cancelarEdicion();
             await cargarRecursos(currentPage);
@@ -131,8 +133,8 @@
         loading = true;
         try {
             const res = await fetch(`${API_BASE}/${r.country}/${r.year}`, { method: 'DELETE' });
-            if (res.status === 404) throw new Error('Recurso no encontrado.');
-            if (!res.ok) throw new Error();
+            if (res.status === 404) throw new Error(`No se encontró el recurso "${r.country}" del año ${r.year}.`);
+            if (!res.ok) throw new Error('Error al eliminar el recurso. Inténtalo de nuevo.');
             setMessage('Recurso eliminado.');
             await cargarRecursos(currentPage);
         } catch (e) { setMessage(e.message || 'Error al eliminar.', 'error'); }

@@ -1,4 +1,3 @@
-///// INDIVIDUAL ELENA - VERSIÓN CON BASE DE DATOS ÚNICA COMPARTIDA (v1 solo lectura, v2 lectura/escritura)
 import dataStore from 'nedb';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -9,7 +8,7 @@ const __dirname = path.dirname(__filename);
 const BASE_URL_API = "/api/v1";
 const BASE_URL_API_V2 = "/api/v2";
 
-// Base de datos única (compartida entre v1 y v2)
+// Base de datos única 
 const db = new dataStore({ 
     filename: path.join(__dirname, '../../data/dataEMM.db'), 
     autoload: true 
@@ -47,7 +46,6 @@ export function loadBackEnd(app) {
     ];
 
     // ------------- FUNCIONES AUXILIARES -------------
-    // Nota: ahora todas usan la misma base de datos 'db'
     function loadInitialDataHandler(req, res) {
         db.find({}, (err, docs) => {
             if (err) return res.status(500).json({ error: "Error en la base de datos" });
@@ -190,9 +188,12 @@ export function loadBackEnd(app) {
 
     // Bloquear métodos de escritura en v1
     app.post(v1Base, (req, res) => res.status(405).json({ error: "Method Not Allowed: v1 es solo lectura" }));
+    app.put(v1Base, (req, res) => res.status(405).json({ error: "Method Not Allowed: v1 es solo lectura" }));  // NUEVA
+    app.post(v1Base + "/:country/:year", (req, res) => res.status(405).json({ error: "Method Not Allowed: v1 es solo lectura" }));  // NUEVA
     app.put(v1Base + "/:country/:year", (req, res) => res.status(405).json({ error: "Method Not Allowed: v1 es solo lectura" }));
     app.delete(v1Base + "/:country/:year", (req, res) => res.status(405).json({ error: "Method Not Allowed: v1 es solo lectura" }));
     app.delete(v1Base, (req, res) => res.status(405).json({ error: "Method Not Allowed: v1 es solo lectura" }));
+
 
     // Control de métodos no permitidos en v1 (solo GET)
     app.all(v1Base, (req, res, next) => {

@@ -102,17 +102,23 @@ test.describe.serial('Pruebas E2E - Ozone Depleting Substance Consumptions', () 
 
         await expect(page.locator('.edit-card')).toBeVisible();
 
-        // Modificamos el último input no deshabilitado (CFC)
         const editInputs = page.locator('.edit-card input:not([disabled])');
         const count = await editInputs.count();
         await editInputs.nth(count - 1).fill('12345');
 
+        // Interceptamos la respuesta del PUT antes de hacer clic
+        const responsePromise = page.waitForResponse(
+            res => res.url().includes('/ozone-depleting-substance-consumptions') && res.request().method() === 'PUT'
+        );
+
         await page.locator('.edit-card button[type="submit"]').click();
 
-        // Esperamos a que el formulario de edición se cierre (señal de éxito)
-        await expect(page.locator('.edit-card')).not.toBeVisible({ timeout: 8000 });
+        // Esperamos a que el PUT termine
+        await responsePromise;
+        await page.waitForTimeout(500);
 
-        // Verificamos que el valor 12345 aparece en la tabla
+        // Verificamos que el formulario se cierra y el valor aparece
+        await expect(page.locator('.edit-card')).not.toBeVisible({ timeout: 5000 });
         await expect(page.locator('.table tbody')).toContainText('12345', { timeout: 5000 });
     });
 
