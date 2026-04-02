@@ -6,6 +6,7 @@ const app = 'http://localhost:3000';
 test.describe.serial('Pruebas E2E - Ozone Depleting Substance Consumptions', () => {
 
     // Función auxiliar para cargar datos iniciales
+    /** @param {import('@playwright/test').Page} page */
     async function cargarDatosIniciales(page) {
         await page.goto(`${app}/ozone-depleting-substance-consumptions`);
         await page.waitForTimeout(1000);

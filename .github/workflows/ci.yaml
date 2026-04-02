@@ -14,15 +14,17 @@ jobs:
         run: npm ci
       - name: Build UI      
         run: npm run build
-      - name: Run Newman tests (unit / API)
+      - name: Run Newman tests (API)
         run: npm test
-      - name: Run e2e tests with Playwright
-        run: npm run test:e2e
+      - name: Run server for e2e tests
+        run: npm start &
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
+      - name: Run Playwright tests
+        run: npx playwright test
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
           name: playwright-report
           path: playwright-report/
-          retention-days: 30np
+          retention-days: 30
