@@ -5,7 +5,6 @@ const app = 'http://localhost:3000';
 
 test.describe.serial('Pruebas E2E - Ozone Depleting Substance Consumptions', () => {
 
-    // Función auxiliar para cargar datos iniciales
     /** @param {import('@playwright/test').Page} page */
     async function cargarDatosIniciales(page) {
         await page.goto(`${app}/ozone-depleting-substance-consumptions`);
@@ -23,7 +22,6 @@ test.describe.serial('Pruebas E2E - Ozone Depleting Substance Consumptions', () 
         await page.getByRole('button', { name: 'Nuevo recurso' }).click();
         await page.waitForTimeout(500);
 
-        // Rellenamos los inputs del formulario por orden
         const inputs = page.locator('.create-card input');
         await inputs.nth(0).fill('test-country');
         await inputs.nth(1).fill('tst');
@@ -74,8 +72,10 @@ test.describe.serial('Pruebas E2E - Ozone Depleting Substance Consumptions', () 
     test('iv. Borrar un recurso concreto', async ({ page }) => {
         await cargarDatosIniciales(page);
 
+        // Tomamos la primera fila de la tabla principal
         const fila = page.locator('.table tbody tr').first();
         const pais = await fila.locator('td').nth(0).innerText();
+        const anio = await fila.locator('td').nth(2).innerText();
 
         page.once('dialog', dialog => dialog.accept());
         await fila.locator('button:has-text("Borrar")').click();
@@ -83,8 +83,13 @@ test.describe.serial('Pruebas E2E - Ozone Depleting Substance Consumptions', () 
 
         await expect(page.locator('.msg-success')).toContainText('Recurso eliminado');
 
-        // Verificar que el recurso ya no aparece en la tabla
-        await expect(page.locator('.table tbody')).not.toContainText(pais);
+        // Verificamos buscando por país Y año exacto para evitar falsos positivos
+        await page.fill('input[placeholder="Ej. japan"]', pais);
+        await page.fill('input[placeholder="Ej. 2013"]', anio);
+        await page.getByRole('button', { name: 'Buscar' }).click();
+        await page.waitForTimeout(1000);
+
+        await expect(page.locator('.msg-error')).toContainText('No hay resultados');
     });
 
     // -----------------------------------------------------------------------
@@ -97,7 +102,6 @@ test.describe.serial('Pruebas E2E - Ozone Depleting Substance Consumptions', () 
         await fila.locator('button:has-text("Editar")').click();
         await page.waitForTimeout(500);
 
-        // Debe aparecer la vista de edición separada
         await expect(page.locator('.edit-card')).toBeVisible();
 
         // Modificamos el último input no deshabilitado (CFC)
@@ -106,9 +110,10 @@ test.describe.serial('Pruebas E2E - Ozone Depleting Substance Consumptions', () 
         await editInputs.nth(count - 1).fill('12345');
 
         await page.locator('.edit-card button[type="submit"]').click();
-        await page.waitForTimeout(1000);
+        await page.waitForTimeout(2000);
 
-        await expect(page.locator('.msg-success')).toContainText('Recurso actualizado correctamente');
+        // Esperamos a que desaparezca el mensaje anterior y aparezca el nuevo
+        await expect(page.locator('.msg-success')).toContainText('Recurso actualizado correctamente', { timeout: 8000 });
         await expect(page.locator('.edit-card')).not.toBeVisible();
     });
 
