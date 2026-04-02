@@ -217,7 +217,7 @@
                     <label>Buscar por campo específico</label>
                     <div class="input-group">
                         <select bind:value={searchParams.field}>
-                            {#each FIELDS as f (f)}<option value={f}>{f.replace(/_/g,' ').toUpperCase()}</option>{/each}
+                            {#each FIELDS as f (f)}<option value={f}>{FIELD_NAMES_ES[f]}</option>{/each}
                         </select>
                         <input type="text" bind:value={searchParams.fieldValue} placeholder="Valor" />
                     </div>
@@ -234,7 +234,7 @@
                     <div class="input-group">
                         <select bind:value={campoSeleccionadoLista}>
                         {#each FIELDS as f (f)}
-                            <option value={f}>{f.replace(/_/g,' ').toUpperCase()}</option>
+                            <option value={f}>{FIELD_NAMES_ES[f]}</option>
                         {/each}
                     </select>
                         <button onclick={listarValoresCampo} class="btn-primary" disabled={cargandoListaValores}>
@@ -268,7 +268,7 @@
             <form onsubmit={crearRecurso}>
                 <div class="form-grid">
                     {#each FIELDS as f (f)}
-                        <input type={f === 'year' ? 'number' : f.includes('_') ? 'number' : 'text'} step={f.includes('_') ? 'any' : undefined} bind:value={newData[f]} placeholder={f.replace(/_/g,' ').toUpperCase()} required={f === 'country' || f === 'code' || f === 'year'} />
+                        <input type={f === 'year' ? 'number' : f.includes('_') ? 'number' : 'text'} step={f.includes('_') ? 'any' : undefined} bind:value={newData[f]} placeholder={FIELD_NAMES_ES[f]} required={f === 'country' || f === 'code' || f === 'year'} />
                     {/each}
                 </div>
                 <div class="form-actions">
@@ -289,7 +289,7 @@
                     <div><label>Código:</label><input type="text" bind:value={editForm.code} required /></div>
                     <div class="readonly-field"><label>Año:</label><input type="number" bind:value={editForm.year} readonly disabled /></div>
                     {#each FIELDS.filter(f => f !== 'country' && f !== 'code' && f !== 'year') as f (f)}
-                        <div><label>{f.replace(/_/g,' ')}:</label><input type="number" step="any" bind:value={editForm[f]} /></div>
+                        <div><label>{FIELD_NAMES_ES[f]}:</label><input type="number" step="any" bind:value={editForm[f]} /></div>
                     {/each}
                 </div>
                 <div class="form-actions">
