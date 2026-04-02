@@ -72,7 +72,6 @@ test.describe.serial('Pruebas E2E - Ozone Depleting Substance Consumptions', () 
     test('iv. Borrar un recurso concreto', async ({ page }) => {
         await cargarDatosIniciales(page);
 
-        // Tomamos la primera fila de la tabla principal
         const fila = page.locator('.table tbody tr').first();
         const pais = await fila.locator('td').nth(0).innerText();
         const anio = await fila.locator('td').nth(2).innerText();
@@ -83,7 +82,6 @@ test.describe.serial('Pruebas E2E - Ozone Depleting Substance Consumptions', () 
 
         await expect(page.locator('.msg-success')).toContainText('Recurso eliminado');
 
-        // Verificamos buscando por país Y año exacto para evitar falsos positivos
         await page.fill('input[placeholder="Ej. japan"]', pais);
         await page.fill('input[placeholder="Ej. 2013"]', anio);
         await page.getByRole('button', { name: 'Buscar' }).click();
@@ -110,11 +108,12 @@ test.describe.serial('Pruebas E2E - Ozone Depleting Substance Consumptions', () 
         await editInputs.nth(count - 1).fill('12345');
 
         await page.locator('.edit-card button[type="submit"]').click();
-        await page.waitForTimeout(2000);
 
-        // Esperamos a que desaparezca el mensaje anterior y aparezca el nuevo
-        await expect(page.locator('.msg-success')).toContainText('Recurso actualizado correctamente', { timeout: 8000 });
-        await expect(page.locator('.edit-card')).not.toBeVisible();
+        // Esperamos a que el formulario de edición se cierre (señal de éxito)
+        await expect(page.locator('.edit-card')).not.toBeVisible({ timeout: 8000 });
+
+        // Verificamos que el valor 12345 aparece en la tabla
+        await expect(page.locator('.table tbody')).toContainText('12345', { timeout: 5000 });
     });
 
     // -----------------------------------------------------------------------
