@@ -18,6 +18,15 @@
     let newDrainedOrganic = $state(0);
     let newPesticidesManufacturing = $state(0);
     let newFoodTransport = $state(0);
+    let searchCountry = $state('');
+    let searchYear = $state('');
+    let searchSavannaFire = $state('');
+    let searchForestFire = $state('');
+    let searchCropResidues = $state('');
+    let searchRiceCultivation = $state('');
+    let searchDrainedOrganic = $state('');
+    let searchPesticides = $state('');
+    let searchFoodTransport = $state('');
 
     // API v2
     const API_BASE = '/api/v2/co2-emission-gap-among-countries-clustering-pca';
@@ -27,13 +36,34 @@
         setTimeout(() => { error = null; successMessage = null; }, 5000);
     }
 
-    // LISTAR (GET) [cite: 57]
+    // LISTAR (GET)
     async function cargarRecursos() {
         loading = true;
         try {
-            const res = await fetch(API_BASE);
+            let queryParams = new URLSearchParams();
+            if (searchCountry) queryParams.append("country", searchCountry);
+            if (searchYear) queryParams.append("year", searchYear);
+            if (searchSavannaFire) queryParams.append("savanna_fire", searchSavannaFire);
+            if (searchForestFire) queryParams.append("forest_fire", searchForestFire);
+            if (searchCropResidues) queryParams.append("crop_residues", searchCropResidues);
+            if (searchRiceCultivation) queryParams.append("rice_cultivation", searchRiceCultivation);
+            if (searchDrainedOrganic) queryParams.append("drained_organic", searchDrainedOrganic);
+            if (searchPesticides) queryParams.append("pesticides_manufacturing", searchPesticides);
+            if (searchFoodTransport) queryParams.append("food_transport", searchFoodTransport);
+
+            const res = await fetch(`${API_BASE}?${queryParams.toString()}`);
+            
             if (!res.ok) throw new Error(`Error ${res.status}`);
+            
             recursos = await res.json();
+            
+            // Si la búsqueda no arroja resultados
+            if (recursos.length === 0 && queryParams.toString() !== "") {
+                error = "No se encontraron emisiones con esos filtros exactos.";
+            } else if (queryParams.toString() !== "") {
+                successMessage = "Búsqueda completada.";
+            }
+
         } catch (e) {
             error = "No se pudieron cargar los datos.";
         } finally {
@@ -42,7 +72,15 @@
         }
     }
 
-    // CARGAR INICIALES (GET /loadInitialData) [cite: 117]
+    // --- FUNCIÓN PARA LIMPIAR BÚSQUEDA ---
+    function limpiarFiltros() {
+        searchCountry = ''; searchYear = ''; searchSavannaFire = ''; searchForestFire = '';
+        searchCropResidues = ''; searchRiceCultivation = ''; searchDrainedOrganic = ''; 
+        searchPesticides = ''; searchFoodTransport = '';
+        cargarRecursos(); // Recarga automática obligatoria
+    }
+
+    // CARGAR INICIALES (GET /loadInitialData) 
     async function cargarEjemplo() {
         loading = true;
         try {
@@ -61,7 +99,7 @@
         }
     }
 
-    // CREAR (POST) [cite: 56]
+    // CREAR (POST)
     async function crearRecurso(event) {
         event.preventDefault();
         const payload = {
@@ -90,7 +128,7 @@
         limpiarMensajes();
     }
 
-    // BORRAR UNO (DELETE) [cite: 59]
+    // BORRAR UNO (DELETE) 
     async function eliminarRecurso(p, a) {
         if (!confirm(`¿Eliminar ${p} ${a}?`)) return;
         const res = await fetch(`${API_BASE}/${p}/${a}`, { method: 'DELETE' });
@@ -103,7 +141,7 @@
         limpiarMensajes();
     }
 
-    // BORRAR TODOS (DELETE) [cite: 58]
+    // BORRAR TODOS (DELETE) 
     async function eliminarTodos() {
         if (!confirm("¿Borrar TODO?")) return;
         const res = await fetch(API_BASE, { method: 'DELETE' });
@@ -136,6 +174,18 @@
             <thead>
                 <tr>
                     <th>País</th><th>Año</th><th>Savanna</th><th>Forest</th><th>Residues</th><th>Rice</th><th>Organic</th><th>Pesticides</th><th>Transport</th><th>Acciones</th>
+                </tr>
+                <tr class="search-row">
+                    <td><input bind:value={searchCountry} placeholder="🔍 País..." onchange={cargarRecursos} /></td>
+                    <td><input type="number" bind:value={searchYear} placeholder="🔍 Año..." onchange={cargarRecursos} /></td>
+                    <td><input type="number" bind:value={searchSavannaFire} placeholder="🔍" onchange={cargarRecursos} /></td>
+                    <td><input type="number" bind:value={searchForestFire} placeholder="🔍" onchange={cargarRecursos} /></td>
+                    <td><input type="number" bind:value={searchCropResidues} placeholder="🔍" onchange={cargarRecursos} /></td>
+                    <td><input type="number" bind:value={searchRiceCultivation} placeholder="🔍" onchange={cargarRecursos} /></td>
+                    <td><input type="number" bind:value={searchDrainedOrganic} placeholder="🔍" onchange={cargarRecursos} /></td>
+                    <td><input type="number" bind:value={searchPesticides} placeholder="🔍" onchange={cargarRecursos} /></td>
+                    <td><input type="number" bind:value={searchFoodTransport} placeholder="🔍" onchange={cargarRecursos} /></td>
+                    <td><button onclick={limpiarFiltros} class="btn-sample" style="width: 100%; font-size: 0.9em;">🧹 Limpiar</button></td>
                 </tr>
             </thead>
             <tbody>
@@ -191,4 +241,6 @@
     .btn-create { background: var(--primary); color: white; width: 100%; }
     .btn-icon { text-decoration: none; font-size: 1.2rem; background: none; }
     .create-row input { width: 70px; padding: 4px; border: 1px solid #ccc; border-radius: 3px; }
+    .search-row input { width: 90%; padding: 5px; border: 1px solid #aaa; border-radius: 4px; box-sizing: border-box; }
+    .search-row td { background-color: #fdfdfd; }
 </style>
