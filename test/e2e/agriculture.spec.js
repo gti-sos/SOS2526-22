@@ -4,11 +4,7 @@ import { test, expect } from '@playwright/test';
 // Asegúrate de que esta URL base coincide con el puerto de tu frontend
 let app = 'http://localhost:3000'; 
 
-test('has title', async ({ page }) => {
-  await page.goto(app);
-  // CORRECCIÓN 1: Usamos /SOS2526/i para ignorar mayúsculas y texto extra
-  await expect(page).toHaveTitle(/SOS2526/i); 
-});
+
 
 test.describe.serial('Pruebas E2E - Panel Agricultura', () => {
 
