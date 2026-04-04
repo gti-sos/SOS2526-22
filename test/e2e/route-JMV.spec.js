@@ -58,14 +58,17 @@ test.describe.serial('E2E Tests - Gestión de Emisiones CO2 (JMV)', () => {
         await expect(page.locator('.msg-success')).toContainText('Recurso eliminado.');
     });
 
-    // Test 4: Editar un recurso 
+// Test 4: Editar un recurso 
     test('Debe permitir editar un recurso en vista separada', async ({ page }) => {
         await page.goto(`${app}/co2-emissions-stats`);
         await page.waitForTimeout(1000);
 
+        //Nos aseguramos de que haya datos en la tabla pulsando el botón
+        await page.locator('button', { hasText: 'Cargar datos iniciales' }).click();
+        await page.waitForTimeout(1500); // Esperamos a que la tabla se llene
+
         // Hacemos clic en el enlace de edición (el emoji del lápiz ✏️) de la primera fila de datos
-        // Usamos el texto del enlace o la clase, en tu caso la clase 'btn-icon' que no es 'btn-delete'
-        const row = page.locator('tbody tr').nth(1); // nth(0) es la fila de crear, nth(1) es la primera de datos
+        const row = page.locator('tbody tr').nth(1); // nth(0) es crear, nth(1) es el primer dato
         await row.locator('a.btn-icon').first().click();
         
         // Verificamos que hemos cambiado de URL
