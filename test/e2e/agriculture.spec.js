@@ -4,8 +4,6 @@ import { test, expect } from '@playwright/test';
 // Asegúrate de que esta URL base coincide con el puerto de tu frontend
 let app = 'http://localhost:3000'; 
 
-
-
 test.describe.serial('Pruebas E2E - Panel Agricultura', () => {
 
   test('i. Cargar datos iniciales', async ({ page }) => {
@@ -18,8 +16,8 @@ test.describe.serial('Pruebas E2E - Panel Agricultura', () => {
     await page.getByRole('button', { name: /Cargar Datos Iniciales/i }).click();
     await page.waitForTimeout(2000);
     
-    const rows = page.locator('tbody tr');
-    await expect(rows.nth(0)).not.toContainText('No se han encontrado resultados');
+    // Cambiado para buscar en toda la tabla y darle un pequeño margen de tiempo
+    await expect(page.locator('table')).not.toContainText('No se han encontrado resultados', { timeout: 5000 });
   });
 
   test('ii. Listar todos los recursos', async ({ page }) => {
@@ -52,10 +50,9 @@ test.describe.serial('Pruebas E2E - Panel Agricultura', () => {
 
     // 4. Clic en guardar
     await form.getByRole('button', { name: 'Guardar' }).click();
-    await page.waitForTimeout(2000);
-
-    // 5. Verificar mensaje de éxito
-    await expect(page.locator('.msg.success')).toContainText('Recurso creado');
+    
+    // 5. Verificar mensaje de éxito con timeout extendido
+    await expect(page.locator('.msg.success')).toContainText('Recurso creado', { timeout: 5000 });
   });
 
   test('iv. Buscar recursos utilizando los filtros', async ({ page }) => {
@@ -66,8 +63,8 @@ test.describe.serial('Pruebas E2E - Panel Agricultura', () => {
     await page.getByPlaceholder('🔎 País').fill('E2ETestland');
     await page.waitForTimeout(2000); 
 
-    // CORRECCIÓN 2: Expresión regular /E2ETestland/i para evitar fallos por mayúsculas/minúsculas
-    await expect(page.locator('tbody')).toContainText(/E2ETestland/i);
+    // CORRECCIÓN: Buscamos en toda la tabla ('table') en vez de ('tbody')
+    await expect(page.locator('table')).toContainText(/E2ETestland/i, { timeout: 5000 });
   });
 
   test('v. Editar recursos', async ({ page }) => {
@@ -87,11 +84,10 @@ test.describe.serial('Pruebas E2E - Panel Agricultura', () => {
     const editForm = page.locator('.form-box.edit');
     await editForm.getByPlaceholder(/^Cultivo$/).fill('Cultivo Editado');
     await editForm.getByRole('button', { name: 'Actualizar' }).click();
-    await page.waitForTimeout(2000);
-
-    // Verificamos mensaje y la tabla (con /i por si acaso)
-    await expect(page.locator('.msg.success')).toContainText('Actualizado');
-    await expect(page.locator('tbody')).toContainText(/Cultivo Editado/i);
+    
+    // Verificamos mensaje y la tabla en general
+    await expect(page.locator('.msg.success')).toContainText('Actualizado', { timeout: 5000 });
+    await expect(page.locator('table')).toContainText(/Cultivo Editado/i, { timeout: 5000 });
   });
 
   test('vi. Borrar un recurso concreto', async ({ page }) => {
@@ -108,10 +104,9 @@ test.describe.serial('Pruebas E2E - Panel Agricultura', () => {
     
     // Clic en la papelera roja
     await page.locator('.btn-del').first().click();
-    await page.waitForTimeout(2000);
-
+    
     // Verificamos mensaje
-    await expect(page.locator('.msg.success')).toContainText('Eliminado');
+    await expect(page.locator('.msg.success')).toContainText('Eliminado', { timeout: 5000 });
   });
 
   test('vii. Borrar todos los recursos', async ({ page }) => {
@@ -124,11 +119,10 @@ test.describe.serial('Pruebas E2E - Panel Agricultura', () => {
     
     // Clic en borrar todo
     await page.getByRole('button', { name: /Borrar Todo/i }).click();
-    await page.waitForTimeout(2000);
-
+    
     // Verificamos el mensaje y que la tabla diga que está vacía
-    await expect(page.locator('.msg.success')).toContainText('Base de datos vaciada');
-    await expect(page.locator('tbody')).toContainText('No se han encontrado resultados');
+    await expect(page.locator('.msg.success')).toContainText('Base de datos vaciada', { timeout: 5000 });
+    await expect(page.locator('table')).toContainText('No se han encontrado resultados', { timeout: 5000 });
   });
 
 });
