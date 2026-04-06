@@ -38,8 +38,8 @@
         setTimeout(() => { error = null; successMessage = null; }, 5000);
     }
 
-    // LISTAR (GET)
-    async function cargarRecursos() {
+    // LISTAR (GET) - Añadimos parámetro esBusqueda
+    async function cargarRecursos(esBusqueda = false) {
         loading = true;
         try {
             let queryParams = new URLSearchParams();
@@ -53,6 +53,7 @@
             if (searchPesticides) queryParams.append("pesticides_manufacturing", searchPesticides);
             if (searchFoodTransport) queryParams.append("food_transport", searchFoodTransport);
 
+            // Siempre enviamos paginación
             queryParams.append("limit", limit);
             queryParams.append("offset", offset);
             
@@ -62,11 +63,13 @@
             
             recursos = await res.json();
             
-            // Si la búsqueda no arroja resultados
-            if (recursos.length === 0 && queryParams.toString() !== "") {
-                error = "No se encontraron emisiones con esos filtros exactos.";
-            } else if (queryParams.toString() !== "") {
-                successMessage = "Búsqueda completada.";
+            // SOLO controlamos el mensaje si la llamada proviene explícitamente de una búsqueda
+            if (esBusqueda === true) {
+                if (recursos.length === 0) {
+                    error = "No se encontraron emisiones con esos filtros exactos.";
+                } else {
+                    successMessage = "Búsqueda completada.";
+                }
             }
 
         } catch (e) {
@@ -76,6 +79,20 @@
             limpiarMensajes();
         }
     }
+
+    // --- FUNCIONES DE BÚSQUEDA Y FILTRADO ---
+    function manejarBusqueda() {
+        offset = 0;
+        cargarRecursos(true); // Pasamos true solo cuando el usuario busca manualmente
+    }
+
+    function limpiarFiltros() {
+        searchCountry = ''; searchYear = ''; searchSavannaFire = ''; searchForestFire = '';
+        searchCropResidues = ''; searchRiceCultivation = ''; searchDrainedOrganic = '';
+        searchPesticides = ''; searchFoodTransport = '';
+        cargarRecursos(true); // Pasamos true para que se considere una acción de filtrado
+    }
+    
     function paginaSiguiente() {
         if (recursos.length === limit) { // Solo si la página está llena podría haber más
             offset += limit;
@@ -88,18 +105,6 @@
             offset -= limit;
             cargarRecursos();
         }
-    }
-
-    function manejarBusqueda() {
-        offset = 0; 
-        cargarRecursos();
-    }
-    // --- FUNCIÓN PARA LIMPIAR BÚSQUEDA ---
-    function limpiarFiltros() {
-        searchCountry = ''; searchYear = ''; searchSavannaFire = ''; searchForestFire = '';
-        searchCropResidues = ''; searchRiceCultivation = ''; searchDrainedOrganic = ''; 
-        searchPesticides = ''; searchFoodTransport = '';
-        cargarRecursos(); // Recarga automática obligatoria
     }
 
     // CARGAR INICIALES (GET /loadInitialData) 
@@ -198,15 +203,15 @@
                     <th>País</th><th>Año</th><th>Sabana</th><th>Bosque</th><th>Residuos</th><th>Arroz</th><th>Orgánico</th><th>Pesticidas</th><th>Transporte</th><th>Acciones</th>
                 </tr>
                 <tr class="search-row">
-                    <td><input bind:value={searchCountry} placeholder="🔍 País..." onchange={cargarRecursos} /></td>
-                    <td><input type="number" bind:value={searchYear} placeholder="🔍 Año..." onchange={cargarRecursos} /></td>
-                    <td><input type="number" bind:value={searchSavannaFire} placeholder="🔍" onchange={cargarRecursos} /></td>
-                    <td><input type="number" bind:value={searchForestFire} placeholder="🔍" onchange={cargarRecursos} /></td>
-                    <td><input type="number" bind:value={searchCropResidues} placeholder="🔍" onchange={cargarRecursos} /></td>
-                    <td><input type="number" bind:value={searchRiceCultivation} placeholder="🔍" onchange={cargarRecursos} /></td>
-                    <td><input type="number" bind:value={searchDrainedOrganic} placeholder="🔍" onchange={cargarRecursos} /></td>
-                    <td><input type="number" bind:value={searchPesticides} placeholder="🔍" onchange={cargarRecursos} /></td>
-                    <td><input type="number" bind:value={searchFoodTransport} placeholder="🔍" onchange={cargarRecursos} /></td>
+                    <td><input bind:value={searchCountry} placeholder="🔍 País..." onchange={manejarBusqueda} /></td>
+                    <td><input type="number" bind:value={searchYear} placeholder="🔍 Año..." onchange={manejarBusqueda} /></td>
+                    <td><input type="number" bind:value={searchSavannaFire} placeholder="🔍" onchange={manejarBusqueda} /></td>
+                    <td><input type="number" bind:value={searchForestFire} placeholder="🔍" onchange={manejarBusqueda} /></td>
+                    <td><input type="number" bind:value={searchCropResidues} placeholder="🔍" onchange={manejarBusqueda} /></td>
+                    <td><input type="number" bind:value={searchRiceCultivation} placeholder="🔍" onchange={manejarBusqueda} /></td>
+                    <td><input type="number" bind:value={searchDrainedOrganic} placeholder="🔍" onchange={manejarBusqueda} /></td>
+                    <td><input type="number" bind:value={searchPesticides} placeholder="🔍" onchange={manejarBusqueda} /></td>
+                    <td><input type="number" bind:value={searchFoodTransport} placeholder="🔍" onchange={manejarBusqueda} /></td>
                     <td><button onclick={limpiarFiltros} class="btn-sample" style="width: 100%; font-size: 0.9em;">🧹 Limpiar</button></td>
                 </tr>
             </thead>
