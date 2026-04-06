@@ -27,6 +27,8 @@
     let searchDrainedOrganic = $state('');
     let searchPesticides = $state('');
     let searchFoodTransport = $state('');
+    let limit = $state(10); // Mostramos 10 recursos por página
+    let offset = $state(0);
 
     // API v2
     const API_BASE = '/api/v2/co2-emission-gap-among-countries-clustering-pca';
@@ -51,6 +53,9 @@
             if (searchPesticides) queryParams.append("pesticides_manufacturing", searchPesticides);
             if (searchFoodTransport) queryParams.append("food_transport", searchFoodTransport);
 
+            queryParams.append("limit", limit);
+            queryParams.append("offset", offset);
+            
             const res = await fetch(`${API_BASE}?${queryParams.toString()}`);
             
             if (!res.ok) throw new Error(`Error ${res.status}`);
@@ -71,7 +76,24 @@
             limpiarMensajes();
         }
     }
+    function paginaSiguiente() {
+        if (recursos.length === limit) { // Solo si la página está llena podría haber más
+            offset += limit;
+            cargarRecursos();
+        }
+    }
 
+    function paginaAnterior() {
+        if (offset >= limit) {
+            offset -= limit;
+            cargarRecursos();
+        }
+    }
+
+    function manejarBusqueda() {
+        offset = 0; 
+        cargarRecursos();
+    }
     // --- FUNCIÓN PARA LIMPIAR BÚSQUEDA ---
     function limpiarFiltros() {
         searchCountry = ''; searchYear = ''; searchSavannaFire = ''; searchForestFire = '';
@@ -173,7 +195,7 @@
         <table class="table">
             <thead>
                 <tr>
-                    <th>País</th><th>Año</th><th>Savanna</th><th>Forest</th><th>Residues</th><th>Rice</th><th>Organic</th><th>Pesticides</th><th>Transport</th><th>Acciones</th>
+                    <th>País</th><th>Año</th><th>Sabana</th><th>Bosque</th><th>Residuos</th><th>Arroz</th><th>Orgánico</th><th>Pesticidas</th><th>Transporte</th><th>Acciones</th>
                 </tr>
                 <tr class="search-row">
                     <td><input bind:value={searchCountry} placeholder="🔍 País..." onchange={cargarRecursos} /></td>
@@ -215,6 +237,17 @@
             </tbody>
         </table>
     </section>
+    <div class="pagination-bar">
+        <button onclick={paginaAnterior} disabled={offset === 0} class="btn-sample">⬅️ Anterior</button>
+        <span class="page-info">Página {(offset / limit) + 1}</span>
+        <button onclick={paginaSiguiente} disabled={recursos.length < limit} class="btn-sample">Siguiente ➡️</button>
+    
+        <select bind:value={limit} onchange={manejarBusqueda} class="limit-select">
+            <option value={5}>5 por pág.</option>
+            <option value={10}>10 por pág.</option>
+            <option value={20}>20 por pág.</option>
+        </select>
+    </div>
 </div>
 
 <style>
@@ -243,4 +276,14 @@
     .create-row input { width: 70px; padding: 4px; border: 1px solid #ccc; border-radius: 3px; }
     .search-row input { width: 90%; padding: 5px; border: 1px solid #aaa; border-radius: 4px; box-sizing: border-box; }
     .search-row td { background-color: #fdfdfd; }
+    .pagination-bar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin-top: 20px;
+    padding-bottom: 30px;
+    }
+    .page-info { font-weight: bold; color: var(--primary); }
+    .limit-select { padding: 5px; border-radius: 4px; border: 1px solid var(--border); }
 </style>
