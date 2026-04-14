@@ -24,7 +24,7 @@ export function loadBackEnd(app) {
         res.redirect("https://documenter.getpostman.com/view/52404851/2sBXihrYaP"); 
     });
 
-    // Datos iniciales (los mismos que tenías)
+    // Datos iniciales 
     const initialDataElena = [
         { country: "bangladesh", code: "bgd", year: 1994, methyl_chloroform: 4, methyl_bromide: 0, hcfc: 38, carbon_tetrachloride: 71, halon: 35, cfc: 1806 },
         { country: "mexico", code: "mex", year: 2010, methyl_chloroform: 0, methyl_bromide: 6679, hcfc: 11717, carbon_tetrachloride: 1, halon: 0, cfc: -2408 },
@@ -174,7 +174,6 @@ export function loadBackEnd(app) {
     app.get(v1Base + "/filters", getFiltersHandler);
     app.get(v1Base + "/:country/:year", getOneHandler);
 
-    // PRIMERO la ruta de campo, pero solo si el parámetro es un campo conocido
     app.get(v1Base + "/:field", (req, res, next) => {
         if (campos.includes(req.params.field)) {
             return getFieldHandler(req, res);
@@ -183,10 +182,8 @@ export function loadBackEnd(app) {
         }
     });
 
-    // DESPUÉS la ruta de país
     app.get(v1Base + "/:country", getByCountryHandler);
 
-    // Bloquear métodos de escritura en v1
     app.post(v1Base, (req, res) => res.status(405).json({ error: "Method Not Allowed: v1 es solo lectura" }));
     app.put(v1Base, (req, res) => res.status(405).json({ error: "Method Not Allowed: v1 es solo lectura" }));  // NUEVA
     app.post(v1Base + "/:country/:year", (req, res) => res.status(405).json({ error: "Method Not Allowed: v1 es solo lectura" }));  // NUEVA
@@ -195,7 +192,7 @@ export function loadBackEnd(app) {
     app.delete(v1Base, (req, res) => res.status(405).json({ error: "Method Not Allowed: v1 es solo lectura" }));
 
 
-    // Control de métodos no permitidos en v1 (solo GET)
+    // Control de métodos (solo GET)
     app.all(v1Base, (req, res, next) => {
         if (!['GET'].includes(req.method)) {
             return res.status(405).json({ error: "Method Not Allowed (solo GET en v1)" });

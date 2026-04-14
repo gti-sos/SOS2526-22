@@ -27,6 +27,8 @@
     let searchDrainedOrganic = $state('');
     let searchPesticides = $state('');
     let searchFoodTransport = $state('');
+    let limit = $state(10); // Mostramos 10 recursos por página
+    let offset = $state(0);
 
     // API v2
     const API_BASE = '/api/v2/co2-emission-gap-among-countries-clustering-pca';
@@ -36,8 +38,8 @@
         setTimeout(() => { error = null; successMessage = null; }, 5000);
     }
 
-    // LISTAR (GET)
-    async function cargarRecursos() {
+    // LISTAR (GET) - Añadimos parámetro esBusqueda
+    async function cargarRecursos(esBusqueda = false) {
         loading = true;
         try {
             let queryParams = new URLSearchParams();
@@ -51,17 +53,23 @@
             if (searchPesticides) queryParams.append("pesticides_manufacturing", searchPesticides);
             if (searchFoodTransport) queryParams.append("food_transport", searchFoodTransport);
 
+            // Siempre enviamos paginación
+            queryParams.append("limit", limit);
+            queryParams.append("offset", offset);
+            
             const res = await fetch(`${API_BASE}?${queryParams.toString()}`);
             
             if (!res.ok) throw new Error(`Error ${res.status}`);
             
             recursos = await res.json();
             
-            // Si la búsqueda no arroja resultados
-            if (recursos.length === 0 && queryParams.toString() !== "") {
-                error = "No se encontraron emisiones con esos filtros exactos.";
-            } else if (queryParams.toString() !== "") {
-                successMessage = "Búsqueda completada.";
+            // SOLO controlamos el mensaje si la llamada proviene explícitamente de una búsqueda
+            if (esBusqueda === true) {
+                if (recursos.length === 0) {
+                    error = "No se encontraron emisiones con esos filtros exactos.";
+                } else {
+                    successMessage = "Búsqueda completada.";
+                }
             }
 
         } catch (e) {
@@ -72,12 +80,31 @@
         }
     }
 
-    // --- FUNCIÓN PARA LIMPIAR BÚSQUEDA ---
+    // --- FUNCIONES DE BÚSQUEDA Y FILTRADO ---
+    function manejarBusqueda() {
+        offset = 0;
+        cargarRecursos(true); // Pasamos true solo cuando el usuario busca manualmente
+    }
+
     function limpiarFiltros() {
         searchCountry = ''; searchYear = ''; searchSavannaFire = ''; searchForestFire = '';
-        searchCropResidues = ''; searchRiceCultivation = ''; searchDrainedOrganic = ''; 
+        searchCropResidues = ''; searchRiceCultivation = ''; searchDrainedOrganic = '';
         searchPesticides = ''; searchFoodTransport = '';
-        cargarRecursos(); // Recarga automática obligatoria
+        cargarRecursos(true); // Pasamos true para que se considere una acción de filtrado
+    }
+    
+    function paginaSiguiente() {
+        if (recursos.length === limit) { // Solo si la página está llena podría haber más
+            offset += limit;
+            cargarRecursos();
+        }
+    }
+
+    function paginaAnterior() {
+        if (offset >= limit) {
+            offset -= limit;
+            cargarRecursos();
+        }
     }
 
     // CARGAR INICIALES (GET /loadInitialData) 
@@ -173,18 +200,18 @@
         <table class="table">
             <thead>
                 <tr>
-                    <th>País</th><th>Año</th><th>Savanna</th><th>Forest</th><th>Residues</th><th>Rice</th><th>Organic</th><th>Pesticides</th><th>Transport</th><th>Acciones</th>
+                    <th>País</th><th>Año</th><th>Sabana</th><th>Bosque</th><th>Residuos</th><th>Arroz</th><th>Orgánico</th><th>Pesticidas</th><th>Transporte</th><th>Acciones</th>
                 </tr>
                 <tr class="search-row">
-                    <td><input bind:value={searchCountry} placeholder="🔍 País..." onchange={cargarRecursos} /></td>
-                    <td><input type="number" bind:value={searchYear} placeholder="🔍 Año..." onchange={cargarRecursos} /></td>
-                    <td><input type="number" bind:value={searchSavannaFire} placeholder="🔍" onchange={cargarRecursos} /></td>
-                    <td><input type="number" bind:value={searchForestFire} placeholder="🔍" onchange={cargarRecursos} /></td>
-                    <td><input type="number" bind:value={searchCropResidues} placeholder="🔍" onchange={cargarRecursos} /></td>
-                    <td><input type="number" bind:value={searchRiceCultivation} placeholder="🔍" onchange={cargarRecursos} /></td>
-                    <td><input type="number" bind:value={searchDrainedOrganic} placeholder="🔍" onchange={cargarRecursos} /></td>
-                    <td><input type="number" bind:value={searchPesticides} placeholder="🔍" onchange={cargarRecursos} /></td>
-                    <td><input type="number" bind:value={searchFoodTransport} placeholder="🔍" onchange={cargarRecursos} /></td>
+                    <td><input bind:value={searchCountry} placeholder="🔍 País..." onchange={manejarBusqueda} /></td>
+                    <td><input type="number" bind:value={searchYear} placeholder="🔍 Año..." onchange={manejarBusqueda} /></td>
+                    <td><input type="number" bind:value={searchSavannaFire} placeholder="🔍" onchange={manejarBusqueda} /></td>
+                    <td><input type="number" bind:value={searchForestFire} placeholder="🔍" onchange={manejarBusqueda} /></td>
+                    <td><input type="number" bind:value={searchCropResidues} placeholder="🔍" onchange={manejarBusqueda} /></td>
+                    <td><input type="number" bind:value={searchRiceCultivation} placeholder="🔍" onchange={manejarBusqueda} /></td>
+                    <td><input type="number" bind:value={searchDrainedOrganic} placeholder="🔍" onchange={manejarBusqueda} /></td>
+                    <td><input type="number" bind:value={searchPesticides} placeholder="🔍" onchange={manejarBusqueda} /></td>
+                    <td><input type="number" bind:value={searchFoodTransport} placeholder="🔍" onchange={manejarBusqueda} /></td>
                     <td><button onclick={limpiarFiltros} class="btn-sample" style="width: 100%; font-size: 0.9em;">🧹 Limpiar</button></td>
                 </tr>
             </thead>
@@ -215,6 +242,17 @@
             </tbody>
         </table>
     </section>
+    <div class="pagination-bar">
+        <button onclick={paginaAnterior} disabled={offset === 0} class="btn-sample">⬅️ Anterior</button>
+        <span class="page-info">Página {(offset / limit) + 1}</span>
+        <button onclick={paginaSiguiente} disabled={recursos.length < limit} class="btn-sample">Siguiente ➡️</button>
+    
+        <select bind:value={limit} onchange={manejarBusqueda} class="limit-select">
+            <option value={5}>5 por pág.</option>
+            <option value={10}>10 por pág.</option>
+            <option value={20}>20 por pág.</option>
+        </select>
+    </div>
 </div>
 
 <style>
@@ -243,4 +281,14 @@
     .create-row input { width: 70px; padding: 4px; border: 1px solid #ccc; border-radius: 3px; }
     .search-row input { width: 90%; padding: 5px; border: 1px solid #aaa; border-radius: 4px; box-sizing: border-box; }
     .search-row td { background-color: #fdfdfd; }
+    .pagination-bar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin-top: 20px;
+    padding-bottom: 30px;
+    }
+    .page-info { font-weight: bold; color: var(--primary); }
+    .limit-select { padding: 5px; border-radius: 4px; border: 1px solid var(--border); }
 </style>
