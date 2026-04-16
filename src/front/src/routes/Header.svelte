@@ -6,6 +6,7 @@
         <a href="/global-agriculture-climate-impacts">🌱 Agricultura</a>
         <a href="/ozone-depleting-substance-consumptions">🛡️ Ozono</a>
         <a href="/co2-emissions-stats">💨 Emisiones CO2</a>
+        <a href="/analytics">📊 Analytics</a>
     </nav>
 </header>
 

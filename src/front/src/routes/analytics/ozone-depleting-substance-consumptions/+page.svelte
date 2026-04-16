@@ -176,6 +176,12 @@
         <br>
     </div>
 
+    <div class="map-link">
+    <a href="/analytics/ozone-depleting-substance-consumptions/map" class="link-btn map-btn">
+        Ver mapa geoespacial (Elena)
+    </a>
+    </div>
+
     <style>
         .container {
             max-width: 1400px;
@@ -223,6 +229,20 @@
             color: #0a0e10;
             font-size: 1rem;
         }
+
+        .map-link {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1rem;
+}
+
+    .map-btn {
+        color: #000;
+    }
+
+    .map-btn:hover {
+        background: #81aed3;
+        color: #000 }
 
         :global(.leyenda-item) {
             display: flex;

@@ -175,6 +175,7 @@
         <a href="/analytics/co2-emission-gap-among-countries-clustering-pca" class="link-btn">Julio - Savanna Fire</a>
     </div>
     
+    
     <div id="container" style="height: 600px; width: 100%;"></div>
     
     {#if loading}
@@ -226,6 +227,8 @@
         flex-wrap: wrap;
         margin-bottom: 2rem;
     }
+    
+    
     
     .link-btn {
         background: #f0f9ff;

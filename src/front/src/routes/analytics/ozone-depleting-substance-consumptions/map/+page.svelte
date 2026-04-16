@@ -2,6 +2,7 @@
     import { onMount } from 'svelte';
 
     onMount(async () => {
+        // @ts-ignore
         const L = (await import('leaflet')).default;
         await import('leaflet/dist/leaflet.css');
 
@@ -24,14 +25,17 @@
         const res = await fetch('/api/v1/ozone-depleting-substance-consumptions');
         const datos = await res.json();
 
+        // @ts-ignore
         const datosValidos = datos.filter(d => coordenadas[d.country]);
 
         // Años mín y máx para normalizar el color
+        // @ts-ignore
         const years = datosValidos.map(d => d.year);
         const minYear = Math.min(...years);
         const maxYear = Math.max(...years);
 
         // Función para interpolar color según año (azul claro = antiguo, azul oscuro = reciente)
+        // @ts-ignore
         function getColorByYear(year) {
             const t = (year - minYear) / (maxYear - minYear || 1);
             // De #AED6F1 (azul claro) a #1a237e (azul muy oscuro)
@@ -41,7 +45,9 @@
             return `rgb(${r},${g},${b})`;
         }
 
+        // @ts-ignore
         datosValidos.forEach(d => {
+            // @ts-ignore
             const [lat, lng] = coordenadas[d.country];
 
             // Media de todas las sustancias (valores absolutos)
@@ -118,7 +124,6 @@
     <p class="subtitle">Color según el año del dato · Tamaño según la media de sustancias · Clic para ver detalle</p>
     <div id="map-container" class="map"></div>
     <br>
-    <a href="/analytics/ozone-depleting-substance-consumptions" class="volver">← Volver a la visualización individual</a>
 </div>
 
 <style>
