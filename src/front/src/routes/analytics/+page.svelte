@@ -94,7 +94,6 @@
             Highcharts.chart('container', {
                 chart: { type: 'column', height: 550 },
                 title: { text: 'Visualización Integrada del Equipo SOS2526-22' },
-                subtitle: { text: 'Consumo de ozono · Impacto agrícola · Emisiones CO2' },
                 xAxis: {
                     categories: years,
                     title: { text: 'Año' },
@@ -169,27 +168,36 @@
 
 <div class="analytics-container">
     <h1>Visualización Integrada del Equipo</h1>
-    <p class="subtitle">Comparativa de datos de agricultura, ozono y emisiones CO2</p>
-
+    
     <div class="individual-links">
-        <a href="/analytics/ozone-depleting-substance-consumptions" class="link-btn">Elena - Consumo de Ozono</a>
-        <a href="/analytics/global-agriculture-climate-impacts" class="link-btn">Celia - Agricultura y Clima</a>
-        <a href="/analytics/co2-emission-gap-among-countries-clustering-pca" class="link-btn">Julio - Emisiones CO2</a>
+        <a href="/analytics/ozone-depleting-substance-consumptions" class="link-btn">Elena - Consumo HCFC</a>
+        <a href="/analytics/global-agriculture-climate-impacts" class="link-btn">Celia - Temperatura media</a>
+        <a href="/analytics/co2-emission-gap-among-countries-clustering-pca" class="link-btn">Julio - Savanna Fire</a>
     </div>
-
-    <div style="position: relative; min-height: 600px;">
-        <div id="container" style="height: 600px; width: 100%;"></div>
-
-        {#if loading}
-            <div class="loading-overlay">
-                <div class="spinner"></div>
-                <p>Cargando visualización...</p>
-            </div>
-        {/if}
-
-        {#if error}
-            <div class="error">Error al cargar los datos: {error}</div>
-        {/if}
+    
+    <div id="container" style="height: 600px; width: 100%;"></div>
+    
+    {#if loading}
+        <div class="loading-overlay">
+            <div class="spinner"></div>
+            <p>Cargando gráfico grupal...</p>
+        </div>
+    {/if}
+    
+    {#if error}
+        <div class="error">
+            <p>Error: {error}</p>
+        </div>
+    {/if}
+        
+    <div class="info">
+        <h3>Visualización Grupal - Métricas utilizadas</h3>
+        <ul>
+            <li><strong>🔵 Barras azules (Elena):</strong> Consumo de HCFC por año (toneladas) — datos de consumo de sustancias que agotan el ozono.</li>
+            <li><strong>🟠 Barras naranjas (Celia):</strong> Temperatura media anual por año (°C) — datos de impacto climático en la agricultura.</li>
+            <li><strong>🟢 Barras verdes (Julio):</strong> Emisiones por fuego de sabana por año — datos de emisiones de CO2.</li>
+        </ul>
+        <p><strong>Normalización:</strong> Cada barra representa el porcentaje que ese año supone sobre el total acumulado de su serie. Así se pueden comparar las tres fuentes de datos independientemente de sus unidades.</p>
     </div>
 </div>
 
@@ -198,18 +206,19 @@
         max-width: 1200px;
         margin: 0 auto;
         padding: 2rem;
-        font-family: system-ui;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        position: relative;
+        min-height: 600px;
     }
+    
     h1 {
-        color: #263238;
+        color: #1e88e5;
         text-align: center;
         margin-bottom: 0.5rem;
     }
-    .subtitle {
-        text-align: center;
-        color: #666;
-        margin-bottom: 2rem;
-    }
+    
     .individual-links {
         display: flex;
         justify-content: center;
@@ -217,6 +226,7 @@
         flex-wrap: wrap;
         margin-bottom: 2rem;
     }
+    
     .link-btn {
         background: #f0f9ff;
         color: #1e88e5;
@@ -227,20 +237,27 @@
         border: 1px solid #bae6fd;
         transition: all 0.2s;
     }
+    
     .link-btn:hover {
         background: #1e88e5;
         color: white;
     }
+    
     .loading-overlay {
         position: absolute;
-        top: 0; left: 0; right: 0; bottom: 0;
-        background: rgba(255,255,255,0.95);
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.95);
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
+        border-radius: 16px;
         z-index: 10;
     }
+    
     .spinner {
         border: 4px solid #f3f3f3;
         border-top: 4px solid #1e88e5;
@@ -248,18 +265,43 @@
         width: 40px;
         height: 40px;
         animation: spin 1s linear infinite;
-        margin-bottom: 1rem;
+        margin: 0 auto 1rem;
     }
+    
     @keyframes spin {
         0% { transform: rotate(0deg); }
         100% { transform: rotate(360deg); }
     }
+    
     .error {
         text-align: center;
         padding: 2rem;
+        margin-top: 1rem;
         color: #e53935;
         background: #fee2e2;
         border-radius: 8px;
-        margin-top: 1rem;
+    }
+    
+    .info {
+        margin-top: 2rem;
+        padding: 1rem;
+        background: #f0f9ff;
+        border-radius: 12px;
+        border: 1px solid #bae6fd;
+    }
+    
+    .info h3 {
+        color: #1e88e5;
+        margin-top: 0;
+    }
+    
+    .info ul {
+        margin: 0;
+        padding-left: 1.5rem;
+    }
+    
+    .info li {
+        margin: 0.5rem 0;
+        color: #333;
     }
 </style>

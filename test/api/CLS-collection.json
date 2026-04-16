@@ -130,7 +130,7 @@
           }
         },
         "url": {
-          "raw": "{{base_url}}/api/v1/global-agriculture-climate-impacts/Spain/2020",
+          "raw": "{{base_url}}/api/v1/global-agriculture-climate-impacts/Spain/2010",
           "host": [
             "{{base_url}}"
           ],
@@ -139,7 +139,7 @@
             "v1",
             "global-agriculture-climate-impacts",
             "Spain",
-            "2020"
+            "2010"
           ]
         }
       },
@@ -176,7 +176,7 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "{{base_url}}/api/v1/global-agriculture-climate-impacts/Spain/2020",
+          "raw": "{{base_url}}/api/v1/global-agriculture-climate-impacts/Spain/2010",
           "host": [
             "{{base_url}}"
           ],
@@ -185,7 +185,7 @@
             "v1",
             "global-agriculture-climate-impacts",
             "Spain",
-            "2020"
+            "2010"
           ]
         }
       },
