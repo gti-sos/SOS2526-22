@@ -1,294 +1,159 @@
 <script>
-    import { onMount, tick } from 'svelte';
-    import 'leaflet/dist/leaflet.css';
-
-    let loading = $state(true);
-    let error = $state(null);
-
-    // Coordenadas de los países
-    const countryCoords = {
-        bangladesh: { lat: 23.8103, lon: 90.4125, name: 'Bangladesh', consumo: 0 },
-        mexico: { lat: 19.4326, lon: -99.1332, name: 'México', consumo: 0 },
-        'united-states': { lat: 38.8951, lon: -77.0364, name: 'Estados Unidos', consumo: 0 },
-        japan: { lat: 35.6895, lon: 139.6917, name: 'Japón', consumo: 0 },
-        china: { lat: 39.9042, lon: 116.4074, name: 'China', consumo: 0 },
-        'costa-rica': { lat: 9.9281, lon: -84.0907, name: 'Costa Rica', consumo: 0 },
-        singapore: { lat: 1.3521, lon: 103.8198, name: 'Singapur', consumo: 0 }
-    };
-
-    function calcularConsumoTotal(registros) {
-        const totalPorPais = {};
-        registros.forEach(item => {
-            const pais = item.country;
-            if (!countryCoords[pais]) return;
-            if (!totalPorPais[pais]) totalPorPais[pais] = 0;
-            const sustancias = ['methyl_chloroform', 'methyl_bromide', 'hcfc', 'carbon_tetrachloride', 'halon', 'cfc'];
-            let total = 0;
-            sustancias.forEach(s => total += Number(item[s]) || 0);
-            totalPorPais[pais] += total;
-        });
-        return totalPorPais;
-    }
+    import { onMount } from 'svelte';
 
     onMount(async () => {
-        try {
-            // 1. Cargar datos de la API
-            console.log('Fetching data...');
-            const res = await fetch('/api/v2/ozone-depleting-substance-consumptions?t=' + Date.now());
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            let data = await res.json();
-            const allData = Array.isArray(data) ? data : (data.data || []);
-            
-            if (allData.length === 0) {
-                error = 'No hay datos disponibles.';
-                loading = false;
-                return;
-            }
+        const L = (await import('leaflet')).default;
+        await import('leaflet/dist/leaflet.css');
 
-            const totalPorPais = calcularConsumoTotal(allData);
-            console.log('Total por país:', totalPorPais);
-            
-            // 2. Esperar a que el DOM esté listo
-            await tick();
-            await new Promise(resolve => setTimeout(resolve, 200));
-            
-            // 3. Obtener el contenedor por ID
-            const container = document.getElementById('map-container-element');
-            if (!container) {
-                throw new Error('No se encontró el elemento del mapa');
-            }
-            
-            // 4. Importar Leaflet y el plugin heat
-            const L = await import('leaflet');
-            await import('leaflet.heat');
-            
-            // 5. Inicializar el mapa
-            const map = L.default.map(container).setView([20, 0], 2);
-            L.default.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-                subdomains: 'abcd',
-                maxZoom: 19
-            }).addTo(map);
-            
-            // 6. Preparar datos para el heatmap
-            // Formato: [lat, lon, intensidad]
-            const heatData = [];
-            const maxConsumo = Math.max(...Object.values(totalPorPais).filter(v => v > 0));
-            
-            for (const [pais, total] of Object.entries(totalPorPais)) {
-                const coords = countryCoords[pais];
-                if (coords && total > 0) {
-                    // Normalizar intensidad (0-1) basado en el consumo máximo
-                    const intensidad = total / maxConsumo;
-                    heatData.push([coords.lat, coords.lon, intensidad]);
-                }
-            }
-            
-            console.log('Datos para heatmap:', heatData);
-            
-            // 7. Añadir capa de calor
-            const heat = L.default.heatLayer(heatData, {
-                radius: 45,
-                blur: 25,
-                maxZoom: 5,
-                minOpacity: 0.3,
-                gradient: {
-                    0.0: '#2c7bb6',   // azul (bajo consumo)
-                    0.3: '#abd9e9',
-                    0.5: '#ffffbf',
-                    0.7: '#fdae61',
-                    0.9: '#d7191c',   // rojo (alto consumo)
-                    1.0: '#b10026'
-                }
-            }).addTo(map);
-            
-            // 8. Opcional: añadir marcadores con popups informativos
-            for (const [pais, total] of Object.entries(totalPorPais)) {
-                const coords = countryCoords[pais];
-                if (coords) {
-                    const color = total > 0 ? '#ff4444' : '#ffaa00';
-                    const marker = L.default.marker([coords.lat, coords.lon], {
-                        icon: L.default.divIcon({
-                            className: 'custom-marker',
-                            html: `<div style="background-color: ${color}; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white;"></div>`,
-                            iconSize: [12, 12]
-                        })
-                    }).addTo(map);
-                    
-                    marker.bindPopup(`
-                        <div style="font-family: Arial, sans-serif; min-width: 200px;">
-                            <h3 style="margin: 0 0 10px 0; color: ${color};">${coords.name}</h3>
-                            <hr style="margin: 5px 0;">
-                            <p><strong>💰 Consumo total:</strong> ${total.toFixed(2)} toneladas</p>
-                            <p><strong>📊 Intensidad:</strong> ${((total / maxConsumo) * 100).toFixed(1)}% del máximo</p>
-                            <p><em>Suma de todas las sustancias y años</em></p>
-                        </div>
-                    `);
-                }
-            }
-            
-            loading = false;
-            console.log('Heatmap inicializado correctamente');
-            
-        } catch (err) {
-            console.error('Error en mapa:', err);
-            error = err.message;
-            loading = false;
+        const coordenadas = {
+            'bangladesh': [23.7, 90.4],
+            'mexico': [23.6, -102.6],
+            'united-states': [37.1, -95.7],
+            'japan': [36.2, 138.3],
+            'china': [35.9, 104.2],
+            'costa-rica': [9.7, -83.8],
+            'singapore': [1.3, 103.8]
+        };
+
+        const map = L.map('map-container').setView([20, 0], 2);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        const res = await fetch('/api/v1/ozone-depleting-substance-consumptions');
+        const datos = await res.json();
+
+        const datosValidos = datos.filter(d => coordenadas[d.country]);
+
+        // Años mín y máx para normalizar el color
+        const years = datosValidos.map(d => d.year);
+        const minYear = Math.min(...years);
+        const maxYear = Math.max(...years);
+
+        // Función para interpolar color según año (azul claro = antiguo, azul oscuro = reciente)
+        function getColorByYear(year) {
+            const t = (year - minYear) / (maxYear - minYear || 1);
+            // De #AED6F1 (azul claro) a #1a237e (azul muy oscuro)
+            const r = Math.round(174 + (26 - 174) * t);
+            const g = Math.round(214 + (35 - 214) * t);
+            const b = Math.round(241 + (126 - 241) * t);
+            return `rgb(${r},${g},${b})`;
         }
+
+        datosValidos.forEach(d => {
+            const [lat, lng] = coordenadas[d.country];
+
+            // Media de todas las sustancias (valores absolutos)
+            const sustancias = [d.hcfc, d.cfc, d.methyl_bromide, d.methyl_chloroform, d.carbon_tetrachloride, d.halon];
+            const media = sustancias.reduce((sum, v) => sum + Math.abs(v || 0), 0) / sustancias.length;
+            const radio = Math.max(8, Math.min(50, Math.log(media + 1) * 3));
+
+            const color = getColorByYear(d.year);
+            const tieneNegativos = d.cfc < 0 || d.methyl_chloroform < 0 || d.carbon_tetrachloride < 0 || d.halon < 0;
+
+            const circulo = L.circleMarker([lat, lng], {
+                radius: radio,
+                fillColor: color,
+                color: '#fff',
+                weight: 2,
+                opacity: 1,
+                fillOpacity: 0.85
+            });
+
+            circulo.bindPopup(`
+                <div style="font-family: system-ui; min-width: 200px;">
+                    <h3 style="margin:0 0 8px; color:#263238; text-transform:capitalize;">
+                        ${d.country} (${d.year})
+                    </h3>
+                    <p style="margin:0 0 8px; font-size:0.85rem; color:#555;">
+                        Media de sustancias: <b>${media.toFixed(0)} ton</b>
+                    </p>
+                    <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+                        <tr><td style="padding:2px 4px;"><b>HCFC</b></td><td style="padding:2px 4px; text-align:right;">${d.hcfc.toLocaleString()} ton</td></tr>
+                        <tr style="background:#f5f5f5;"><td style="padding:2px 4px;"><b>CFC</b></td><td style="padding:2px 4px; text-align:right; color:${d.cfc < 0 ? '#c0392b' : '#000'};">${d.cfc.toLocaleString()} ton</td></tr>
+                        <tr><td style="padding:2px 4px;"><b>Bromuro de metilo</b></td><td style="padding:2px 4px; text-align:right;">${d.methyl_bromide.toLocaleString()} ton</td></tr>
+                        <tr style="background:#f5f5f5;"><td style="padding:2px 4px;"><b>Metilcloroformo</b></td><td style="padding:2px 4px; text-align:right; color:${d.methyl_chloroform < 0 ? '#c0392b' : '#000'};">${d.methyl_chloroform.toLocaleString()} ton</td></tr>
+                        <tr><td style="padding:2px 4px;"><b>Tetracloruro</b></td><td style="padding:2px 4px; text-align:right; color:${d.carbon_tetrachloride < 0 ? '#c0392b' : '#000'};">${d.carbon_tetrachloride.toLocaleString()} ton</td></tr>
+                        <tr style="background:#f5f5f5;"><td style="padding:2px 4px;"><b>Halón</b></td><td style="padding:2px 4px; text-align:right; color:${d.halon < 0 ? '#c0392b' : '#000'};">${d.halon.toLocaleString()} ton</td></tr>
+                    </table>
+                    ${tieneNegativos ? '<p style="color:#c0392b; font-size:0.8rem; margin:6px 0 0;">⚠️ Contiene valores negativos (reducción)</p>' : ''}
+                </div>
+            `);
+
+            circulo.addTo(map);
+        });
+
+        // Leyenda
+        const leyenda = L.control({ position: 'bottomright' });
+        leyenda.onAdd = () => {
+            const div = L.DomUtil.create('div');
+            div.style.cssText = 'background:white; padding:12px; border-radius:8px; border:1px solid #ccc; font-family:system-ui; font-size:0.85rem;';
+            div.innerHTML = `
+                <strong style="display:block; margin-bottom:8px;">Leyenda</strong>
+                <div style="margin-bottom:8px;">
+                    <div style="display:flex; align-items:center; gap:8px; margin:4px 0;">
+                        <span style="width:14px;height:14px;background:#AED6F1;border-radius:50%;display:inline-block;border:2px solid #fff;box-shadow:0 0 2px #999;"></span>
+                        Dato más antiguo (${minYear})
+                    </div>
+                    <div style="display:flex; align-items:center; gap:8px; margin:4px 0;">
+                        <span style="width:14px;height:14px;background:rgb(26,35,126);border-radius:50%;display:inline-block;border:2px solid #fff;box-shadow:0 0 2px #999;"></span>
+                        Dato más reciente (${maxYear})
+                    </div>
+                </div>
+                <hr style="margin:8px 0; border-color:#eee;">
+                <div style="color:#666; font-size:0.8rem;">
+                    <b>Color:</b> año del dato<br>
+                    <b>Tamaño:</b> media de sustancias
+                </div>
+            `;
+            return div;
+        };
+        leyenda.addTo(map);
     });
 </script>
 
-<svelte:head>
-    <title>Heatmap - Consumo de sustancias</title>
-</svelte:head>
-
-<div class="map-container">
-    <h1>🔥 Mapa de calor - Consumo de sustancias agotadoras de ozono</h1>
-    <p>Las zonas con colores más cálidos (rojo) indican mayor consumo total de sustancias.</p>
-    
-    <div id="map-container-element" class="map"></div>
-    
-    <div class="legend">
-        <h4>Leyenda de intensidad</h4>
-        <div class="gradient-bar"></div>
-        <div class="legend-labels">
-            <span>Bajo</span>
-            <span style="float: right">Alto</span>
-        </div>
-        <div class="legend-colors">
-            <span style="background: #2c7bb6;"></span>
-            <span style="background: #abd9e9;"></span>
-            <span style="background: #ffffbf;"></span>
-            <span style="background: #fdae61;"></span>
-            <span style="background: #d7191c;"></span>
-            <span style="background: #b10026;"></span>
-        </div>
-        <p class="legend-note">* Los círculos blancos indican la ubicación exacta de cada país</p>
-    </div>
-    
-    {#if loading}
-        <div class="loading-overlay">
-            <div class="spinner"></div>
-            <p>Cargando mapa de calor...</p>
-        </div>
-    {/if}
-    
-    {#if error}
-        <div class="error">Error: {error}</div>
-    {/if}
+<div class="container">
+    <h1>Mapa de Consumo de Sustancias que Agotan el Ozono</h1>
+    <p class="subtitle">Color según el año del dato · Tamaño según la media de sustancias · Clic para ver detalle</p>
+    <div id="map-container" class="map"></div>
+    <br>
+    <a href="/analytics/ozone-depleting-substance-consumptions" class="volver">← Volver a la visualización individual</a>
 </div>
 
 <style>
-    .map-container {
-        max-width: 1200px;
-        margin: 2rem auto;
-        padding: 1rem;
-        position: relative;
+    .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px;
+        font-family: system-ui;
     }
+
     h1 {
         text-align: center;
-        color: #1e88e5;
+        color: #263238;
+        margin-bottom: 5px;
     }
+
+    .subtitle {
+        text-align: center;
+        color: #666;
+        margin-bottom: 20px;
+    }
+
     .map {
         width: 100%;
         height: 600px;
-        border-radius: 1rem;
-        border: 1px solid #ccc;
-        z-index: 1;
+        border-radius: 12px;
+        border: 1px solid #dee2e6;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
-    
-    /* Leyenda */
-    .legend {
-        background: rgba(0, 0, 0, 0.85);
-        color: white;
-        padding: 12px 18px;
-        border-radius: 8px;
-        position: absolute;
-        bottom: 20px;
-        right: 20px;
-        z-index: 10;
-        font-size: 12px;
-        backdrop-filter: blur(5px);
-        min-width: 180px;
-        font-family: Arial, sans-serif;
-    }
-    .legend h4 {
-        margin: 0 0 8px 0;
+
+    .volver {
+        display: block;
         text-align: center;
-        font-size: 14px;
-    }
-    .gradient-bar {
-        height: 20px;
-        background: linear-gradient(to right, #2c7bb6, #abd9e9, #ffffbf, #fdae61, #d7191c, #b10026);
-        border-radius: 4px;
-        margin: 8px 0 4px 0;
-    }
-    .legend-labels {
-        font-size: 11px;
-        margin-bottom: 8px;
-    }
-    .legend-colors {
-        display: flex;
-        gap: 2px;
-        margin-top: 5px;
-    }
-    .legend-colors span {
-        flex: 1;
-        height: 8px;
-        border-radius: 2px;
-    }
-    .legend-note {
-        font-size: 10px;
-        margin: 8px 0 0 0;
-        opacity: 0.7;
-        text-align: center;
-    }
-    
-    /* Marcador personalizado */
-    :global(.custom-marker) {
-        background: transparent !important;
-        border: none !important;
-    }
-    
-    /* Loading overlay */
-    .loading-overlay {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: rgba(0, 0, 0, 0.85);
-        color: white;
-        padding: 1.5rem 2rem;
-        border-radius: 1rem;
-        text-align: center;
-        z-index: 20;
-        backdrop-filter: blur(5px);
-        min-width: 220px;
-    }
-    .loading-overlay p {
-        margin: 0;
-        font-size: 1rem;
-    }
-    .spinner {
-        width: 40px;
-        height: 40px;
-        margin: 0 auto 10px auto;
-        border: 4px solid rgba(255, 255, 255, 0.3);
-        border-radius: 50%;
-        border-top-color: white;
-        animation: spin 1s ease-in-out infinite;
-    }
-    @keyframes spin {
-        to { transform: rotate(360deg); }
-    }
-    
-    .error {
-        text-align: center;
-        padding: 2rem;
-        font-size: 1.2rem;
-        color: #e53935;
-        background: white;
-        border-radius: 1rem;
-        margin-top: 1rem;
+        color: #1e88e5;
+        text-decoration: none;
+        margin-top: 20px;
     }
 </style>
