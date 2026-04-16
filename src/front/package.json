@@ -36,6 +36,7 @@
 		"bootstrap": "^5.3.8",
 		"highcharts": "^12.6.0",
 		"leaflet": "^1.9.4",
+		"leaflet.heat": "^0.2.0",
 		"sveltestrap": "^5.11.3"
 	}
 }

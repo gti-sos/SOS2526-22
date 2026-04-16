@@ -31,17 +31,20 @@ const dbV2 = new dataStore({
 export function loadBackEnd(app) {
 
     const initialData = [
-        { country: "spain", year: 2020, crop_type: "wheat", average_temperature_c: 20, total_precipitation_mm: 500 },
-        { country: "france", year: 2020, crop_type: "corn", average_temperature_c: 19, total_precipitation_mm: 450 },
-        { country: "germany", year: 2020, crop_type: "barley", average_temperature_c: 17, total_precipitation_mm: 480 },
-        { country: "italy", year: 2020, crop_type: "soy", average_temperature_c: 21, total_precipitation_mm: 470 },
-        { country: "portugal", year: 2020, crop_type: "rice", average_temperature_c: 22, total_precipitation_mm: 460 },
-        { country: "greece", year: 2020, crop_type: "olive", average_temperature_c: 25, total_precipitation_mm: 430 },
-        { country: "norway", year: 2020, crop_type: "barley", average_temperature_c: 10, total_precipitation_mm: 300 },
-        { country: "sweden", year: 2020, crop_type: "wheat", average_temperature_c: 11, total_precipitation_mm: 310 },
-        { country: "finland", year: 2020, crop_type: "corn", average_temperature_c: 8, total_precipitation_mm: 290 },
-        { country: "poland", year: 2020, crop_type: "soy", average_temperature_c: 16, total_precipitation_mm: 320 }
+        { country: "spain", year: 2010, crop_type: "wheat", average_temperature_c: 20, total_precipitation_mm: 500 },
+        { country: "france", year: 2015, crop_type: "corn", average_temperature_c: 19, total_precipitation_mm: 450 },
+        { country: "germany", year: 2010, crop_type: "barley", average_temperature_c: 17, total_precipitation_mm: 480 },
+        { country: "italy", year: 1997, crop_type: "soy", average_temperature_c: 21, total_precipitation_mm: 470 },
+        { country: "portugal", year: 2000, crop_type: "rice", average_temperature_c: 22, total_precipitation_mm: 460 },
+        { country: "greece", year: 1998, crop_type: "olive", average_temperature_c: 25, total_precipitation_mm: 430 },
+        { country: "norway", year: 1994, crop_type: "barley", average_temperature_c: 10, total_precipitation_mm: 300 },
+        { country: "sweden", year: 2013, crop_type: "wheat", average_temperature_c: 11, total_precipitation_mm: 310 },
+        { country: "finland", year: 1995, crop_type: "corn", average_temperature_c: 8, total_precipitation_mm: 290 },
+        { country: "poland", year: 2012, crop_type: "soy", average_temperature_c: 16, total_precipitation_mm: 320 }
     ];
+
+
+    
 
     const campos = ["country", "year", "crop_type", "average_temperature_c", "total_precipitation_mm"];
 
