@@ -179,7 +179,7 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "{{base_url}}/api/v2/global-agriculture-climate-impacts/Spain/2020",
+          "raw": "{{base_url}}/api/v2/global-agriculture-climate-impacts/Spain/2010",
           "host": [
             "{{base_url}}"
           ],
@@ -188,7 +188,7 @@
             "v2",
             "global-agriculture-climate-impacts",
             "Spain",
-            "2020"
+            "2010"
           ]
         }
       },
@@ -472,7 +472,7 @@
           }
         },
         "url": {
-          "raw": "{{base_url}}/api/v2/global-agriculture-climate-impacts/Spain/2020",
+          "raw": "{{base_url}}/api/v2/global-agriculture-climate-impacts/Spain/2010",
           "host": [
             "{{base_url}}"
           ],
@@ -481,7 +481,7 @@
             "v2",
             "global-agriculture-climate-impacts",
             "Spain",
-            "2020"
+            "2010"
           ]
         }
       },
@@ -736,7 +736,7 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "{{base_url}}/api/v2/global-agriculture-climate-impacts/crop_type",
+          "raw": "{{base_url}}/api/v2/global-agriculture-climate-impacts/year",
           "host": [
             "{{base_url}}"
           ],
@@ -744,7 +744,81 @@
             "api",
             "v2",
             "global-agriculture-climate-impacts",
-            "crop_type"
+            "year"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Filtro por rango",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "// 1. Validar el estado 200\r",
+              "pm.test(\"Status code is 200\", () => {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "// 2. Test Genérico de Rango\r",
+              "pm.test(\"Los datos recibidos cumplen con el rango de la URL\", () => {\r",
+              "    const res = pm.response.json();\r",
+              "    \r",
+              "    // Extraemos los valores de la URL actual\r",
+              "    const urlParams = pm.request.url.query;\r",
+              "    const fromVal = parseFloat(urlParams.get(\"from\"));\r",
+              "    const toVal = parseFloat(urlParams.get(\"to\"));\r",
+              "\r",
+              "    // Solo ejecutamos la lógica si existen los parámetros en la URL\r",
+              "    if (!isNaN(fromVal) && !isNaN(toVal)) {\r",
+              "        res.forEach(item => {\r",
+              "            // Si es un array de objetos (ruta base)\r",
+              "            const valor = (typeof item === 'object') ? item.average_temperature_c : item;\r",
+              "            \r",
+              "            pm.expect(valor).to.be.at.least(fromVal, `El valor ${valor} es menor que el límite inferior ${fromVal}`);\r",
+              "            pm.expect(valor).to.be.at.most(toVal, `El valor ${valor} es mayor que el límite superior ${toVal}`);\r",
+              "        });\r",
+              "    } else {\r",
+              "        console.log(\"No se detectaron parámetros 'from' o 'to' numéricos en la URL.\");\r",
+              "    }\r",
+              "});\r",
+              "\r",
+              "// 3. Validar que la respuesta sea un array\r",
+              "pm.test(\"La respuesta es un array de datos\", () => {\r",
+              "    pm.expect(pm.response.json()).to.be.an('array');\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v2/global-agriculture-climate-impacts/total_precipitation_mm?from=10&to=300",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v2",
+            "global-agriculture-climate-impacts",
+            "total_precipitation_mm"
+          ],
+          "query": [
+            {
+              "key": "from",
+              "value": "10"
+            },
+            {
+              "key": "to",
+              "value": "300"
+            }
           ]
         }
       },
