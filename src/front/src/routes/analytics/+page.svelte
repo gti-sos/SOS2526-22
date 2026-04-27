@@ -10,22 +10,18 @@
     
     async function initChart() {
         try {
-            const [resElena, resCelia, resJulio] = await Promise.all([
+            const [resElena, resCelia] = await Promise.all([
                 fetch('/api/v2/ozone-depleting-substance-consumptions'),
                 fetch('/api/v2/global-agriculture-climate-impacts'),
-                fetch('/api/v2/co2-emission-gap-among-countries-clustering-pca')
             ]);
 
             if (!resElena.ok) throw new Error('Error al cargar datos de ozono');
             if (!resCelia.ok) throw new Error('Error al cargar datos de agricultura');
-            if (!resJulio.ok) throw new Error('Error al cargar datos de CO2');
 
             const ozonoData = await resElena.json();
             const celiaRaw = await resCelia.json();
-            const julioRaw = await resJulio.json();
 
             const agriculturaData = Array.isArray(celiaRaw) ? celiaRaw : (celiaRaw.data || []);
-            const emisionesData = Array.isArray(julioRaw) ? julioRaw : (julioRaw.data || []);
 
             // Serie Elena: HCFC por año (sin world y sin asia)
             const hcfcPorAnio = {};
@@ -55,21 +51,10 @@
                 tempMediaPorAnio[y] = tempPorAnio[y] / countPorAnio[y];
             });
 
-            // Serie Julio: savanna_fire por año
-            const savannaPorAnio = {};
-            // @ts-ignore
-            emisionesData.forEach(d => {
-                // @ts-ignore
-                if (!savannaPorAnio[d.year]) savannaPorAnio[d.year] = 0;
-                // @ts-ignore
-                savannaPorAnio[d.year] += Number(d.savanna_fire) || 0;
-            });
-
             // Unir todos los años
             const yearsSet = new Set([
                 ...Object.keys(hcfcPorAnio),
                 ...Object.keys(tempMediaPorAnio),
-                ...Object.keys(savannaPorAnio)
             ]);
             const years = Array.from(yearsSet).map(Number).sort((a, b) => a - b);
 
@@ -77,13 +62,11 @@
             const valoresElena = years.map(y => hcfcPorAnio[y] || 0);
             // @ts-ignore
             const valoresCelia = years.map(y => tempMediaPorAnio[y] || 0);
-            // @ts-ignore
-            const valoresJulio = years.map(y => savannaPorAnio[y] || 0);
+
 
             // Opción 3: porcentaje sobre el total de cada serie
             const totalElena = valoresElena.reduce((a, b) => a + b, 0) || 1;
             const totalCelia = valoresCelia.reduce((a, b) => a + b, 0) || 1;
-            const totalJulio = valoresJulio.reduce((a, b) => a + b, 0) || 1;
 
             const Highcharts = (await import('highcharts')).default;
             const AccessibilityModule = (await import('highcharts/modules/accessibility')).default;
@@ -143,13 +126,6 @@
                     color: '#fb8c00',
                     valoresReales: valoresCelia,
                     unidad: '°C'
-                }, {
-                    name: 'Julio - Savanna Fire',
-                    // @ts-ignore
-                    data: years.map((y, i) => valoresJulio[i] > 0 ? (valoresJulio[i] / totalJulio) * 100 : null),
-                    color: '#10b981',
-                    valoresReales: valoresJulio,
-                    unidad: 'toneladas CO2'
                 }],
                 credits: { enabled: false },
                 legend: { align: 'right', verticalAlign: 'top', layout: 'vertical' }
@@ -172,7 +148,6 @@
     <div class="individual-links">
         <a href="/analytics/ozone-depleting-substance-consumptions" class="link-btn">Elena - Consumo HCFC</a>
         <a href="/analytics/global-agriculture-climate-impacts" class="link-btn">Celia - Temperatura media</a>
-        <a href="/analytics/co2-emission-gap-among-countries-clustering-pca" class="link-btn">Julio - Savanna Fire</a>
     </div>
     
     
@@ -196,9 +171,8 @@
         <ul>
             <li><strong>🔵 Barras azules (Elena):</strong> Consumo de HCFC por año (toneladas) — datos de consumo de sustancias que agotan el ozono.</li>
             <li><strong>🟠 Barras naranjas (Celia):</strong> Temperatura media anual por año (°C) — datos de impacto climático en la agricultura.</li>
-            <li><strong>🟢 Barras verdes (Julio):</strong> Emisiones por fuego de sabana por año — datos de emisiones de CO2.</li>
         </ul>
-        <p><strong>Normalización:</strong> Cada barra representa el porcentaje que ese año supone sobre el total acumulado de su serie. Así se pueden comparar las tres fuentes de datos independientemente de sus unidades.</p>
+        <p><strong>Normalización:</strong> Cada barra representa el porcentaje que ese año supone sobre el total acumulado de su serie.</p>
     </div>
 </div>
 
