@@ -64,7 +64,7 @@
             const valoresCelia = years.map(y => tempMediaPorAnio[y] || 0);
 
 
-            // Opción 3: porcentaje sobre el total de cada serie
+            // porcentaje sobre el total de cada serie
             const totalElena = valoresElena.reduce((a, b) => a + b, 0) || 1;
             const totalCelia = valoresCelia.reduce((a, b) => a + b, 0) || 1;
 
