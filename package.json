@@ -19,14 +19,12 @@
     "build": "cd src/front && npm install --legacy-peer-deps && npm run build",
     "dev-front": "cd src/front && npm run dev -- --open",
     "test": "npm run build && npm run test-EMM-local && npm run test-EMM-local-v2  && npm run test-JMV-local &&  npm run test-JMV-local-v2 && npm run test-CLS-local && npm run test-CLS-local-v2",
-   
     "NVM-CLS-local": "newman run test/api/CLS-collection.json -e test/api/CLS-local.json",
     "NVM-CLS-local-v2": "newman run test/api/CLS-collection-v2.json -e test/api/CLS-local.json",
     "test-CLS-local": "start-server-and-test start http://localhost:3000 NVM-CLS-local",
     "test-CLS-local-v2": "start-server-and-test start http://localhost:3000 NVM-CLS-local-v2",
     "test-global-agriculture-climate-impacts": "npm run test-CLS-local & npx kill-port 3000",
     "test-CLS-render": "newman run test/api/CLS-collection.json -e test/api/CLS-render.json --bail",
-    
     "NVM-EMM-local": "newman run test/api/EMM-collection.json -e test/api/EMM-local.json",
     "NVM-EMM-local-v2": "newman run test/api/EMM-collection-v2.json -e test/api/EMM-local.json",
     "test-EMM-local": "start-server-and-test start http://localhost:3000 NVM-EMM-local",
@@ -43,6 +41,9 @@
     "test:e2e": "start-server-and-test start http://localhost:3000 'npx playwright test'"
   },
   "dependencies": {
+    "chart.js": "^4.5.1",
+    "chartjs-chart-sankey": "^0.14.0",
+    "chartjs-chart-treemap": "^3.1.0",
     "cors": "^2.8.6",
     "express": "^5.2.1",
     "nedb": "^1.8.0",

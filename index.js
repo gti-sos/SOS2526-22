@@ -5,6 +5,7 @@ import {handler} from "./src/front/build/handler.js";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 
+import proxyCheaters from './src/back/cheaters-stats-proxy.js';
 
 
 
@@ -21,6 +22,8 @@ app.use(cors());
 
 
 app.use(express.json());
+
+app.use('/cheaters-stats-proxy', proxyCheaters);
 
 
 
