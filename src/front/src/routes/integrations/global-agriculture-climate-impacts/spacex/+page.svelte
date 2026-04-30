@@ -4,65 +4,57 @@
 
     let canvas;
     let chartInstance = null;
+    
+    // Estados reactivos (Svelte 5)
+    let spaceXData = $state([]); 
+    let agriData = $state([]); 
+    let loading = $state(true);
 
-    onMount(async () => {
-        try {
-            const [res1, res2] = await Promise.all([
-                fetch("https://api.spacexdata.com/v4/launches"),
-                fetch("https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts")
-            ]);
+    // 1. Procesamiento de datos (Se actualiza solo cuando cargan las APIs)
+    let integratedData = $derived.by(() => {
+        if (agriData.length === 0 && spaceXData.length === 0) return [];
 
-            const launches = await res1.json();
-            const agriculture = await res2.json();
+        const allYears = [...new Set([
+            ...agriData.map(d => parseInt(d.year)), 
+            ...spaceXData.map(d => new Date(d.date_utc).getFullYear())
+        ])].filter(y => y >= 2010 && y <= 2023).sort((a, b) => a - b);
 
-            // Diccionario para unificar datos por año
-            const stats = {};
-
-            // 1. Procesar lanzamientos de SpaceX
-            launches.forEach(l => {
-                const year = new Date(l.date_utc).getFullYear();
-                if (year >= 2010 && year <= 2023) { // Rango donde hay datos de ambas
-                    if (!stats[year]) stats[year] = { lanzamientos: 0, temp: [] };
-                    stats[year].lanzamientos += 1;
-                }
-            });
-
-            // 2. Procesar agricultura y clima
-            agriculture.forEach(a => {
-                const year = parseInt(a.year);
-                if (stats[year]) {
-                    stats[year].temp.push(a.average_temperature_c);
-                }
-            });
-
-            // 3. Preparar labels y datos finales
-            const labels = Object.keys(stats).sort();
-            const dataLanzamientos = labels.map(y => stats[y].lanzamientos);
+        return allYears.map(year => {
+            const agriForYear = agriData.filter(d => parseInt(d.year) === year);
+            const launchesForYear = spaceXData.filter(d => new Date(d.date_utc).getFullYear() === year);
             
-            // Calculamos el promedio y aplicamos un factor x2 para que se vea en la gráfica
-            const dataTempGrafica = labels.map(y => {
-                if (stats[y].temp.length === 0) return 15; // Valor por defecto si no hay dato ese año
-                const avg = stats[y].temp.reduce((a, b) => a + b, 0) / stats[y].temp.length;
-                return avg * 2; // ESCALADO: Multiplicamos por 2 para que sea visible junto a los lanzamientos
-            });
+            const avgTemp = agriForYear.length > 0 
+                ? agriForYear.reduce((acc, curr) => acc + (parseFloat(curr.average_temperature_c) || 0), 0) / agriForYear.length 
+                : 15;
 
+            return {
+                year,
+                agriVal: avgTemp,
+                launchesVal: launchesForYear.length
+            };
+        });
+    });
+
+    // 2. Efecto para la gráfica (se redibuja cuando integratedData cambia)
+    $effect(() => {
+        if (integratedData.length > 0 && canvas) {
             if (chartInstance) chartInstance.destroy();
 
             chartInstance = new Chart(canvas, {
                 type: 'radar',
                 data: {
-                    labels: labels,
+                    labels: integratedData.map(d => d.year),
                     datasets: [
                         {
                             label: 'Lanzamientos SpaceX',
-                            data: dataLanzamientos,
+                            data: integratedData.map(d => d.launchesVal),
                             backgroundColor: 'rgba(231, 76, 60, 0.4)',
                             borderColor: '#e74c3c',
                             borderWidth: 2
                         },
                         {
                             label: 'Temp. Media x2 (Visibilidad)',
-                            data: dataTempGrafica,
+                            data: integratedData.map(d => d.agriVal * 2),
                             backgroundColor: 'rgba(46, 204, 113, 0.4)',
                             borderColor: '#2ecc71',
                             borderWidth: 2
@@ -72,50 +64,91 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: 'INTEGRACIÓN COMPLETA: SPACEX Y CLIMA (2010-2023)',
-                            font: { size: 18 }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: (context) => {
-                                    let value = context.raw;
-                                    if (context.datasetIndex === 1) value = (value / 2).toFixed(2) + " °C";
-                                    return `${context.dataset.label}: ${value}`;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        r: {
-                            suggestedMin: 0,
-                            suggestedMax: 80,
-                            ticks: { stepSize: 10 }
-                        }
-                    }
+                    scales: { r: { suggestedMin: 0 } }
                 }
             });
+        }
+    });
+
+    onMount(async () => {
+        try {
+            const [resAgri, resSpx] = await Promise.all([
+                fetch("https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts"),
+                fetch("https://api.spacexdata.com/v4/launches")
+            ]);
+            agriData = await resAgri.json();
+            spaceXData = await resSpx.json();
+            loading = false;
         } catch (e) {
-            console.error("Error en la integración:", e);
+            console.error(e);
+            loading = false;
         }
     });
 </script>
 
-<div class="container">
-    <div class="chart-box">
-        <canvas bind:this={canvas}></canvas>
+<main>
+    <div class="container">
+        <!-- Gráfica -->
+        <div class="chart-box">
+            <canvas bind:this={canvas}></canvas>
+        </div>
+
+        {#if loading}
+            <p style="text-align:center">Cargando datos integrados...</p>
+        {:else}
+            <!-- TABLA LITERAL ESTILO CHEATERS -->
+            <section class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Año</th>
+                            <th>Métrica Agrícola (Altura)</th>
+                            <th>Lanzamientos (SpaceX)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {#each integratedData as d}
+                            <tr>
+                                <td>{d.year}</td>
+                                <td>{d.agriVal.toFixed(2)}</td>
+                                <td class="cheat-val">{d.launchesVal}</td>
+                            </tr>
+                        {/each}
+                    </tbody>
+                </table>
+            </section>
+        {/if}
     </div>
-</div>
+</main>
 
 <style>
+    main { padding: 2rem; max-width: 1000px; margin: auto; font-family: 'Inter', sans-serif; }
     .container { padding: 20px; background: #f9f9f9; border-radius: 15px; }
+    
     .chart-box { 
-        height: 550px; 
+        height: 500px; 
         background: white; 
         padding: 20px; 
         border-radius: 10px; 
         box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
+        margin-bottom: 30px;
     }
+
+    /* ESTILO TABLA CHEATERS */
+    .table-container { margin-top: 2rem; }
+    table { 
+        width: 100%; 
+        border-collapse: collapse; 
+        background: white; 
+        border-radius: 12px; 
+        overflow: hidden; 
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
+    }
+    th, td { padding: 15px; text-align: center; border-bottom: 1px solid #f0f0f0; }
+    th { background: #2d3748; color: white; font-weight: 500; }
+    
+    /* El valor resaltado en rojo como en cheaters */
+    .cheat-val { font-weight: bold; color: #c0392b; }
+    
+    tr:hover { background-color: #f8fafc; }
 </style>
