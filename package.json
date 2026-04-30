@@ -41,11 +41,16 @@
     "test:e2e": "start-server-and-test start http://localhost:3000 'npx playwright test'"
   },
   "dependencies": {
+    "c3": "^0.7.20",
     "chart.js": "^4.5.1",
     "chartjs-chart-sankey": "^0.14.0",
     "chartjs-chart-treemap": "^3.1.0",
     "cors": "^2.8.6",
+    "d3": "^7.9.0",
+    "echarts": "^6.0.0",
     "express": "^5.2.1",
+    "leaflet": "^1.9.4",
+    "leaflet.heat": "^0.2.0",
     "nedb": "^1.8.0",
     "newman": "^6.2.2",
     "start-server-and-test": "^2.1.5"

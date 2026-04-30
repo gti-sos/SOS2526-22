@@ -18,7 +18,7 @@
                 <p class="description">Descripción de la integración próximamente.</p>
                 <div class="card-footer">
                     <span class="library-tag">Biblioteca</span>
-                    <a href="/integrations/ozone-depleting-substance-consumptions/integration-1" class="link-btn">
+                    <a href="/integrations/ozone-depleting-substance-consumptions/Olympics-Athlet-Events" class="link-btn">
                         Ver integración →
                     </a>
                 </div>
