@@ -353,6 +353,7 @@
         gap: 0.5rem;
         font-size: 0.85rem;
     }
+    
     .legend-item span {
         width: 18px;
         height: 18px;
