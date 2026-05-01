@@ -33,7 +33,7 @@
                 <p class="description">Descripción de la integración próximamente.</p>
                 <div class="card-footer">
                     <span class="library-tag">Biblioteca</span>
-                    <a href="/integrations/ozone-depleting-substance-consumptions/integration-2" class="link-btn">
+                    <a href="/integrations/ozone-depleting-substance-consumptions/military-stats" class="link-btn">
                         Ver integración →
                     </a>
                 </div>
@@ -48,7 +48,7 @@
                 <p class="description">Descripción de la integración próximamente.</p>
                 <div class="card-footer">
                     <span class="library-tag">Biblioteca</span>
-                    <a href="/integrations/ozone-depleting-substance-consumptions/integration-3" class="link-btn">
+                    <a href="/integrations/ozone-depleting-substance-consumptions/prueba" class="link-btn">
                         Ver integración →
                     </a>
                 </div>

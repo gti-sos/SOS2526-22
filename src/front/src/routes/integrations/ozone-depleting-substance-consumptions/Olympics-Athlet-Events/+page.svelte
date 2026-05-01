@@ -43,6 +43,7 @@
             console.log('Atletas por año:', atletasPorAnio);
 
             // 3. Crear array de años ordenados
+            // eslint-disable-next-line svelte/prefer-svelte-reactivity
             const yearsSet = new Set();
             Object.keys(methylPorAnio).forEach(y => yearsSet.add(parseInt(y)));
             Object.keys(atletasPorAnio).forEach(y => yearsSet.add(parseInt(y)));
@@ -103,7 +104,7 @@
                 },
                 tooltip: {
                     grouped: true,
-                    contents: (d, defaultTitleFormat, defaultValueFormat, color) => {
+                    contents: (d) => {
                         const idx = d[0].index;
                         const year = years[idx];
                         
