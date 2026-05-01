@@ -3,6 +3,7 @@
     import { onMount, tick } from 'svelte';
 
     let error = null;
+    let loading = $state(true);  // ✅ Estado de carga añadido
 
     onMount(async () => {
         console.log('1. Iniciando carga de datos...');
@@ -141,10 +142,14 @@
             });
 
             console.log('Gráfico generado correctamente');
+            
+            // ✅ Ocultar loading después de que el gráfico esté listo
+            loading = false;
 
         } catch (err) {
             console.error('ERROR:', err);
             error = err.message;
+            loading = false;  // ✅ Ocultar loading también en caso de error
         }
     });
 </script>
@@ -163,8 +168,15 @@
         <p><strong>Integración:</strong> Comparativa por año entre el consumo de Methyl Bromide (toneladas) y el número de atletas olímpicos, mostrando al pasar el ratón el país de origen de cada dato.</p>
     </div>
 
-    <div class="chart-card">
+    <div class="chart-card" style="position: relative;">
         <div id="chart" style="width: 100%; min-height: 550px;"></div>
+        
+        {#if loading}
+            <div class="loading-overlay">
+                <div class="spinner"></div>
+                <p>Cargando datos y generando gráfico...</p>
+            </div>
+        {/if}
     </div>
 
     {#if error}
@@ -172,8 +184,7 @@
     {/if}
 
     <div class="info">
-        <h3>
-            Sobre esta integración</h3>
+        <h3>Sobre esta integración</h3>
         <ul>
             <li><strong>Tipo de gráfico:</strong> Bar (barras agrupadas) con <strong>c3.js + d3.js</strong></li>
             <li><strong>Eje X:</strong> Año</li>
@@ -231,6 +242,50 @@
         box-shadow: 0 4px 12px rgba(0,0,0,0.07);
         margin-bottom: 2rem;
         border: 1px solid #f0f0f0;
+        position: relative;
+        min-height: 590px;
+    }
+
+    /* ✅ Estilos para el overlay de carga */
+    .loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.95);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        border-radius: 12px;
+        z-index: 10;
+        backdrop-filter: blur(4px);
+    }
+
+    .spinner {
+        width: 50px;
+        height: 50px;
+        border: 4px solid #e0e0e0;
+        border-top-color: #2085d8;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 1rem;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    .loading-overlay p {
+        margin: 0.25rem 0;
+        color: #555;
+        font-size: 1rem;
+    }
+
+    .loading-note {
+        font-size: 0.8rem;
+        color: #999;
     }
 
     .error-box {

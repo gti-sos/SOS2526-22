@@ -1,0 +1,338 @@
+[33m84fbe84[m[33m ([m[1;36mHEAD -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m integración 2 elena
+[33m5147f05[m Merge branch 'main' of https://github.com/gti-sos/SOS2526-22
+[33m45bd680[m integracion 2 elena
+[33mdb3de55[m integración2
+[33m969106c[m celia cambios
+[33ma8378db[m celia cambios
+[33m81cb253[m Merge branch 'main' of https://github.com/gti-sos/SOS2526-22
+[33m9151553[m integración 1 elena
+[33m11d25ca[m celia cambios
+[33m315673e[m celia cambios
+[33mbd6107b[m celia cambios
+[33ma51618a[m celia cambios
+[33m3191c49[m celia
+[33me4d2c00[m integración elena
+[33m7bdc783[m modificación grafica grupal
+[33m702b60b[m prueba
+[33mf25f7d4[m celia cambios todo bien
+[33ma1a9ab7[m opcional EMM
+[33m6d1f47e[m opcional EMM
+[33mce6d139[m parte individual EMM
+[33m7b13706[m parte grupal L10
+[33m8cbe216[m parte grupal L10
+[33m90f3760[m prueba
+[33m0f495e5[m Merge conflictos highcharts
+[33mdc46dd9[m E
+[33m6489149[m Solucionando conflicto en base de datos
+[33m82c26e5[m celia F10
+[33mb81bfa2[m fix: correccion de eventos onchange y tests e2e pasando al 100%
+[33m6809d89[m feat: implementada paginación, traducciones y tests e2e para D02
+[33m3a09fcc[m prueba
+[33me338cbe[m cambio celia
+[33mfca0363[m Fix: Cargar datos iniciales antes de test de edición para CI
+[33md291ac3[m D02: Implementación de búsquedas y tests E2E JMV
+[33m6b7cf6f[m celia añade despliege render
+[33m59bc001[m EMM
+[33m438666a[m EMM
+[33m014fc18[m EMM
+[33m51e9e2a[m correcciones index
+[33m45e7860[m correcciones test ozono
+[33mb4cea5f[m test elena3
+[33mddb410c[m test elena2
+[33ma2741bc[m test elena
+[33md52a1bf[m cambios elena
+[33m4423474[m celia entrega
+[33m00f517c[m elena
+[33mde78187[m corrección yaml
+[33m4da01d9[m e2e elena
+[33m8ddc141[m e2e elena
+[33m54dc183[m Merge branch 'main' of https://github.com/gti-sos/SOS2526-22
+[33mceb6823[m celia
+[33mc7b6ace[m page Elena
+[33mae86cfb[m L08
+[33m0a1f941[m l08
+[33m649f9bf[m Merge branch 'main' of https://github.com/gti-sos/SOS2526-22
+[33m0a996f6[m Julio
+[33m42cb225[m celia
+[33mb0d5896[m Modificada pagina principal svelte
+[33m6b4feaf[m celia mañana
+[33mbc150b9[m Merge branch 'main' of https://github.com/gti-sos/SOS2526-22
+[33m0e9b486[m F07 Elenaa
+[33mb425d88[m Remove empty line in API documentation section
+[33m73f7c08[m Add V2 API documentation for ozone-depleting substances
+[33m9b4d339[m F07 Elena
+[33m9384cf5[m Final elena
+[33m4aca1bd[m Merge branch 'main' of https://github.com/gti-sos/SOS2526-22
+[33m52ae033[m e
+[33m90b8d2c[m cambios
+[33mf575ac1[m celia arreglo
+[33mbfc2ef8[m celia resuelve
+[33m1b27a64[m celiaaaaaa
+[33m5d7f254[m celiaaaaaa
+[33m022b40a[m celiaaaaaa
+[33mbf8aa82[m celiaaaaaa
+[33mf4f851e[m celiaaaaaa
+[33m130ff20[m celiaaaaaa
+[33m6e2ec4d[m celiaaaaaa
+[33mb681d7a[m celiaaaaaa
+[33m3fc424d[m celiaaaaaa
+[33mbd75d10[m harta
+[33m186412d[m celia
+[33mc74e277[m celia
+[33ma46d3ab[m celiaaa
+[33mf0bf1e4[m celiaaa
+[33me526a8d[m celiaaa
+[33m4b85fad[m celiaaa
+[33m2251491[m celia
+[33mec5e1ae[m celia
+[33m16c3d21[m svelte Elena
+[33m7b11ed6[m svelte Elena
+[33md53e9b8[m celiaa
+[33mc889918[m celia
+[33md40db59[m error
+[33m56b1a6c[m api v2
+[33m8fd6b32[m Merge branch 'main' of https://github.com/gti-sos/SOS2526-22
+[33m7b38df6[m elena
+[33m7927c1a[m  celia
+[33m5074919[m celia
+[33m54c0661[m celia
+[33md829a9a[m cambio
+[33mc1d6938[m harta
+[33m9b87f7c[m celia cambio para su local
+[33m9999916[m Celia
+[33m490e3a1[m corrección edb
+[33m54d3aa0[m p
+[33m1417ebb[m test
+[33m7817a80[m Prueba
+[33m9522223[m Prueba
+[33m43f8d27[m Celia cambios
+[33mdcc734f[m fin
+[33me46c7e0[m CELIa
+[33mda125c0[m Mantenimiento de carpeta data para Render
+[33mc10f1c8[m Fix: eliminar nedb antigua y dejar solo seald-io
+[33mc5b00a0[m Update README.md
+[33m98eee9d[m Celia parte individual
+[33m965973c[m CELIA: Corrección 404 y bases de datos CLS
+[33mbcb0abb[m CELIA: Corrección 404 y bases de datos CLS
+[33m366e3b7[m Celia parte individual
+[33m8cf54be[m Celia parte individual
+[33m8570339[m Celia parte individual
+[33m63d90b8[m Celia parte individual
+[33m8530370[m Añadida vista principal del grupo con enlaces (F07)
+[33ma94ac1f[m Merge branch 'main' of https://github.com/gti-sos/SOS2526-22
+[33mbc042ea[m Terminado recurso Julio API v2 y Frontend
+[33m4105a08[m Update Postman V2 link in indexJMV.js
+[33mfca10c4[m añadido doc de v2
+[33m1aac3ca[m Add V2 API documentation link for CO2 emission gap
+[33med5152f[m Borrado archivo v2 redundante y unificada la API en indexJMV.js
+[33m1429273[m Julio
+[33mc1eb503[m Añadida api v2
+[33m6411818[m Individual Elena
+[33m5e74eec[m Individual Elena
+[33m4b589bb[m Merge branch 'main' of https://github.com/gti-sos/SOS2526-22
+[33m7e8cdba[m commit previo a modificar indexEMM F07
+[33med65994[m añadido put que me faltaba en indexJMV.js
+[33m160f41e[m package.json
+[33m303ecc4[m prueba
+[33m63e75af[m push
+[33mb39aa62[m index
+[33m8fdf242[m corrección index
+[33m9787149[m Actualizar
+[33m6ba7d64[m inicios L07
+[33m823d818[m Borrada la carpeta public con los htlm
+[33mf9ae385[m S
+[33m63e8a64[m Prueba2
+[33m06a9a84[m Prueba
+[33m29a309d[m Merge branch 'main' of https://github.com/gti-sos/SOS2526-22
+[33m213b207[m Instalación svelte
+[33m6a2b7af[m celiaaaaaaaaa
+[33m6b5ae57[m Celia camhios
+[33m51a19ed[m celiaaaaaaaaa
+[33m172dcff[m celia
+[33m5711784[m Celia camhios
+[33mc8dc677[m CELIA
+[33mf235b62[m celiaaaaaaaaa
+[33mf7de922[m celiAA
+[33m14cfab1[m celiaaaaaaaaa
+[33m51f0031[m celiaaaaaaaaa
+[33m46a426e[m celia harta
+[33m84ca804[m celiaaaaaaaaa
+[33m340f5e2[m celiaaaaaaaaa
+[33m1aae4b1[m celia
+[33me6fd90b[m celia
+[33mb99c305[m celiaaa
+[33mf41032b[m celiaaa
+[33m48bbc27[m F
+[33m79695f6[m test
+[33m3077090[m Fix CO2 emission API link in README
+[33m16a44ca[m test
+[33mdfd4e38[m Arreglos
+[33m071c7b5[m test
+[33mbc712ef[m celiaaa
+[33mb0bdc80[m Update test scripts in package.json
+[33m7cb29d0[m package.json arreglado
+[33m960f10d[m test2
+[33mb5c2080[m Merge branch 'main' of https://github.com/gti-sos/SOS2526-22
+[33mcd7006d[m Prueba
+[33m0808a24[m test1
+[33m34de9d7[m test
+[33mef3f1b8[m test
+[33m56dcc14[m Merge branch 'main' of https://github.com/gti-sos/SOS2526-22
+[33me0c2f96[m package.json modificado
+[33mdef96e8[m Merge branch 'main' of https://github.com/gti-sos/SOS2526-22
+[33m2c07a02[m final e
+[33mdabdc6f[m Modificado JMV-collection.json y JMV-local.json
+[33m462dce8[m Merge branch 'main' of https://github.com/gti-sos/SOS2526-22
+[33mf07bb9f[m añadidos exports de postman
+[33mfbda738[m arreglo
+[33m2774134[m arreglos
+[33m56886d7[m Prueba
+[33m9ce6909[m Prueba previa a revisión
+[33m3dbd95a[m celia cambio postman
+[33m5af1686[m cambio celia ultimo
+[33me24eeb3[m celia
+[33m8565006[m celiaaa cambio
+[33md64344c[m cambio celia ultimo
+[33m8bf517c[m Cambios en indexJMV.js y borrado de archivos innecesarios
+[33m1e25fda[m Añadido index.html
+[33md5cda9e[m celia cambio postman
+[33ma4035e4[m Merge branch 'main' of https://github.com/gti-sos/SOS2526-22
+[33m39dd44d[m celia cambio postman
+[33m3048802[m prueba
+[33m6536bea[m CELIAA
+[33mda10722[m celia fin
+[33m23c6d29[m cambios CELIA final
+[33me420bb3[m celia
+[33m1c1f8f3[m ojala funcione
+[33m0730bfd[m hola
+[33mb9c71b7[m paso
+[33m576df0d[m ojala funcione
+[33m11235b9[m ojala funcione
+[33mcc1a48a[m celia
+[33m19c527c[m CELIAA
+[33m96bfdac[m CELIAA
+[33m09bdd66[m cambios CELIA final
+[33m5265b94[m celia ndb
+[33mddbe9ae[m cambios CELIA final
+[33ma21f9f1[m celia cambios final
+[33mf4225d7[m celia cambios
+[33m1a4df9f[m Error local2
+[33me7d1572[m Error local
+[33mde9ba4e[m Corrección script elena
+[33mdcf7d24[m Corrección script elena
+[33mc9c15e2[m Corrección script elena
+[33m9b32f0e[m Corrección script elena
+[33m0f139a0[m Corrección script elena
+[33me1ff817[m Corrección script elena
+[33mf3477dc[m test
+[33m5d7d6af[m test
+[33mc2d5e14[m test
+[33m500563e[m 400 error elenq
+[33m523221b[m Correccion yaml
+[33m88ab7af[m Correccion yaml
+[33macb9451[m C
+[33m37698f4[m E
+[33m640d66e[m pnt 2E:una persistencia basada en una base de datos NeDB
+[33mb999470[m Pnt2 elena
+[33m7ecb4f0[m Merge branch 'main' of https://github.com/gti-sos/SOS2526-22
+[33m35ba362[m E
+[33m1652c63[m celia cambio postman
+[33m169b60a[m e
+[33m6fccdf1[m Test CI
+[33m01c81fc[m Test CI
+[33m72d7c46[m Test CI
+[33me25bc16[m Test CI
+[33m4974ff1[m Test CI
+[33me8ba941[m celia cambios postman
+[33mb8b6b3c[m Test CI
+[33mdf799a6[m Test CI
+[33m9242708[m Update ci.yml
+[33mac31e1e[m celiaa cambios
+[33m792585f[m celiaaa
+[33mdea830b[m celiaa cambios
+[33mcfdd084[m celiaa cambios
+[33m8707b39[m cambio celia2
+[33md7d9f7f[m Merge branch 'main' of https://github.com/gti-sos/SOS2526-22
+[33mbc3309f[m cambios celia
+[33ma6aabc4[m limpieza index.js
+[33ma157e24[m limpieza index.js
+[33md299b51[m limpieza index.js
+[33mac9f704[m limpieza index.js
+[33m8f1706e[m creación carpetas individuales
+[33m4bdfb0e[m Ee
+[33m6fa21cb[m Ee
+[33m5e8f002[m E
+[33m54cd156[m Merge branch 'main' of https://github.com/gti-sos/SOS2526-22
+[33m93aa213[m E
+[33mad5c4f2[m Update API documentation links in README
+[33mb8b738f[m Modify live URL and add API documentation
+[33m49afd53[m Update ci.yml
+[33mf6dec39[m Update ci.yml
+[33m820295f[m Delete workflows
+[33m4ba4fc1[m Create ci.yml
+[33m6286cb6[m Delete ci.yml
+[33m018586f[m Create ci.yml
+[33m49f01d6[m Create workflows
+[33m1b2114d[m W
+[33m94dab63[m W
+[33m4b8fa86[m W
+[33ma4f5132[m d
+[33m0706ef5[m d
+[33mbec81b6[m d
+[33me3247aa[m S
+[33mc2c1d9b[m Merge branch 'main' of https://github.com/gti-sos/SOS2526-22
+[33m74d1c82[m e
+[33m1558bcb[m Enhance POST request with validation and duplicate checks
+[33m463ffba[m Fix validation for PUT request parameters
+[33m3047d82[m Implement 405 Method Not Allowed for POST requests
+[33m92a72ea[m Change response status from 400 to 409 for existing data
+[33mbb8402a[m modificación git
+[33md25fe4e[m cambios CELIA
+[33mdb51b11[m Merge branch 'main' of https://github.com/gti-sos/SOS2526-22
+[33m2d85bbf[m cambios celia
+[33mc53e841[m Ahora si
+[33m6badfd2[m APIs añadidas
+[33m22d2858[m Añadida parte individual en index.js
+[33m605981e[m Modificado public/about.html
+[33m3c4d2b0[m Añadido public/about.html
+[33mf83267e[m Añadida la URl de despliegue del sistema en render
+[33meace9e2[m arreglo port
+[33m45e51f8[m correcciones2
+[33mc94a3da[m correcciones1
+[33m69df2f3[m correcciones
+[33m6c0ecc6[m Prueba postman delete
+[33m0a5422e[m Prueba postman put
+[33m6270224[m Prueba postman get2
+[33m862ff41[m Prueba postman 3
+[33m721ce3a[m Prueba postman 3
+[33m1cc89f8[m Prueba postman 2
+[33ma7c5b51[m Prueba postman 1
+[33m49963a2[m 'cambios'
+[33m220f3cf[m actualizaciones
+[33m6c6067a[m Punto 12 Elena3
+[33m4fb4e74[m Punto 12 Elena
+[33mfbe98ee[m Punto 12 Elena
+[33mb95004c[m Punto 12 Elena
+[33m3613799[m Añadir Api Elena2
+[33m5bb8413[m Añadir Api Elena
+[33mc224581[m Añadir ruta /sampkes/EMM
+[33m09e27ff[m restaurando ruta /cool
+[33ma43f522[m Descripción de los cambios
+[33m04c5a8d[m cambios
+[33m206559f[m Añadida ruta /samples/YYY con algoritmo de media
+[33m7177f70[m Cambios
+[33m1136037[m cambio
+[33m8010782[m Cmabios
+[33m904082c[m apartado ruta dinámica /cool F04
+[33mc71822b[m Añadido index-JMV.js
+[33m1a4eba3[m corrección final package
+[33m53f0da5[m Corrección package.json
+[33mf36d3db[m Corregidos valores de temperatura y cálculo de media
+[33m32cbe33[m Añadido package.json
+[33m8faec7f[m Actualización 1 index-EMM.js
+[33maa644ec[m Merge branch 'main' of https://github.com/gti-sos/SOS2526-22
+[33m262ecca[m Añadido punto 13 de Elena: index-EMM.js
+[33mf4f81f8[m Añadido cálculo de media por country usando iteradores
+[33m247a7b2[m Update README with team and project details
+[33m8e12bf7[m Añadir index-CLS.js con cálculo de media para region North
+[33mfe18699[m Initial commit
