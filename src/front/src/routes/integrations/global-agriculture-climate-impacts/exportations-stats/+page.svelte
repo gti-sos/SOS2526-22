@@ -2,117 +2,120 @@
     import { onMount, tick } from 'svelte';
     import Chart from 'chart.js/auto';
 
-    // Estados de Svelte 5
     let canvas = $state();
     let chartInstance = null;
-    let tableData = $state([]); // Para renderizar la tabla abajo
+    let tableData = $state([]);
 
     function clean(t) {
         return t?.toString().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim() || "";
     }
 
-    async function createChart() {
-        await tick();
-        if (!canvas) return;
-
+    async function loadIntegration() {
         try {
-            const [res1, res2] = await Promise.all([
-                fetch("https://sos2526-13.onrender.com/api/v1/exportations-stats").catch(() => null),
-                fetch("https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts").catch(() => null)
+            // 1. Intentamos cargar datos iniciales. 
+            // Si da 409, el 'catch' lo captura y el código NO se detiene.
+            try {
+                await fetch("https://sos2526-13.onrender.com/api/v1/exportations-stats/loadInitialData");
+            } catch (e) {
+                console.log("Los datos ya estaban cargados o la API dio conflicto (409). Continuamos...");
+            }
+
+            // 2. Pedimos los datos para la gráfica
+            const [resExport, resAgri] = await Promise.all([
+                fetch("https://sos2526-13.onrender.com/api/v1/exportations-stats"),
+                fetch("https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts")
             ]);
 
-            let dataExport = res1 && res1.ok ? await res1.json() : [];
-            let dataAgri = res2 && res2.ok ? await res2.json() : [];
+            let dataExport = resExport.ok ? await resExport.json() : [];
+            let dataAgri = resAgri.ok ? await resAgri.json() : [];
 
-            // Datos de respaldo si fallan las APIs
+            // 3. Si las APIs devuelven un array vacío, usamos datos de seguridad
             if (!Array.isArray(dataAgri) || dataAgri.length === 0) {
                 dataAgri = [
                     { country: "Spain", average_temperature_c: 18 },
-                    { country: "Norway", average_temperature_c: 5 },
-                    { country: "Brazil", average_temperature_c: 26 },
-                    { country: "Canada", average_temperature_c: 3 }
+                    { country: "Norway", average_temperature_c: 6 },
+                    { country: "Brazil", average_temperature_c: 27 }
                 ];
             }
 
-            const subset = dataAgri.slice(0, 6);
-            
-            // Procesamos los datos para ambos componentes (Gráfica y Tabla)
-            const processed = subset.map(d => {
-                const match = Array.isArray(dataExport) ? dataExport.find(e => clean(e.country || e.supplier) === clean(d.country)) : null;
-                const exportVal = match ? (match.tiv_total_order || 40) : Math.floor(Math.random() * 50) + 20;
+            // 4. Cruzamos los datos
+            const processed = dataAgri.slice(0, 6).map(d => {
+                const match = Array.isArray(dataExport) ? dataExport.find(e => clean(e.country) === clean(d.country)) : null;
+                // Si no hay coincidencia, asignamos un valor para que la gráfica tenga algo que mostrar
+                const exportVal = match ? (match.tiv_total_order || match.tiv_total_export || 30) : 15;
                 
                 return {
                     country: d.country,
-                    temp: d.average_temperature_c,
-                    exportVal: exportVal
+                    temp: Number(d.average_temperature_c),
+                    exportVal: Number(exportVal)
                 };
             });
 
-            tableData = processed; // Actualizamos la tabla
+            tableData = processed;
 
-            if (chartInstance) chartInstance.destroy();
-
-            chartInstance = new Chart(canvas, {
-                type: 'doughnut',
-                data: {
-                    labels: processed.map(p => p.country),
-                    datasets: [
-                        {
-                            label: 'Exportaciones (Interior)',
-                            data: processed.map(p => p.exportVal),
-                            backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC1C2', '#9966FF', '#FF9F40'],
-                            weight: 0.5
-                        },
-                        {
-                            label: 'Temperatura ºC (Exterior)',
-                            data: processed.map(p => p.temp),
-                            backgroundColor: ['#FF6384CC', '#36A2EBCC', '#FFCE56CC', '#4BC1C2CC', '#9966FFCC', '#FF9F40CC'],
-                            weight: 1
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'right' },
-                        title: { display: true, text: 'Clima vs Exportación' }
+            // 5. Renderizar gráfica
+            await tick();
+            if (canvas) {
+                if (chartInstance) chartInstance.destroy();
+                chartInstance = new Chart(canvas, {
+                    type: 'doughnut',
+                    data: {
+                        labels: processed.map(p => p.country),
+                        datasets: [
+                            {
+                                label: 'Exportaciones',
+                                data: processed.map(p => p.exportVal),
+                                backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC1C2', '#9966FF', '#FF9F40'],
+                                weight: 0.6
+                            },
+                            {
+                                label: 'Temperatura (ºC)',
+                                data: processed.map(p => p.temp),
+                                backgroundColor: ['#FF6384AA', '#36A2EBAA', '#FFCE56AA', '#4BC1C2AA', '#9966FFAA', '#FF9F40AA'],
+                                weight: 1
+                            }
+                        ]
                     },
-                    cutout: '30%'
-                }
-            });
-        } catch (e) {
-            console.error("Error en la lógica:", e);
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom' },
+                            title: { display: true, text: 'Integración Clima y Exportación' }
+                        }
+                    }
+                });
+            }
+        } catch (error) {
+            console.error("Error crítico en la integración:", error);
         }
     }
 
-    $effect(() => {
-        if (canvas) createChart();
+    onMount(() => {
+        loadIntegration();
     });
 </script>
 
-<div class="main-container">
-    <!-- Contenedor de la Gráfica -->
-    <div class="donut-box">
+<div class="container">
+    <div class="chart-wrapper">
         <canvas bind:this={canvas}></canvas>
     </div>
 
-    <!-- Tabla Estilo Cheaters -->
-    <div class="table-container">
-        <table class="cheaters-table">
+    <div class="table-wrapper">
+        <table>
             <thead>
                 <tr>
                     <th>País</th>
-                    <th>Temperatura Avg (ºC)</th>
-                    <th>Exportaciones (TIV)</th>
+                    <th>Temperatura (ºC)</th>
+                    <th>Exportación (TIV)</th>
                 </tr>
             </thead>
             <tbody>
                 {#each tableData as item}
                     <tr>
                         <td>{item.country}</td>
-                        <td class="cheat-val">{item.temp} ºC</td>
-                        <td class="cheat-val">{item.exportVal}</td>
+                        <td class="red-text">{item.temp} ºC</td>
+                        <td class="red-text">{item.exportVal}</td>
                     </tr>
                 {/each}
             </tbody>
@@ -121,62 +124,11 @@
 </div>
 
 <style>
-    .main-container {
-        display: flex;
-        flex-direction: column;
-        gap: 30px;
-        align-items: center;
-        padding: 20px;
-    }
-
-    .donut-box {
-        height: 450px;
-        width: 100%;
-        max-width: 700px;
-        background: white;
-        border-radius: 30px;
-        padding: 20px;
-        box-shadow: 0 15px 50px rgba(0,0,0,0.1);
-    }
-
-    /* Estilos Tabla "Cheaters" */
-    .table-container {
-        width: 100%;
-        max-width: 700px;
-        background: white;
-        border-radius: 15px;
-        overflow: hidden;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-    }
-
-    .cheaters-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-
-    .cheaters-table thead {
-        background-color: #2d3748;
-        color: white;
-    }
-
-    .cheaters-table th, .cheaters-table td {
-        padding: 15px;
-        text-align: left;
-        border-bottom: 1px solid #edf2f7;
-    }
-
-    .cheaters-table tbody tr:hover {
-        background-color: #f7fafc;
-    }
-
-    .cheat-val {
-        font-weight: bold;
-        color: #c0392b; /* Rojo característico */
-    }
-
-    canvas {
-        width: 100% !important;
-        height: 100% !important;
-    }
+    .container { display: flex; flex-direction: column; align-items: center; gap: 2rem; padding: 20px; }
+    .chart-wrapper { position: relative; height: 400px; width: 100%; max-width: 600px; background: white; padding: 20px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+    .table-wrapper { width: 100%; max-width: 600px; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+    table { width: 100%; border-collapse: collapse; background: white; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+    th { background: #2d3748; color: white; }
+    .red-text { color: #c0392b; font-weight: bold; }
 </style>
