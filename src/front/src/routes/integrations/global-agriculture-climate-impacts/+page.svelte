@@ -1,20 +1,21 @@
 <svelte:head>
-    <title>Integración: Impacto vs Exportaciones - SOS2526</title>
+    <title>Integración: Impacto vs Externas - SOS2526</title>
 </svelte:head>
 
 <main class="container">
     <header class="header">
         <h1>Integraciones</h1>
-        <p class="subtitle">Análisis cruzado de datos</p>
+        <p class="subtitle">Análisis cruzado de datos en tiempo real</p>
     </header>
 
     <section class="team-section">
-        <h2>🔗 Integración destacada</h2>
+        <h2>🔗 Conexiones de Datos</h2>
 
         <div class="cards-grid">
+            <!-- Integración Interna -->
             <div class="member-card card-integration">
                 <h3>Impacto Agrícola vs Exportaciones</h3>
-                <p class="data-source">Comparativa entre fuentes:<br>
+                <p class="data-source">Comparativa entre módulos del grupo:<br>
                     <code>/global-agriculture-climate-impacts</code><br>
                     <code>/exportations-stats</code>
                 </p>
@@ -25,13 +26,12 @@
                 </div>
             </div>
 
-
-
-               <div class="member-card card-integration">
+            <!-- SpaceX -->
+            <div class="member-card card-integration">
                 <h3>Impacto Agrícola vs SpaceX</h3>
-                <p class="data-source">Comparativa entre fuentes:<br>
+                <p class="data-source">Datos externos de lanzamientos:<br>
                     <code>/global-agriculture-climate-impacts</code><br>
-                    <code>/exportations-stats</code>
+                    <code>api.spacexdata.com/v4/launches</code>
                 </p>
                 <div class="links">
                     <a href="/integrations/global-agriculture-climate-impacts/spacex" class="link-btn main-btn">
@@ -40,17 +40,12 @@
                 </div>
             </div>
 
-
-
-
-
-
-
-              <div class="member-card card-integration">
+            <!-- Adobe -->
+            <div class="member-card card-integration">
                 <h3>Impacto Agrícola vs Adobe</h3>
-                <p class="data-source">Comparativa entre fuentes:<br>
+                <p class="data-source">Integración mediante API Adobe:<br>
                     <code>/global-agriculture-climate-impacts</code><br>
-                    <code>/exportations-stats</code>
+                    <code>adobe.io/apis</code>
                 </p>
                 <div class="links">
                     <a href="/integrations/global-agriculture-climate-impacts/adobe" class="link-btn main-btn">
@@ -58,28 +53,15 @@
                     </a>
                 </div>
             </div>
-       
-
         </div>
 
-
-
-        
-         
-    
-
-
-          
-          
-
-
-
         <div class="cards-grid">
+            <!-- AdaFruit -->
             <div class="member-card card-integration">
                 <h3>Impacto Agrícola vs AdaFruit</h3>
-                <p class="data-source">Comparativa entre fuentes:<br>
+                <p class="data-source">Sensores y datos IoT:<br>
                     <code>/global-agriculture-climate-impacts</code><br>
-                    <code>/exportations-stats</code>
+                    <code>io.adafruit.com/api</code>
                 </p>
                 <div class="links">
                     <a href="/integrations/global-agriculture-climate-impacts/adafruit" class="link-btn main-btn">
@@ -88,14 +70,12 @@
                 </div>
             </div>
 
-
-
-            
+            <!-- Cheaters -->
             <div class="member-card card-integration">
                 <h3>Impacto Agrícola vs Cheaters</h3>
-                <p class="data-source">Comparativa entre fuentes:<br>
+                <p class="data-source">API Externa de terceros:<br>
                     <code>/global-agriculture-climate-impacts</code><br>
-                    <code>/exportations-stats</code>
+                    <code>api.cheaters.com/v1</code>
                 </p>
                 <div class="links">
                     <a href="/integrations/global-agriculture-climate-impacts/cheaters" class="link-btn main-btn">
@@ -103,49 +83,14 @@
                     </a>
                 </div>
             </div>
-
-
-
-
-
-
         </div>
-
-
-
-
-           
-       
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     </section>
 </main>
 
 <style>
     :root {
         --primary: #2085d8;
-        --accent: #d8206d; /* Color distinto para diferenciar la integración */
+        --accent: #d8206d; 
         --bg: #f8f9fa;
         --text: #333;
     }
@@ -165,9 +110,11 @@
     .team-section h2 { text-align: center; margin-bottom: 30px; }
 
     .cards-grid {
-        display: flex;
-        justify-content: center;
-        margin: 0 auto;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 25px;
+        margin-bottom: 25px;
+        justify-items: center;
     }
 
     .member-card {
@@ -177,21 +124,26 @@
         box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         border-top: 5px solid var(--accent);
         width: 100%;
-        max-width: 400px;
         display: flex;
         flex-direction: column;
+        transition: transform 0.3s ease;
+    }
+
+    .member-card:hover {
+        transform: translateY(-5px);
     }
 
     .member-card h3 { margin-top: 0; color: var(--accent); font-size: 1.3rem; }
 
-    .data-source { font-size: 0.9rem; color: #555; margin-bottom: 20px; }
+    .data-source { font-size: 0.9rem; color: #555; margin-bottom: 20px; flex-grow: 1; }
     .data-source code {
-        background: #eee;
+        background: #f0f0f0;
         padding: 4px 8px;
         border-radius: 4px;
         display: block;
         margin-top: 5px;
         font-size: 0.8rem;
+        color: #d63384;
     }
 
     .link-btn {
@@ -202,12 +154,12 @@
         border-radius: 6px;
         text-align: center;
         font-weight: 600;
+        display: block;
         transition: all 0.2s;
     }
 
     .link-btn:hover {
         opacity: 0.9;
-        transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
 </style>

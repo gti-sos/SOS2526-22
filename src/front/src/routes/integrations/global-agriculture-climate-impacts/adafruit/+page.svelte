@@ -18,16 +18,7 @@
             let launches = await res1.json();
             let agriculture = await res2.json();
 
-            // Fallback por si la API de agricultura falla o está vacía
-            if (!agriculture || agriculture.length === 0) {
-                agriculture = [
-                    { year: 2018, average_temperature_c: 14.5, country: "España" },
-                    { year: 2019, average_temperature_c: 15.2, country: "Francia" },
-                    { year: 2020, average_temperature_c: 16.1, country: "Italia" },
-                    { year: 2021, average_temperature_c: 16.8, country: "Portugal" },
-                    { year: 2022, average_temperature_c: 17.5, country: "Grecia" }
-                ];
-            }
+            
 
             const launchesCount = {};
             launches.forEach(l => {

@@ -18,14 +18,7 @@
             const adobeData = await res1.json();
             let agriculture = await res2.json();
 
-            if (agriculture.length === 0) {
-                agriculture = [
-                    { country: "Spain", year: 2021, average_temperature_c: 18.5 },
-                    { country: "France", year: 2022, average_temperature_c: 15.2 },
-                    { country: "Italy", year: 2023, average_temperature_c: 21.0 },
-                    { country: "Germany", year: 2024, average_temperature_c: 12.5 }
-                ];
-            }
+         
 
             const adobeEndpoints = Object.keys(adobeData.paths || {}).length;
 

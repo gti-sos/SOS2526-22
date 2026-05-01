@@ -2,181 +2,151 @@
     import { onMount, tick } from 'svelte';
     import Chart from 'chart.js/auto';
 
-    // Estados de Svelte 5
     let canvas = $state();
     let chartInstance = null;
-    let tableData = $state([]); // Para renderizar la tabla abajo
+    let tableData = $state([]);
 
+    // Limpieza estricta para comparar nombres de países sin errores por espacios o tildes
     function clean(t) {
-        return t?.toString().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim() || "";
+        return t?.toString()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .toLowerCase()
+            .trim() || "";
     }
 
-    async function createChart() {
-        await tick();
-        if (!canvas) return;
-
+    async function loadIntegration() {
         try {
-            const [res1, res2] = await Promise.all([
-                fetch("https://sos2526-13.onrender.com/api/v1/exportations-stats").catch(() => null),
-                fetch("https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts").catch(() => null)
+            // 1. Fetch de datos reales (SIN datos de carga inicial forzada ni precargados)
+            const [resExport, resAgri] = await Promise.all([
+                fetch("https://sos2526-13.onrender.com/api/v1/exportations-stats"),
+                fetch("https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts")
             ]);
 
-            let dataExport = res1 && res1.ok ? await res1.json() : [];
-            let dataAgri = res2 && res2.ok ? await res2.json() : [];
+            const dataExport = resExport.ok ? await resExport.json() : [];
+            const dataAgri = resAgri.ok ? await resAgri.json() : [];
 
-            // Datos de respaldo si fallan las APIs
-            if (!Array.isArray(dataAgri) || dataAgri.length === 0) {
-                dataAgri = [
-                    { country: "Spain", average_temperature_c: 18 },
-                    { country: "Norway", average_temperature_c: 5 },
-                    { country: "Brazil", average_temperature_c: 26 },
-                    { country: "Canada", average_temperature_c: 3 }
-                ];
-            }
+            // 2. CREACIÓN DE MAPA DINÁMICO (Cruza los datos de ambas APIs)
+            const statsMap = new Map();
 
-            const subset = dataAgri.slice(0, 6);
-            
-            // Procesamos los datos para ambos componentes (Gráfica y Tabla)
-            const processed = subset.map(d => {
-                const match = Array.isArray(dataExport) ? dataExport.find(e => clean(e.country || e.supplier) === clean(d.country)) : null;
-                const exportVal = match ? (match.tiv_total_order || 40) : Math.floor(Math.random() * 50) + 20;
-                
-                return {
-                    country: d.country,
-                    temp: d.average_temperature_c,
-                    exportVal: exportVal
-                };
-            });
-
-            tableData = processed; // Actualizamos la tabla
-
-            if (chartInstance) chartInstance.destroy();
-
-            chartInstance = new Chart(canvas, {
-                type: 'doughnut',
-                data: {
-                    labels: processed.map(p => p.country),
-                    datasets: [
-                        {
-                            label: 'Exportaciones (Interior)',
-                            data: processed.map(p => p.exportVal),
-                            backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC1C2', '#9966FF', '#FF9F40'],
-                            weight: 0.5
-                        },
-                        {
-                            label: 'Temperatura ºC (Exterior)',
-                            data: processed.map(p => p.temp),
-                            backgroundColor: ['#FF6384CC', '#36A2EBCC', '#FFCE56CC', '#4BC1C2CC', '#9966FFCC', '#FF9F40CC'],
-                            weight: 1
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'right' },
-                        title: { display: true, text: 'Clima vs Exportación' }
-                    },
-                    cutout: '30%'
+            // Procesar Exportaciones: creamos la entrada en el mapa
+            dataExport.forEach(item => {
+                const name = item.country || item.province || item.territory;
+                if (name) {
+                    const key = clean(name);
+                    statsMap.set(key, {
+                        country: name,
+                        exportVal: Number(item.tiv_total_order || item.tiv_total_export || 0),
+                        temp: 0 // Se llenará si coincide con la otra API
+                    });
                 }
             });
-        } catch (e) {
-            console.error("Error en la lógica:", e);
+
+            // Procesar Agricultura: si el país ya existe, añade la temperatura. Si no, crea entrada nueva.
+            dataAgri.forEach(item => {
+                const name = item.country || item.province || item.territory;
+                if (name) {
+                    const key = clean(name);
+                    if (statsMap.has(key)) {
+                        statsMap.get(key).temp = Number(item.average_temperature_c || 0);
+                    } else {
+                        statsMap.set(key, {
+                            country: name,
+                            exportVal: 0,
+                            temp: Number(item.average_temperature_c || 0)
+                        });
+                    }
+                }
+            });
+
+            // Convertir mapa a array y filtrar para que la gráfica tenga sentido (solo datos > 0)
+            tableData = Array.from(statsMap.values())
+                .filter(d => d.exportVal > 0 || d.temp > 0)
+                .slice(0, 10); // Limitamos a 10 para claridad visual
+
+            // 3. Renderizar Gráfica Doughnut
+            await tick();
+            if (canvas && tableData.length > 0) {
+                if (chartInstance) chartInstance.destroy();
+                chartInstance = new Chart(canvas, {
+                    type: 'doughnut',
+                    data: {
+                        labels: tableData.map(p => p.country),
+                        datasets: [
+                            {
+                                label: 'Exportaciones (TIV)',
+                                data: tableData.map(p => p.exportVal),
+                                backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC1C2', '#9966FF', '#FF9F40'],
+                                weight: 0.6
+                            },
+                            {
+                                label: 'Temperatura (ºC)',
+                                data: tableData.map(p => p.temp),
+                                backgroundColor: ['#FF6384AA', '#36A2EBAA', '#FFCE56AA', '#4BC1C2AA', '#9966FFAA', '#FF9F40AA'],
+                                weight: 1
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom' },
+                            title: { display: true, text: 'Integración Real Clima y Exportación' }
+                        }
+                    }
+                });
+            }
+        } catch (error) {
+            console.error("Error crítico en la integración:", error);
         }
     }
 
-    $effect(() => {
-        if (canvas) createChart();
-    });
+    onMount(loadIntegration);
 </script>
 
-<div class="main-container">
-    <!-- Contenedor de la Gráfica -->
-    <div class="donut-box">
-        <canvas bind:this={canvas}></canvas>
-    </div>
+<div class="container">
+    {#if tableData.length === 0}
+        <div class="loading-state">
+            <p>Conectando con las APIs...</p>
+            <p><small>Si no aparecen datos, asegúrate de que los recursos en Render tengan datos cargados.</small></p>
+        </div>
+    {:else}
+        <div class="chart-wrapper">
+            <canvas bind:this={canvas}></canvas>
+        </div>
 
-    <!-- Tabla Estilo Cheaters -->
-    <div class="table-container">
-        <table class="cheaters-table">
-            <thead>
-                <tr>
-                    <th>País</th>
-                    <th>Temperatura Avg (ºC)</th>
-                    <th>Exportaciones (TIV)</th>
-                </tr>
-            </thead>
-            <tbody>
-                {#each tableData as item}
+        <div class="table-wrapper">
+            <table>
+                <thead>
                     <tr>
-                        <td>{item.country}</td>
-                        <td class="cheat-val">{item.temp} ºC</td>
-                        <td class="cheat-val">{item.exportVal}</td>
+                        <th>País</th>
+                        <th>Temperatura (ºC)</th>
+                        <th>Exportación (TIV)</th>
                     </tr>
-                {/each}
-            </tbody>
-        </table>
-    </div>
+                </thead>
+                <tbody>
+                    {#each tableData as item}
+                        <tr>
+                            <td>{item.country}</td>
+                            <td class="text-temp">{item.temp} ºC</td>
+                            <td class="text-export">{item.exportVal}</td>
+                        </tr>
+                    {/each}
+                </tbody>
+            </table>
+        </div>
+    {/if}
 </div>
 
 <style>
-    .main-container {
-        display: flex;
-        flex-direction: column;
-        gap: 30px;
-        align-items: center;
-        padding: 20px;
-    }
-
-    .donut-box {
-        height: 450px;
-        width: 100%;
-        max-width: 700px;
-        background: white;
-        border-radius: 30px;
-        padding: 20px;
-        box-shadow: 0 15px 50px rgba(0,0,0,0.1);
-    }
-
-    /* Estilos Tabla "Cheaters" */
-    .table-container {
-        width: 100%;
-        max-width: 700px;
-        background: white;
-        border-radius: 15px;
-        overflow: hidden;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-    }
-
-    .cheaters-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-
-    .cheaters-table thead {
-        background-color: #2d3748;
-        color: white;
-    }
-
-    .cheaters-table th, .cheaters-table td {
-        padding: 15px;
-        text-align: left;
-        border-bottom: 1px solid #edf2f7;
-    }
-
-    .cheaters-table tbody tr:hover {
-        background-color: #f7fafc;
-    }
-
-    .cheat-val {
-        font-weight: bold;
-        color: #c0392b; /* Rojo característico */
-    }
-
-    canvas {
-        width: 100% !important;
-        height: 100% !important;
-    }
+    .container { display: flex; flex-direction: column; align-items: center; gap: 2rem; padding: 20px; font-family: sans-serif; }
+    .chart-wrapper { position: relative; height: 450px; width: 100%; max-width: 600px; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+    .table-wrapper { width: 100%; max-width: 600px; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+    table { width: 100%; border-collapse: collapse; background: white; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+    th { background: #2d3748; color: white; }
+    .text-temp { color: #e53e3e; font-weight: bold; }
+    .text-export { color: #3182ce; font-weight: bold; }
+    .loading-state { text-align: center; margin-top: 50px; color: #555; }
 </style>
