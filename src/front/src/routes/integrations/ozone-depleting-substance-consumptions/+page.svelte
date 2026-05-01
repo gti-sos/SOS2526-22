@@ -44,11 +44,11 @@
             <div class="card-number">API Externa 1</div>
             <div class="card-content">
                 <div class="api-badge externa">API Externa</div>
-                <h3>Integración 3</h3>
+                <h3>OpenAq</h3>
                 <p class="description">Descripción de la integración próximamente.</p>
                 <div class="card-footer">
                     <span class="library-tag">Biblioteca</span>
-                    <a href="/integrations/ozone-depleting-substance-consumptions/prueba" class="link-btn">
+                    <a href="/integrations/ozone-depleting-substance-consumptions/openaq" class="link-btn">
                         Ver integración →
                     </a>
                 </div>

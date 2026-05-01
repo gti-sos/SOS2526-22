@@ -5,14 +5,13 @@ import {handler} from "./src/front/build/handler.js";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 
-import proxyCheaters from './src/back/cheaters-stats-proxy.js';
-
-
 
 // Importar backends individuales
 import { loadBackEnd as loadCLS } from "./src/back/indexCLS.js";
 import { loadBackEnd as loadEMM } from "./src/back/indexEMM.js";
 import { loadBackEnd as loadJMV } from "./src/back/indexJMV.js";
+import openaqProxy from './src/back/proxy-open.js';
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -23,8 +22,9 @@ app.use(cors());
 
 app.use(express.json());
 
-app.use('/cheaters-stats-proxy', proxyCheaters);
 
+
+app.use('/api/proxy/openaq', openaqProxy);
 
 
 // Cargar backends

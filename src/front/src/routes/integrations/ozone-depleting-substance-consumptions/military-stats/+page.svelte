@@ -32,7 +32,7 @@
         try {
             // 1. Obtener datos de tu API (ozono - HCFC)
             console.log('📡 Cargando datos de Elena (HCFC)...');
-            const resElena = await fetch('/api/v1/ozone-depleting-substance-consumptions');
+            const resElena = await fetch('/api/v2/ozone-depleting-substance-consumptions');
             if (!resElena.ok) throw new Error(`HTTP ${resElena.status} - Elena`);
             const elenaData = await resElena.json();
             const ozonoData = Array.isArray(elenaData) ? elenaData : [];
@@ -64,7 +64,7 @@
             let aniosMilitaryPorPais = {};
             
             try {
-                const resMilitary = await fetch('https://sos2526-13.onrender.com/api/v1/military-stats');
+                const resMilitary = await fetch('https://sos2526-13.onrender.com/api/v2/military-stats');
                 if (resMilitary.ok) {
                     const militaryData = await resMilitary.json();
                     const militaryStats = Array.isArray(militaryData) ? militaryData : (militaryData.data || []);
