@@ -1,7 +1,9 @@
 <script>
     // @ts-nocheck
     import { onMount, tick } from 'svelte';
+    import 'highcharts/modules/accessibility.js';
 
+    // svelte-ignore non_reactive_update
     let error = null;
     let loading = $state(true);  // ✅ Estado de carga añadido
 

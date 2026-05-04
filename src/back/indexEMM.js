@@ -16,6 +16,32 @@ const db = new dataStore({
 
 export function loadBackEnd(app) {
 
+    // ------------- PROXY GITHUB (con autenticación) -------------
+    app.get('/api/proxy/github', async (req, res) => {
+        try {
+            const { language } = req.query;
+            if (!language) return res.status(400).json({ error: 'Se requiere parámetro language' });
+            
+            const TOKEN = process.env.GITHUB_TOKEN_EMM;
+            console.log('Token EMM:', process.env.GITHUB_TOKEN_EMM ? '✅ Presente' : '❌ No encontrado');
+            const url = `https://api.github.com/search/repositories?q=language:${language}&per_page=1`;
+            
+            const response = await fetch(url, {
+                headers: {
+                    'Authorization': `Bearer ${TOKEN}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
+            
+            if (!response.ok) throw new Error(`GitHub error: ${response.status}`);
+            const data = await response.json();
+            res.json({ total_count: data.total_count });
+            
+        } catch (error) {
+            console.error('GitHub proxy error:', error);
+            res.status(500).json({ error: error.message });
+        }
+    });
     // ------------- DOCS (ambas versiones) -------------
     app.get(BASE_URL_API + "/ozone-depleting-substance-consumptions/docs", (req, res) => {
         res.redirect("https://documenter.getpostman.com/view/52404851/2sBXiertqM"); 
