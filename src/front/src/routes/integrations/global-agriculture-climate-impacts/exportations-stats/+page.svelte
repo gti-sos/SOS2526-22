@@ -5,19 +5,11 @@
     let canvas = $state();
     let chartInstance = null;
     let tableData = $state([]);
-
-    // Limpieza estricta para comparar nombres de países sin errores por espacios o tildes
-    function clean(t) {
-        return t?.toString()
-            .normalize("NFD")
-            .replace(/[\u0300-\u036f]/g, "")
-            .toLowerCase()
-            .trim() || "";
-    }
+    let errorMessage = $state("");
 
     async function loadIntegration() {
+        console.log("--- Iniciando carga con campos corregidos ---");
         try {
-            // 1. Fetch de datos reales (SIN datos de carga inicial forzada ni precargados)
             const [resExport, resAgri] = await Promise.all([
                 fetch("https://sos2526-13.onrender.com/api/v1/exportations-stats"),
                 fetch("https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts")
@@ -26,64 +18,72 @@
             const dataExport = resExport.ok ? await resExport.json() : [];
             const dataAgri = resAgri.ok ? await resAgri.json() : [];
 
-            // 2. CREACIÓN DE MAPA DINÁMICO (Cruza los datos de ambas APIs)
-            const statsMap = new Map();
+            const yearMap = new Map();
 
-            // Procesar Exportaciones: creamos la entrada en el mapa
+            // 1. PROCESAR EXPORTACIONES (Usando year_of_order)
             dataExport.forEach(item => {
-                const name = item.country || item.province || item.territory;
-                if (name) {
-                    const key = clean(name);
-                    statsMap.set(key, {
-                        country: name,
-                        exportVal: Number(item.tiv_total_order || item.tiv_total_export || 0),
-                        temp: 0 // Se llenará si coincide con la otra API
-                    });
-                }
-            });
-
-            // Procesar Agricultura: si el país ya existe, añade la temperatura. Si no, crea entrada nueva.
-            dataAgri.forEach(item => {
-                const name = item.country || item.province || item.territory;
-                if (name) {
-                    const key = clean(name);
-                    if (statsMap.has(key)) {
-                        statsMap.get(key).temp = Number(item.average_temperature_c || 0);
-                    } else {
-                        statsMap.set(key, {
-                            country: name,
-                            exportVal: 0,
-                            temp: Number(item.average_temperature_c || 0)
-                        });
+                // Priorizamos year_of_order según tu JSON
+                const year = item.year_of_order || item.year; 
+                if (year) {
+                    if (!yearMap.has(year)) {
+                        yearMap.set(year, { year, exportVal: 0, temp: 0, countries: new Set() });
                     }
+                    const val = Number(item.tiv_total_order || 0);
+                    yearMap.get(year).exportVal += val;
+                    // Usamos supplier o recipient según lo que quieras trackear, 
+                    // aquí pongo ambos para que veas el flujo
+                    if(item.supplier) yearMap.get(year).countries.add(item.supplier);
                 }
             });
 
-            // Convertir mapa a array y filtrar para que la gráfica tenga sentido (solo datos > 0)
-            tableData = Array.from(statsMap.values())
-                .filter(d => d.exportVal > 0 || d.temp > 0)
-                .slice(0, 10); // Limitamos a 10 para claridad visual
+            // 2. PROCESAR AGRICULTURA
+            dataAgri.forEach(item => {
+                const year = item.year; // En agricultura suele ser 'year'
+                if (year) {
+                    if (!yearMap.has(year)) {
+                        yearMap.set(year, { year, exportVal: 0, temp: 0, countries: new Set() });
+                    }
+                    const currentData = yearMap.get(year);
+                    // Solo actualizamos si hay un valor de temperatura real
+                    if (item.average_temperature_c) {
+                        currentData.temp = Number(item.average_temperature_c);
+                    }
+                    if(item.country) currentData.countries.add(item.country);
+                }
+            });
 
-            // 3. Renderizar Gráfica Doughnut
+            // 3. FILTRADO Y ORDENACIÓN
+            // Ordenamos por año para que la gráfica tenga sentido cronológico
+            tableData = Array.from(yearMap.values())
+                .filter(d => d.exportVal > 0 || d.temp !== 0)
+                .sort((a, b) => a.year - b.year);
+
+            console.log("Datos procesados correctamente:", tableData);
+
+            if (tableData.length === 0) {
+                errorMessage = "No se han podido cruzar los datos. Revisa la consola.";
+                return;
+            }
+
             await tick();
-            if (canvas && tableData.length > 0) {
+            if (canvas) {
                 if (chartInstance) chartInstance.destroy();
                 chartInstance = new Chart(canvas, {
                     type: 'doughnut',
                     data: {
-                        labels: tableData.map(p => p.country),
+                        labels: tableData.map(d => `Año ${d.year}`),
                         datasets: [
                             {
                                 label: 'Exportaciones (TIV)',
-                                data: tableData.map(p => p.exportVal),
-                                backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC1C2', '#9966FF', '#FF9F40'],
-                                weight: 0.6
+                                data: tableData.map(d => d.exportVal),
+                                backgroundColor: ['#36A2EB', '#4BC0C0', '#9966FF', '#FF9F40', '#FFCD56'],
+                                hoverOffset: 15
                             },
                             {
-                                label: 'Temperatura (ºC)',
-                                data: tableData.map(p => p.temp),
-                                backgroundColor: ['#FF6384AA', '#36A2EBAA', '#FFCE56AA', '#4BC1C2AA', '#9966FFAA', '#FF9F40AA'],
-                                weight: 1
+                                label: 'Temp Media (ºC)',
+                                data: tableData.map(d => d.temp),
+                                backgroundColor: ['#FF6384', '#FF6384CC', '#FF638499', '#FF638466', '#FF638433'],
+                                weight: 0.6
                             }
                         ]
                     },
@@ -91,14 +91,15 @@
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: {
-                            legend: { position: 'bottom' },
-                            title: { display: true, text: 'Integración Real Clima y Exportación' }
+                            legend: { position: 'right' },
+                            title: { display: true, text: 'Relación Anual Clima vs Exportaciones' }
                         }
                     }
                 });
             }
         } catch (error) {
-            console.error("Error crítico en la integración:", error);
+            console.error("Error en la integración:", error);
+            errorMessage = "Error de conexión con las APIs.";
         }
     }
 
@@ -106,12 +107,18 @@
 </script>
 
 <div class="container">
-    {#if tableData.length === 0}
-        <div class="loading-state">
-            <p>Conectando con las APIs...</p>
-            <p><small>Si no aparecen datos, asegúrate de que los recursos en Render tengan datos cargados.</small></p>
+    {#if errorMessage}
+        <div class="error-banner">
+            <strong>Atención:</strong> {errorMessage}
+            <p style="font-size: 0.8rem; margin-top: 5px;">Revisa la consola (F12) para más detalles.</p>
         </div>
-    {:else}
+    {/if}
+
+    {#if tableData.length === 0 && !errorMessage}
+        <div class="loading-state">
+            <p>Conectando con APIs y procesando datos...</p>
+        </div>
+    {:else if tableData.length > 0}
         <div class="chart-wrapper">
             <canvas bind:this={canvas}></canvas>
         </div>
@@ -120,17 +127,22 @@
             <table>
                 <thead>
                     <tr>
-                        <th>País</th>
-                        <th>Temperatura (ºC)</th>
-                        <th>Exportación (TIV)</th>
+                        <th>Año</th>
+                        <th>Temperatura Media</th>
+                        <th>Suma Exportaciones</th>
+                        <th>Países Implicados</th>
                     </tr>
                 </thead>
                 <tbody>
                     {#each tableData as item}
                         <tr>
-                            <td>{item.country}</td>
-                            <td class="text-temp">{item.temp} ºC</td>
-                            <td class="text-export">{item.exportVal}</td>
+                            <td><strong>{item.year}</strong></td>
+                            <td class="text-temp">{item.temp > 0 ? item.temp.toFixed(2) + ' ºC' : 'Sin datos'}</td>
+                            <td class="text-export">{item.exportVal.toLocaleString()}</td>
+                            <td class="text-muted">
+                                {Array.from(item.countries).slice(0,3).join(', ')}
+                                {item.countries.size > 3 ? '...' : ''}
+                            </td>
                         </tr>
                     {/each}
                 </tbody>
@@ -140,13 +152,16 @@
 </div>
 
 <style>
+    /* Se mantienen los estilos anteriores */
     .container { display: flex; flex-direction: column; align-items: center; gap: 2rem; padding: 20px; font-family: sans-serif; }
+    .error-banner { width: 100%; max-width: 600px; padding: 15px; background-color: #fff5f5; color: #c53030; border: 1px solid #feb2b2; border-radius: 8px; text-align: center; }
     .chart-wrapper { position: relative; height: 450px; width: 100%; max-width: 600px; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
-    .table-wrapper { width: 100%; max-width: 600px; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+    .table-wrapper { width: 100%; max-width: 800px; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
     table { width: 100%; border-collapse: collapse; background: white; }
-    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+    th, td { padding: 14px; text-align: left; border-bottom: 1px solid #eee; }
     th { background: #2d3748; color: white; }
     .text-temp { color: #e53e3e; font-weight: bold; }
     .text-export { color: #3182ce; font-weight: bold; }
+    .text-muted { color: #718096; font-size: 0.85rem; }
     .loading-state { text-align: center; margin-top: 50px; color: #555; }
 </style>
