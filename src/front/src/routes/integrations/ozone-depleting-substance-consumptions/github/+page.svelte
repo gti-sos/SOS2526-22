@@ -60,7 +60,7 @@
                 await new Promise(r => setTimeout(r, 800));
             }
 
-            // Sumar HCFC por país (todos los años)
+            // Sumar HCFC por país 
             const sumByCountry = {};
             ozoneValidos.forEach(oz => {
                 const country = oz.country;
@@ -131,7 +131,7 @@
             series: [{
                 name: 'HCFC',
                 data: data,
-                colors: ['#2085d8', '#fb8c00', '#10b981', '#e53935', '#8e44ad', '#f1c40f', '#1e88e5']
+                colors: ['#2085d8', '#fb8c00', '#10b981', '#e53935', '#8e44ad', '#f1c40f', '#ca1ee5']
             }],
             credits: { enabled: false }
         });
@@ -144,12 +144,12 @@
 </svelte:head>
 
 <div class="container">
-    <h1>💻 Repositorios GitHub vs 🌍 Consumo de HCFC por País</h1>
+    <h1> Repositorios GitHub vs Consumo de HCFC por País</h1>
     <p class="subtitle">Gráfico circular (pie) – cada país tiene asociado un lenguaje de programación</p>
 
     <div class="info-api">
         <p><strong>API 1 (propia):</strong> Ozone Depleting Substance Consumptions — <code>/api/v1/ozone-depleting-substance-consumptions</code></p>
-        <p><strong>API 2 (GitHub, con autenticación + proxy):</strong> GitHub Search API — <code>/api/proxy/github?language=python</code></p>
+        <p><strong>API 2 (GitHub,  proxy):</strong> GitHub Search API — <code>/api/proxy/github?language=python</code></p>
         <p><strong>Integración:</strong> El gráfico muestra la proporción de HCFC por país. En el tooltip se muestra también el número de repositorios GitHub del lenguaje asociado.</p>
     </div>
 
