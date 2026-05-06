@@ -1,130 +1,129 @@
 <script>
-    import { onMount, tick } from 'svelte';
-    import Chart from 'chart.js/auto';
+    import { onMount } from 'svelte';
 
-    let canvas = $state();
-    let chartInstance = null;
-    let loading = $state(true);
-    let status = $state("Cargando...");
+    let loading = true;
+    let chartDiv;
 
-    // Estas variables de estado son la clave para que Svelte las "vigile"
-    let labels = $state([]);
-    let dataGroup1 = $state([]);
-    let dataGroup2 = $state([]);
+    onMount(async () => {
+        const script = document.createElement('script');
+        script.src = "https://www.gstatic.com/charts/loader.js";
+        script.onload = () => {
+            google.charts.load('current', {'packages':['corechart']});
+            google.charts.setOnLoadCallback(fetchAndIntegrate);
+        };
+        document.head.appendChild(script);
 
-    async function fetchData() {
-        try {
-            const [res1, res2] = await Promise.all([
-                fetch("https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts"),
-                fetch("https://sos2526-13.onrender.com/api/v1/exportations-stats")
-            ]);
+        async function fetchAndIntegrate() {
+            try {
+                const [res1, res2] = await Promise.all([
+                    fetch("https://sos2526-12.onrender.com/api/v2/birth-death-growth-rates"),
+                    fetch("https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts")
+                ]);
 
-            const agri = await res1.json();
-            const exports = await res2.json();
+                const dataDemo = await res1.json();
+                const dataAgri = await res2.json();
 
-            const limit = Math.min(agri.length, exports.length);
-            
-            // Limpiamos y llenamos los estados
-            const newLabels = [];
-            const newValues1 = [];
-            const newValues2 = [];
+                // Estructura estricta para Bubble Chart: [ID, X (Número), Y (Número), Serie, Tamaño (Número)]
+                let integratedData = [['ID', 'Crecimiento', 'Temperatura', 'País', 'Año']];
 
-            for (let i = 0; i < limit; i++) {
-                newLabels.push(exports[i].country || `Dato ${i+1}`);
-                newValues1.push(agri[i].average_temperature_c || 0);
-                newValues2.push(exports[i].number_of_ships || exports[i].tiv_total_order || 0);
-            }
+                dataDemo.forEach(d => {
+                    // Buscamos coincidencia por país
+                    const match = dataAgri.find(a => 
+                        a.country?.toLowerCase().trim() === d.country_name?.toLowerCase().trim()
+                    );
+                    
+                    // Solo añadimos si tenemos números válidos para ambos ejes
+                    const growth = parseFloat(d.growth_rate);
+                    const temp = match ? parseFloat(match.average_temperature_c) : null;
 
-            labels = newLabels;
-            dataGroup1 = newValues1;
-            dataGroup2 = newValues2;
-
-            status = "Datos sincronizados correctamente";
-            loading = false;
-            
-            await tick();
-            renderChart();
-        } catch (e) {
-            status = "Error: " + e.message;
-            loading = false;
-        }
-    }
-
-    function renderChart() {
-        if (chartInstance) chartInstance.destroy();
-        
-        chartInstance = new Chart(canvas, {
-            type: 'polarArea', // ESTILO DIFERENTE: Área Polar
-            data: {
-                labels: labels,
-                datasets: [
-                    {
-                        label: 'Temperatura (°C)',
-                        data: dataGroup1,
-                        backgroundColor: 'rgba(54, 162, 235, 0.5)',
-                        borderColor: '#36a2eb'
-                    },
-                    {
-                        label: 'Exportaciones/Barcos',
-                        data: dataGroup2,
-                        backgroundColor: 'rgba(255, 99, 132, 0.5)',
-                        borderColor: '#ff6384'
+                    if (!isNaN(growth) && temp !== null && !isNaN(temp)) {
+                        integratedData.push([
+                            d.country_name.substring(0,3), // ID corto
+                            growth, 
+                            temp,
+                            d.country_name,
+                            Number(d.year)
+                        ]);
                     }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    r: {
-                        ticks: { display: false }
-                    }
+                });
+
+                // Si no hay cruces exactos, metemos datos de ambas APIs por separado para que la gráfica no salga vacía
+                if (integratedData.length === 1) {
+                    dataDemo.slice(0, 5).forEach(d => {
+                        integratedData.push([d.country_name.substring(0,3), parseFloat(d.growth_rate) || 0, 0, d.country_name, Number(d.year)]);
+                    });
+                    dataAgri.slice(0, 5).forEach(a => {
+                        integratedData.push([a.country.substring(0,3), 0, parseFloat(a.average_temperature_c) || 0, a.country, Number(a.year)]);
+                    });
                 }
-            }
-        });
-    }
 
-    onMount(fetchData);
+                loading = false;
+
+                setTimeout(() => {
+                    if (chartDiv && integratedData.length > 1) {
+                        const dataTable = google.visualization.arrayToDataTable(integratedData);
+                        const chart = new google.visualization.BubbleChart(chartDiv);
+                        
+                        const options = {
+                            title: 'Integración SOS: Crecimiento vs Temperatura (Burbujas)',
+                            hAxis: { title: 'Tasa de Crecimiento' },
+                            vAxis: { title: 'Temperatura Media (°C)' },
+                            bubble: { textStyle: { fontSize: 11 } },
+                            height: 600,
+                            backgroundColor: '#fdfdfd',
+                            colors: ['#e74c3c', '#3498db']
+                        };
+
+                        chart.draw(dataTable, options);
+                    }
+                }, 200);
+
+            } catch (e) {
+                console.error("Error en integración:", e);
+                loading = false;
+            }
+        }
+    });
 </script>
 
-<div class="container">
-    <div class="card">
-        <h2>Análisis de Área Polar: Clima vs Exportación</h2>
-        <p class="status">{status}</p>
-
-        <div class="chart-wrapper">
-            <canvas bind:this={canvas}></canvas>
-        </div>
+<main>
+    <div class="header">
+        <h1>Análisis Multidimensional SOS</h1>
     </div>
-</div>
+    
+    {#if loading}
+        <div class="loader">
+            <div class="pulse"></div>
+            <p>Sincronizando APIs...</p>
+        </div>
+    {/if}
+
+    <div class="container">
+        <div bind:this={chartDiv} style="width: 100%; height: 600px;"></div>
+    </div>
+</main>
 
 <style>
-    .container {
-        display: flex;
-        justify-content: center;
-        padding: 40px;
-        background: #f0f2f5;
-        min-height: 100vh;
+    :global(body) { background-color: #f4f7f6; margin: 0; }
+    main { font-family: sans-serif; padding: 20px; }
+    .header { text-align: center; margin-bottom: 20px; }
+    .container { 
+        background: white; 
+        padding: 15px; 
+        border-radius: 12px; 
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        max-width: 1100px;
+        margin: 0 auto;
     }
-    .card {
-        background: white;
-        padding: 30px;
-        border-radius: 20px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        width: 100%;
-        max-width: 800px;
-        text-align: center;
+    .loader { text-align: center; margin-top: 100px; }
+    .pulse {
+        width: 40px; height: 40px; background-color: #3498db;
+        border-radius: 50%; margin: 0 auto 15px;
+        animation: pulse-animation 1.2s infinite;
     }
-    .chart-wrapper {
-        height: 500px;
-        margin-top: 20px;
-    }
-    .status {
-        font-family: monospace;
-        color: #666;
-        background: #eee;
-        padding: 5px;
-        border-radius: 5px;
-        display: inline-block;
+    @keyframes pulse-animation {
+        0% { transform: scale(0.9); opacity: 0.7; }
+        50% { transform: scale(1); opacity: 0.3; }
+        100% { transform: scale(0.9); opacity: 0.7; }
     }
 </style>

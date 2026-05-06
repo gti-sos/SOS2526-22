@@ -41,7 +41,9 @@
     "test:e2e": "start-server-and-test start http://localhost:3000 'npx playwright test'"
   },
   "dependencies": {
+    "@toast-ui/chart": "^4.6.1",
     "apexcharts": "^5.10.6",
+    "billboard.js": "^3.18.0",
     "c3": "^0.7.20",
     "chart.js": "^4.5.1",
     "chartjs-chart-sankey": "^0.14.0",
@@ -51,6 +53,7 @@
     "dotenv": "^17.4.2",
     "echarts": "^6.0.0",
     "express": "^5.2.1",
+    "frappe-charts": "^1.6.2",
     "leaflet": "^1.9.4",
     "leaflet.heat": "^0.2.0",
     "nedb": "^1.8.0",
