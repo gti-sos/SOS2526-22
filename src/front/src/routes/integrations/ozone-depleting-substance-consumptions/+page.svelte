@@ -70,16 +70,15 @@
             </div>
         </div>
 
-        <!-- Tarjeta existente: Military -->
         <div class="integration-card">
             <div class="card-number">API Compañero 5</div>
             <div class="card-content">
-                <div class="api-badge sos">API SOS-13</div>
-                <h3>Military stats</h3>
+                <div class="api-badge sos">API SOS-25</div>
+                <h3>international tourist arrivals</h3>
                 <p class="description">Descripción de la integración próximamente.</p>
                 <div class="card-footer">
                     <span class="library-tag">Biblioteca</span>
-                    <a href="/integrations/ozone-depleting-substance-consumptions/z" class="link-btn">
+                    <a href="/integrations/ozone-depleting-substance-consumptions/international-tourist-arrivals" class="link-btn">
                         Ver integración →
                     </a>
                 </div>
@@ -103,14 +102,14 @@
         </div>
 
         <div class="integration-card">
-            <div class="card-number">API Externa 1</div>
+            <div class="card-number">API Externa 2</div>
             <div class="card-content">
                 <div class="api-badge externa">API Externa</div>
-                <h3>GitHub API</h3>
+                <h3>TVmaze API</h3>
                 <p class="description">Descripción de la integración próximamente.</p>
                 <div class="card-footer">
                     <span class="library-tag">Biblioteca</span>
-                    <a href="/integrations/ozone-depleting-substance-consumptions/github" class="link-btn">
+                    <a href="/integrations/ozone-depleting-substance-consumptions/TVmaze" class="link-btn">
                         Ver integración →
                     </a>
                 </div>
@@ -119,14 +118,14 @@
 
 
         <div class="integration-card">
-            <div class="card-number">API Externa 1</div>
+            <div class="card-number">API Externa 3</div>
             <div class="card-content">
                 <div class="api-badge externa">API Externa</div>
-                <h3>GitHub API</h3>
+                <h3>Countries API</h3>
                 <p class="description">Descripción de la integración próximamente.</p>
                 <div class="card-footer">
                     <span class="library-tag">Biblioteca</span>
-                    <a href="/integrations/ozone-depleting-substance-consumptions/github" class="link-btn">
+                    <a href="/integrations/ozone-depleting-substance-consumptions/restcountries" class="link-btn">
                         Ver integración →
                     </a>
                 </div>
