@@ -299,6 +299,7 @@
     <div class="info-api">
         <p><strong>API 1 (propia):</strong> Ozone Depleting Substance Consumptions — <code>/api/v1/ozone-depleting-substance-consumptions</code></p>
         <p><strong>API 2 (compañero SOS grupo 13):</strong> Military Stats — <code>https://sos2526-13.onrender.com/api/v1/military-stats</code></p>
+        <p><strong>Integración:</strong> Se cruzan los datos de HCFC por país con el gasto militar per cápita.</p>
     </div>
 
     <div class="chart-card">

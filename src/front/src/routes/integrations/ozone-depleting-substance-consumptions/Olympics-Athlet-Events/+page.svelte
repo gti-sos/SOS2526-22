@@ -1,7 +1,6 @@
 <script>
     // @ts-nocheck
     import { onMount, tick } from 'svelte';
-    import 'highcharts/modules/accessibility.js';
 
     // svelte-ignore non_reactive_update
     let error = null;
@@ -188,7 +187,7 @@
     <div class="info">
         <h3>Sobre esta integración</h3>
         <ul>
-            <li><strong>Tipo de gráfico:</strong> Bar (barras agrupadas) con <strong>c3.js + d3.js</strong></li>
+            <li><strong>Biblioteca:</strong> c3.js + d3.js | <strong>Tipo:</strong> Bar (barras agrupadas)</li>
             <li><strong>Eje X:</strong> Año</li>
             <li><strong>Eje Y:</strong> Valor en escala logarítmica</li>
             <li><strong>Azul:</strong> Consumo total de Methyl Bromide (toneladas) por año — API de ozono</li>

@@ -60,7 +60,7 @@
                 await new Promise(r => setTimeout(r, 800));
             }
 
-            // Sumar HCFC por país 
+            // Sumar HCFC por país
             const sumByCountry = {};
             ozoneValidos.forEach(oz => {
                 const country = oz.country;
@@ -69,7 +69,6 @@
                 sumByCountry[country] += value;
             });
 
-            // Crear datos para el gráfico circular y la tabla
             combinedData = Object.entries(sumByCountry).map(([country, totalHCFC]) => ({
                 key: country,
                 label: COUNTRY_LABELS[country],
@@ -78,11 +77,11 @@
                 repos: reposMap[countryToLanguage[country]] || 0
             }));
 
-            console.log('Datos combinados (agregados):', $state.snapshot(combinedData));
+            console.log('Datos combinados:', $state.snapshot(combinedData));
 
             loading = false;
             await tick();
-            setTimeout(() => crearGrafico(), 300);
+            setTimeout(() => crearGraficoRadar(), 300);
         } catch (e) {
             console.error('Error:', e);
             error = e.message;
@@ -90,68 +89,81 @@
         }
     }
 
-    function crearGrafico() {
-        console.log('Iniciando gráfico circular con Highcharts...');
-        const container = document.getElementById('pie-chart');
-        if (!container) {
-            console.error('Contenedor no encontrado');
-            return;
-        }
+    async function crearGraficoRadar() {
+    console.log('Creando gráfico radar con Highcharts...');
+    let container = document.getElementById('radar-chart');
+    let attempts = 0;
+    while (!container && attempts < 20) {
+        await new Promise(r => setTimeout(r, 100));
+        container = document.getElementById('radar-chart');
+        attempts++;
+    }
+    if (!container) {
+        console.error('Contenedor #radar-chart no encontrado después de varios intentos');
+        return;
+    }
 
-        // Ordenar los datos para el gráfico
-        const sorted = [...combinedData].sort((a, b) => b.totalHCFC - a.totalHCFC);
-        const data = sorted.map(item => ({
-            name: `${item.label} (${item.language})`,
-            y: item.totalHCFC,
-            repos: item.repos
-        }));
+    // Ordenar países por nombre para que los ejes sean legibles
+    const sortedCountries = [...combinedData].sort((a, b) => a.label.localeCompare(b.label));
+    const categories = sortedCountries.map(c => `${c.label} (${c.language})`);
 
-        Highcharts.chart('pie-chart', {
-            chart: { type: 'pie', height: 500 },
-            accessibility: { enabled: false },   
-            title: { text: 'Distribución del consumo de HCFC por país' },
-            subtitle: { text: 'El tamaño del sector representa toneladas de HCFC' },
-            tooltip: {
-                pointFormat: '<b>{point.name}</b><br/>' +
-                            'Consumo HCFC: {point.y:,.0f} toneladas<br/>' +
-                            'Repositorios GitHub: {point.repos:,.0f}'
-            },
-            plotOptions: {
-                pie: {
-                    allowPointSelect: true,
-                    cursor: 'pointer',
-                    dataLabels: {
-                        enabled: true,
-                        format: '<b>{point.name}</b><br/>{point.percentage:.1f}%',
-                        distance: 30
-                    },
-                    showInLegend: true
-                }
-            },
-            series: [{
-                name: 'HCFC',
-                data: data,
-                colors: ['#2085d8', '#fb8c00', '#10b981', '#e53935', '#8e44ad', '#f1c40f', '#ca1ee5']
-            }],
-            credits: { enabled: false }
-        });
-        console.log('Gráfico circular creado');
+    // Obtener valores
+    const hcfcValues = sortedCountries.map(c => c.totalHCFC);
+    const reposValues = sortedCountries.map(c => c.repos);
+
+    // Normalizar a porcentaje (0-100%)
+    const maxHCFC = Math.max(...hcfcValues);
+    const maxRepos = Math.max(...reposValues);
+    const hcfcPercent = hcfcValues.map(v => (v / maxHCFC) * 100);
+    const reposPercent = reposValues.map(v => (v / maxRepos) * 100);
+
+    Highcharts.chart('radar-chart', {
+        chart: { polar: true, type: 'line', height: 550 },
+        accessibility: { enabled: false },   // Elimina la advertencia
+        title: { text: 'Comparativa de HCFC y repositorios GitHub por país', style: { fontSize: '18px', color: '#2085d8' } },
+        subtitle: { text: 'Radar normalizado (0-100%) – cada país es un eje', style: { fontSize: '12px', color: '#666' } },
+        xAxis: { categories: categories, tickmarkPlacement: 'on', lineWidth: 0 },
+        yAxis: { gridLineInterpolation: 'polygon', min: 0, max: 100, tickInterval: 20, labels: { format: '{value}%' } },
+        tooltip: {
+            shared: true,
+            pointFormat: '<span style="color:{series.color}">\u25CF</span> {series.name}: <b>{point.y:.1f}%</b><br/>'
+        },
+        plotOptions: {
+            series: {
+                dataLabels: { enabled: true, format: '{point.y:.0f}%', style: { fontSize: '10px' } },
+                marker: { enabled: true, radius: 4 }
+            }
+        },
+        series: [{
+            name: 'Consumo HCFC',
+            data: hcfcPercent,
+            color: '#2085d8',
+            pointPlacement: 'on'
+        }, {
+            name: 'Repositorios GitHub',
+            data: reposPercent,
+            color: '#f59e0b',
+            pointPlacement: 'on'
+        }],
+        credits: { enabled: false }
+    });
+    console.log('Gráfico radar creado');
     }
 </script>
 
 <svelte:head>
-    <title>Integración 3 - GitHub & Ozono</title>
+    <title>Integración 3 - GitHub & Ozono (Radar)</title>
 </svelte:head>
 
 <div class="container">
-    <h1> Repositorios GitHub vs Consumo de HCFC por País</h1>
-    <p class="subtitle">Gráfico circular (pie) – cada país tiene asociado un lenguaje de programación</p>
+    <h1>🐙 Repositorios GitHub vs  Consumo de HCFC por País</h1>
+    <p class="subtitle">Datos de <strong>API propia</strong> (consumo total de HCFC por país) y <strong>GitHub API</strong> (repositorios por lenguaje de programación asociado)</p>
+    
 
     <div class="info-api">
         <p><strong>API 1 (propia):</strong> Ozone Depleting Substance Consumptions — <code>/api/v1/ozone-depleting-substance-consumptions</code></p>
-        <p><strong>API 2 (GitHub,  proxy):</strong> GitHub Search API — <code>/api/proxy/github?language=python</code></p>
-        <p><strong>Integración:</strong> El gráfico muestra la proporción de HCFC por país. En el tooltip se muestra también el número de repositorios GitHub del lenguaje asociado.</p>
-    </div>
+        <p><strong>API 2 (GitHub, con proxy):</strong> GitHub Search API — <code>/api/proxy/github?language=python</code></p>
+        <p><strong>Integración:</strong> A cada país de la API de ozono se le asocia un lenguaje de programación. Se obtiene el consumo total de HCFC del país  y el número de repositorios GitHub en ese lenguaje. Ambos valores se normalizan a 0-100% para compararlos visualmente en el radar.</p>   </div>
 
     {#if loading}
         <div class="loading-box">
@@ -163,7 +175,7 @@
         <div class="error-box">❌ Error: {error}</div>
     {:else}
         <div class="chart-card">
-            <div id="pie-chart" style="width:100%; height:500px;"></div>
+            <div id="radar-chart" style="width:100%; height:550px;"></div>
         </div>
 
         <div class="table-container">
@@ -175,7 +187,7 @@
                             <th>País</th>
                             <th>Lenguaje asociado</th>
                             <th>HCFC total (ton)</th>
-                            <th>Repos GitHub</th>
+                            <th>Repositorios GitHub</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -195,10 +207,9 @@
         <div class="info">
             <h3>📖 Sobre esta integración</h3>
             <ul>
-                <li><strong>Tipo de gráfico:</strong> Pie (circular) con <strong>Highcharts</strong> – NO es línea, bar, ni los tipos usados por Celia (bubble, polarArea, doughnut, radar)</li>
-                <li><strong>Autenticación:</strong> GitHub Personal Access Token oculto en proxy del backend</li>
-                <li><strong>Proxy:</strong> <code>/api/proxy/github</code> — evita exponer el token y resuelve CORS</li>
-                <li><strong>Datos:</strong> Consumo total de HCFC por país (suma de todos los años) y repositorios GitHub del lenguaje asociado.</li>
+                <li><strong>Biblioteca:</strong> Highcharts | <strong>Tipo:</strong> Bubble Chart Radar (polar)</li>
+                <li><strong>Normalización:</strong> Ambos conjuntos de datos están normalizados a porcentaje (0-100%) respecto a su valor máximo para permitir comparación visual.</li>
+                <li><strong>Interpretación:</strong> Cada eje representa un país. El polígono azul muestra el consumo de HCFC, el naranja los repositorios GitHub. La forma y solapamiento indican si ambos factores están correlacionados.</li>
             </ul>
         </div>
     {/if}
@@ -206,7 +217,7 @@
 
 <style>
     .container {
-        max-width: 1200px;
+        max-width: 1000px;
         margin: 0 auto;
         padding: 2rem;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -226,12 +237,7 @@
     }
 
     .info-api p { margin: 0.3rem 0; }
-    .info-api code {
-        background: #e2e8f0;
-        padding: 0.2rem 0.4rem;
-        border-radius: 4px;
-        font-size: 0.8rem;
-    }
+    .info-api code { background: #e2e8f0; padding: 0.2rem 0.4rem; border-radius: 4px; font-size: 0.8rem; }
 
     .loading-box {
         display: flex;

@@ -9,11 +9,11 @@
         <p class="subtitle">Consumo de sustancias que agotan el ozono · APIs integradas</p>
     </header>
 
-    <div class="cards-grid-top">
+    <div class="cards-grid-row">
         <div class="integration-card">
             <div class="card-number">API Compañero 1</div>
             <div class="card-content">
-                <div class="api-badge sos">API SOS</div>
+                <div class="api-badge sos">API SOS-30</div>
                 <h3>Olympics Athlete Events</h3>
                 <p class="description">Descripción de la integración próximamente.</p>
                 <div class="card-footer">
@@ -28,12 +28,74 @@
         <div class="integration-card">
             <div class="card-number">API Compañero 2</div>
             <div class="card-content">
-                <div class="api-badge sos">API SOS</div>
+                <div class="api-badge sos">API SOS-13</div>
                 <h3>Military stats</h3>
                 <p class="description">Descripción de la integración próximamente.</p>
                 <div class="card-footer">
                     <span class="library-tag">Biblioteca</span>
                     <a href="/integrations/ozone-depleting-substance-consumptions/military-stats" class="link-btn">
+                        Ver integración →
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="integration-card">
+            <div class="card-number">API Compañero 3</div>
+            <div class="card-content">
+                <div class="api-badge sos">API SOS-10</div>
+                <h3>deaths-by-risk-factors</h3>
+                <p class="description">Descripción de la integración próximamente.</p>
+                <div class="card-footer">
+                    <span class="library-tag">Biblioteca</span>
+                    <a href="/integrations/ozone-depleting-substance-consumptions/deaths-by-risk-factors" class="link-btn">
+                        Ver integración →
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="integration-card">
+            <div class="card-number">API Compañero 4</div>
+            <div class="card-content">
+                <div class="api-badge sos">API SOS-24</div>
+                <h3>average-monthly-wages</h3>
+                <p class="description">Descripción de la integración próximamente.</p>
+                <div class="card-footer">
+                    <span class="library-tag">Biblioteca</span>
+                    <a href="/integrations/ozone-depleting-substance-consumptions/average-monthly-wages" class="link-btn">
+                        Ver integración →
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tarjeta existente: Military -->
+        <div class="integration-card">
+            <div class="card-number">API Compañero 5</div>
+            <div class="card-content">
+                <div class="api-badge sos">API SOS-13</div>
+                <h3>Military stats</h3>
+                <p class="description">Descripción de la integración próximamente.</p>
+                <div class="card-footer">
+                    <span class="library-tag">Biblioteca</span>
+                    <a href="/integrations/ozone-depleting-substance-consumptions/z" class="link-btn">
+                        Ver integración →
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tarjeta existente: GitHub -->
+        <div class="integration-card">
+            <div class="card-number">API Externa 1</div>
+            <div class="card-content">
+                <div class="api-badge externa">API Externa</div>
+                <h3>GitHub API</h3>
+                <p class="description">Descripción de la integración próximamente.</p>
+                <div class="card-footer">
+                    <span class="library-tag">Biblioteca</span>
+                    <a href="/integrations/ozone-depleting-substance-consumptions/github" class="link-btn">
                         Ver integración →
                     </a>
                 </div>
@@ -54,33 +116,17 @@
                 </div>
             </div>
         </div>
-    </div>
 
-    <div class="cards-grid-bottom">
+
         <div class="integration-card">
-            <div class="card-number">API Externa 2</div>
+            <div class="card-number">API Externa 1</div>
             <div class="card-content">
                 <div class="api-badge externa">API Externa</div>
-                <h3>Integración 4</h3>
+                <h3>GitHub API</h3>
                 <p class="description">Descripción de la integración próximamente.</p>
                 <div class="card-footer">
                     <span class="library-tag">Biblioteca</span>
-                    <a href="/integrations/ozone-depleting-substance-consumptions/integration-4" class="link-btn">
-                        Ver integración →
-                    </a>
-                </div>
-            </div>
-        </div>
-
-        <div class="integration-card">
-            <div class="card-number">API Externa 3</div>
-            <div class="card-content">
-                <div class="api-badge externa">API Externa</div>
-                <h3>Integración 5</h3>
-                <p class="description">Descripción de la integración próximamente.</p>
-                <div class="card-footer">
-                    <span class="library-tag">Biblioteca</span>
-                    <a href="/integrations/ozone-depleting-substance-consumptions/integration-5" class="link-btn">
+                    <a href="/integrations/ozone-depleting-substance-consumptions/github" class="link-btn">
                         Ver integración →
                     </a>
                 </div>
@@ -98,7 +144,7 @@
     }
 
     .container {
-        max-width: 1100px;
+        max-width: 1300px;
         margin: 0 auto;
         padding: 40px 20px;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -121,19 +167,11 @@
         color: #666;
     }
 
-    .cards-grid-top {
+    .cards-grid-row {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(4, 1fr);
         gap: 24px;
         margin-bottom: 24px;
-    }
-
-    .cards-grid-bottom {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 24px;
-        width: calc(66.66% + 8px);
-        margin: 0 auto;
     }
 
     .integration-card {
@@ -231,8 +269,14 @@
         transition: all 0.2s;
     }
 
-    .link-btn:hover {
+    .link-btn:hover:not(.disabled) {
         background: var(--accent-dark);
         transform: translateY(-1px);
+    }
+
+    .link-btn.disabled {
+        background: #ccc;
+        cursor: default;
+        pointer-events: none;
     }
 </style>
