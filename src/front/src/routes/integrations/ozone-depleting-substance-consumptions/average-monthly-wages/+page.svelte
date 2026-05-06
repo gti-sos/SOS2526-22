@@ -25,7 +25,6 @@
         return n.replace(/[\s_]+/g, '-');
     }
 
-    // Transformación para reducir la dominancia de valores extremos
     function transformSize(rawHcfc) {
         return Math.pow(rawHcfc, 0.35);
     }
@@ -60,6 +59,7 @@
                 let c = item.country;
                 if (!c) return;
                 c = normalizeCountry(c);
+                // Guardamos el registro con el año más reciente (aunque no mostremos el año)
                 if (!wagesByCountry[c] || wagesByCountry[c].year < item.year) {
                     wagesByCountry[c] = { ...item, country: c };
                 }
@@ -70,15 +70,13 @@
             console.log('🌍 Total países únicos:', allCountries.size);
 
             const nodes = [];
-            // Valor base para países SIN HCFC (más pequeño que el menor HCFC real)
-            const MIN_RAW_HCFC = 20;   // tras transformación ≈ 2.85 (Bangladesh da 3.57)
+            const MIN_RAW_HCFC = 20;
 
             for (const countryKey of allCountries) {
                 const hcfc = hcfcByCountry[countryKey] || 0;
                 const wageData = wagesByCountry[countryKey];
                 const salary = wageData ? wageData.avg_monthly_usd : 0;
                 const currency = wageData ? wageData.currency : 'N/A';
-                const year = wageData ? wageData.year : 'Sin dato';
                 const hasSalary = salary > 0;
                 const hasHcfc = hcfc > 0;
 
@@ -96,7 +94,6 @@
                     hcfc,
                     salary,
                     currency,
-                    year,
                     hasSalary,
                     hasHcfc,
                     size
@@ -135,12 +132,11 @@
         const pack = d3.pack().size([width, height]).padding(5);
         const root = pack(d3.hierarchy(rootData).sum(d => d.value).sort((a,b) => b.value - a.value));
 
-        // Nueva paleta de colores: Plasma (mucho más contrastada)
-        const salaries = data.filter(d => d.salary > 0).map(d => d.salary);
-        const maxSalary = salaries.length > 0 ? Math.max(...salaries) : 1;
-        const colorScale = d3.scaleSequentialLog()
-            .domain([1, maxSalary])
-            .interpolator(d3.interpolatePlasma);  // <--- CAMBIO AQUÍ
+        const getSalaryColor = (salary) => {
+            if (salary > 5000) return '#e63946';
+            if (salary > 2000) return '#f4a261';
+            return '#264653';
+        };
 
         const svg = d3.select(container)
             .append('svg')
@@ -170,9 +166,13 @@
         nodesGroup.append('circle')
             .attr('r', d => d.r)
             .attr('fill', d => {
-                if (d.data.hasSalary) return colorScale(d.data.salary);
-                if (d.data.hasHcfc) return '#aaaaaa';  // gris: solo HCFC
-                return '#e0e0e0';                      // gris claro: solo salario
+                if (d.data.hasSalary) {
+                    return getSalaryColor(d.data.salary);   // rojo, naranja o azul oscuro
+                }
+                if (d.data.hasHcfc) {
+                    return '#3a6ea5';   // azul medio para solo HCFC
+                }
+                return '#f5f5f5';       // gris muy claro: !hasSalary && !hasHcfc
             })
             .attr('stroke', 'white')
             .attr('stroke-width', 2)
@@ -185,8 +185,7 @@
                         <b>${d.data.name}</b><br>
                         💰 Salario: ${salaryText}<br>
                         💱 Moneda: ${d.data.currency}<br>
-                        🌿 HCFC: ${d.data.hasHcfc ? `${d.data.hcfc.toLocaleString()} ton` : 'Sin dato'}<br>
-                        📅 Año: ${d.data.year}
+                        🌿 HCFC: ${d.data.hasHcfc ? `${d.data.hcfc.toLocaleString()} ton` : 'Sin dato'}
                     `)
                     .style('left', (event.pageX + 12) + 'px')
                     .style('top', (event.pageY - 28) + 'px');
@@ -200,17 +199,16 @@
                 tooltip.style('opacity', 0);
             });
 
-
-            nodesGroup.append('text')
-                .attr('text-anchor', 'middle')
-                .attr('dominant-baseline', 'middle')
-                .attr('fill', '#333')   // <-- siempre negro
-                .style('font-size', d => `${Math.min(14, d.r / 3.5)}px`)
-                .style('font-weight', 'bold')
-                .text(d => d.r > 24 ? d.data.name : '');
+        nodesGroup.append('text')
+            .attr('text-anchor', 'middle')
+            .attr('dominant-baseline', 'middle')
+            .attr('fill', '#333')
+            .style('font-size', d => `${Math.min(14, d.r / 3.5)}px`)
+            .style('font-weight', 'bold')
+            .text(d => d.r > 24 ? d.data.name : '');
 
         rendered = true;
-        console.log('✅ Circle Packing renderizado con paleta Plasma y tamaños ajustados');
+        console.log('✅ Circle Packing renderizado sin años');
     }
 
     $effect(() => {
@@ -235,8 +233,7 @@
     <div class="info-api">
         <p><strong>API propia:</strong> Consumo de HCFC — <code>/api/v1/ozone-depleting-substance-consumptions</code></p>
         <p><strong>API grupo 24:</strong> Salario mensual medio — <code>https://sos2526-24.onrender.com/api/v1/average-monthly-wages/</code></p>
-        <p><strong>Integración:</strong> Cada círculo representa un país. El tamaño indica el consumo de HCFC y el color indica el salario mensual medio en USD. Los valores de HCFC se comprimen con potencia 0.35 para que los países pequeños sean visibles.</p>
-        
+        <p><strong>Integración:</strong> Cada círculo representa un país. El tamaño indica el consumo de HCFC y el color indica el salario mensual medio en USD. Los valores de HCFC se comprimen con potencia 0.35 para que los países pequeños sean visibles.</p>   
 
     </div>
 
@@ -249,12 +246,13 @@
         <div class="error-box">❌ Error: {error}</div>
     {:else}
         <div class="legend">
-            <div><span style="background:#d73027; display:inline-block; width:20px; height:12px;"></span> Salario alto (amarillo/rosa)</div>
-            <div><span style="background:#4575b4; display:inline-block; width:20px; height:12px;"></span> Salario bajo (púrpura)</div>
-            <div><span style="background:#aaaaaa; display:inline-block; width:20px; height:12px;"></span> Solo HCFC (sin salario)</div>
-            <div><span style="background:#e0e0e0; display:inline-block; width:20px; height:12px;"></span> Solo salario (sin HCFC)</div>
-            <div>🔵 Tamaño del círculo = consumo de HCFC (transformado con potencia 0.35)</div>
-            <div>📌 Los países sin HCFC son más pequeños que el menor consumidor real (Bangladesh)</div>
+            <div><span class="legend-color salary-high"></span> Salario &gt; $5000</div>
+            <div><span class="legend-color salary-mid"></span> Salario $2000–5000</div>
+            <div><span class="legend-color salary-low"></span> Salario &lt; $2000</div>
+            <div><span class="legend-color hcfc-only"></span> Solo HCFC (sin salario)</div>
+            <div><span class="legend-color no-data"></span> Sin salario ni HCFC (raro)</div>
+            <div>🔵 Tamaño = consumo HCFC (transformado)</div>
+            <div>📌 Países sin HCFC tienen tamaño equivalente a 20 toneladas (inferior a Bangladesh)</div>
         </div>
 
         <div class="chart-card">
@@ -263,20 +261,19 @@
 
         <div class="info">
             <h3>Sobre esta integración</h3>
-            <ul>
+           <ul>
                 <li><strong>Biblioteca:</strong> D3.js | <strong>Tipo:</strong> Circle Packing</li>
-                <li><strong>Tamaño del círculo:</strong> Consumo de HCFC (toneladas) — API propia</li>
-                <li><strong>Color:</strong> Salario mensual medio en USD — SOS2526-24.</li>
-                <li><strong>Gris oscuro:</strong> Países con HCFC pero sin dato de salario</li>
-                <li><strong>Gris claro:</strong> Países con salario pero sin HCFC</li>
-                <li><strong>Tooltip:</strong> Muestra país, salario, moneda, HCFC y año</li>
+                <li><strong>Tamaño del círculo:</strong> Consumo de HCFC (toneladas) </li>
+                <li><strong>Color:</strong> Salario mensual medio en USD.</li>
+                <li><strong>Azul:</strong> Países con HCFC pero sin dato de salario.</li>
+                <li><strong>Gris muy claro:</strong> Países sin salario ni HCFC (caso muy raro)</li>
+                <li><strong>Tooltip:</strong> Muestra salario, moneda, HCFC y año.</li>
             </ul>
         </div>
     {/if}
 </div>
 
 <style>
-    /* Los estilos son exactamente los mismos que ya tenías, los mantengo por completitud */
     .container {
         max-width: 1200px;
         margin: 0 auto;
@@ -339,6 +336,22 @@
         padding: 0.5rem 1rem;
         border-radius: 8px;
     }
+    .legend-color {
+        display: inline-block;
+        width: 20px;
+        height: 12px;
+        margin-right: 0.3rem;
+        border-radius: 2px;
+        vertical-align: middle;
+    }
+    .no-data {
+        background-color: #f5f5f5;
+        border: 1px solid #ccc;
+    }
+    .salary-high { background-color: #e63946; }
+    .salary-mid  { background-color: #f4a261; }
+    .salary-low  { background-color: #264653; }
+    .hcfc-only   { background-color: #3a6ea5; }
     .chart-card {
         background: white;
         border-radius: 12px;
