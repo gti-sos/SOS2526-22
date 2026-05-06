@@ -12,7 +12,7 @@
         try {
             // 1. Obtener datos de ozono (API propia)
             console.log('2. Cargando datos de Elena (methyl_bromide)...');
-            const resElena = await fetch('/api/v1/ozone-depleting-substance-consumptions/loadInitialData');
+            const resElena = await fetch('/api/v1/ozone-depleting-substance-consumptions');
             if (!resElena.ok) throw new Error(`HTTP ${resElena.status} - Elena`);
             const elenaData = await resElena.json();
             const ozonoData = Array.isArray(elenaData) ? elenaData : [];

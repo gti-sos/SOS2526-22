@@ -1,18 +1,37 @@
 <script>
-    // @ts-nocheck
-    import { onMount, tick } from 'svelte';
+    import { onMount } from 'svelte';
 
-    let loading = true;
-    let error = null;
+    let loading = $state(true);
+    let error = $state(null);
+    let container = $state(null);
+    let chartData = $state(null);
+    let rendered = $state(false);
 
-    onMount(async () => {
-        await fetchData();
-    });
+    // Normalización de nombres de países para que coincidan entre APIs
+    function normalizeCountry(name) {
+        if (!name) return '';
+        let n = name.toLowerCase().trim();
+        const replacements = {
+            'usa': 'united-states',
+            'us': 'united-states',
+            'united states': 'united-states',
+            'uk': 'united-kingdom',
+            'united kingdom': 'united-kingdom',
+            'uae': 'united-arab-emirates',
+            'south korea': 'korea-south',
+            'russia': 'russian-federation',
+            'tanzania': 'united-republic-of-tanzania'
+        };
+        if (replacements[n]) return replacements[n];
+        return n.replace(/[\s_]+/g, '-');
+    }
 
     async function fetchData() {
         try {
             loading = true;
+            error = null;
 
+            // 1. Cargar HCFC (API propia)
             console.log('Cargando datos de ozono...');
             const resOzone = await fetch('/api/v1/ozone-depleting-substance-consumptions');
             if (!resOzone.ok) throw new Error(`HTTP ${resOzone.status} - Ozono`);
@@ -20,11 +39,15 @@
 
             const hcfcByCountry = {};
             ozone.forEach(item => {
-                const c = item.country;
+                let c = item.country;
                 if (c === 'world' || c === 'asia') return;
-                hcfcByCountry[c] = (hcfcByCountry[c] || 0) + Math.abs(item.hcfc || 0);
+                c = normalizeCountry(c);
+                const value = Math.abs(item.hcfc || 0);
+                hcfcByCountry[c] = (hcfcByCountry[c] || 0) + value;
             });
+            console.log('HCFC por país:', hcfcByCountry);
 
+            // 2. Cargar salarios (API grupo 24)
             console.log('Cargando datos de salarios...');
             const resWages = await fetch('https://sos2526-24.onrender.com/api/v1/average-monthly-wages/');
             if (!resWages.ok) throw new Error(`HTTP ${resWages.status} - Wages`);
@@ -33,176 +56,211 @@
 
             const wagesByCountry = {};
             wagesArray.forEach(item => {
-                const c = item.country;
+                let c = item.country;
+                if (!c) return;
+                c = normalizeCountry(c);
                 if (!wagesByCountry[c] || wagesByCountry[c].year < item.year) {
-                    wagesByCountry[c] = { ...item };
+                    wagesByCountry[c] = { ...item, country: c };
                 }
             });
+            console.log('Salarios por país:', Object.keys(wagesByCountry).length);
 
-            const combined = Object.entries(wagesByCountry).map(([country, wage]) => {
-                const normalizedCountry = country === 'usa' ? 'united-states' : country;
-                const hcfc = hcfcByCountry[normalizedCountry] || 0;
-                return {
-                    country,
-                    label: country.charAt(0).toUpperCase() + country.slice(1),
-                    year: wage.year,
-                    avg_monthly_usd: wage.avg_monthly_usd,
-                    currency: wage.currency,
+            // 3. Unir todos los países (los que aparecen en cualquiera de las dos APIs)
+            const allCountries = new Set([...Object.keys(hcfcByCountry), ...Object.keys(wagesByCountry)]);
+            console.log('Total países únicos:', allCountries.size);
+
+            const points = [];
+            for (const country of allCountries) {
+                const hcfc = hcfcByCountry[country] || 0;
+                const wageData = wagesByCountry[country];
+                const salary = wageData ? wageData.avg_monthly_usd : 0;
+                const currency = wageData ? wageData.currency : 'N/A';
+                const year = wageData ? wageData.year : 'Sin dato';
+                const label = country.split('-').map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
+                points.push({
+                    country: label,
                     hcfc,
-                    hasOzone: hcfc > 0
-                };
-            }).filter(d => d.avg_monthly_usd > 0);
-
-            console.log('Datos combinados:', combined);
-
+                    salary,
+                    currency,
+                    year,
+                    hasSalary: salary > 0,
+                    hasHcfc: hcfc > 0
+                });
+            }
+            // Ordenamos para que las burbujas grandes no tapen del todo
+            points.sort((a,b) => b.hcfc - a.hcfc);
+            console.log('Datos finales:', points);
+            chartData = points;
             loading = false;
-            await tick();
-            await new Promise(r => setTimeout(r, 150));
-            renderTreemap(combined);
-
-        } catch (e) {
-            console.error('Error:', e);
-            error = e.message;
+        } catch (err) {
+            console.error(err);
+            error = err.message;
             loading = false;
         }
     }
 
-
-
-
-    async function renderTreemap(data) {
-        console.log('Iniciando renderTreemap...');
-        const d3 = await import('d3');
-        console.log('D3 importado');
-
-
-        const container = document.getElementById('treemap-container');
-        console.log('Contenedor:', container);
-        console.log('Ancho:', container?.clientWidth);
-
-
-        if (!container) {
-            console.error('Contenedor no encontrado');
+    async function renderBubbleChart(data) {
+        if (!container) return;
+        let width = container.clientWidth;
+        if (width === 0) {
+            setTimeout(() => renderBubbleChart(data), 100);
             return;
         }
-
-        const width = 900;
         const height = 520;
+        const margin = { top: 40, right: 30, bottom: 60, left: 80 };
+        const innerWidth = width - margin.left - margin.right;
+        const innerHeight = height - margin.top - margin.bottom;
 
+        const d3 = await import('d3');
         container.innerHTML = '';
 
-
-        const svg = d3.select('#treemap-container')
+        const svg = d3.select(container)
             .append('svg')
-            .attr('width', '100%')
+            .attr('width', width)
             .attr('height', height)
-            .attr('viewBox', `0 0 ${width} ${height}`)
-            .attr('preserveAspectRatio', 'xMidYMid meet');
+            .append('g')
+            .attr('transform', `translate(${margin.left},${margin.top})`);
 
-        // Tooltip creado ANTES de los event handlers
+        // Escalas
+        const maxSalary = Math.max(...data.map(d => d.salary), 1);
+        const maxHcfc = Math.max(...data.map(d => d.hcfc), 1);
+
+        const xScale = d3.scaleLinear()
+            .domain([0, maxSalary * 1.05])
+            .range([0, innerWidth])
+            .nice();
+
+        const yScale = d3.scaleLinear()
+            .domain([0, maxHcfc * 1.05])
+            .range([innerHeight, 0])
+            .nice();
+
+        // Escala para el radio (tamaño de burbuja) -> basado en HCFC, con un mínimo de 5px
+        const rScale = d3.scaleSqrt()
+            .domain([0, maxHcfc])
+            .range([5, 45]);
+
+        // Escala de color: rojo (salario alto) a azul (salario bajo), gris si no hay salario
+        const colorScale = d3.scaleSequentialLog()
+            .domain([1, maxSalary])
+            .interpolator(d3.interpolateRdYlBu);
+
+        // Ejes
+        svg.append('g')
+            .attr('transform', `translate(0,${innerHeight})`)
+            .call(d3.axisBottom(xScale).ticks(8).tickFormat(d => d === 0 ? '0' : `$${d.toLocaleString()}`));
+
+        svg.append('g')
+            .call(d3.axisLeft(yScale).ticks(8).tickFormat(d => d.toLocaleString()));
+
+        // Etiquetas de ejes
+        svg.append('text')
+            .attr('x', innerWidth/2)
+            .attr('y', innerHeight + 40)
+            .attr('text-anchor', 'middle')
+            .style('font-size', '12px')
+            .style('fill', '#555')
+            .text('Salario mensual medio (USD) →');
+
+        svg.append('text')
+            .attr('transform', 'rotate(-90)')
+            .attr('x', -innerHeight/2)
+            .attr('y', -55)
+            .attr('text-anchor', 'middle')
+            .style('font-size', '12px')
+            .style('fill', '#555')
+            .text('↑ Consumo de HCFC (toneladas)');
+
+        // Tooltip
         const tooltip = d3.select('body').append('div')
             .style('opacity', 0)
             .style('position', 'absolute')
             .style('background', 'white')
-            .style('border', '1px solid #ddd')
+            .style('border', '1px solid #ccc')
             .style('border-radius', '8px')
-            .style('padding', '10px 14px')
-            .style('font-family', 'Segoe UI, sans-serif')
-            .style('font-size', '13px')
+            .style('padding', '8px 12px')
+            .style('font-size', '12px')
             .style('pointer-events', 'none')
-            .style('box-shadow', '0 4px 12px rgba(0,0,0,0.1)')
-            .style('z-index', '9999');
+            .style('box-shadow', '0 2px 6px rgba(0,0,0,0.1)')
+            .style('z-index', '1000');
 
-        const root = d3.hierarchy({ children: data })
-            .sum(d => d.avg_monthly_usd)
-            .sort((a, b) => b.value - a.value);
-
-        d3.treemap()
-            .size([width, height])
-            .padding(3)
-            .round(true)(root);
-
-        const maxHcfc = Math.max(...data.map(d => d.hcfc));
-        const colorScale = d3.scaleSequential()
-            .domain([0, maxHcfc > 0 ? maxHcfc : 1])
-            .interpolator(d3.interpolateBlues);
-
-        const cell = svg.selectAll('g')
-            .data(root.leaves())
-            .join('g')
-            .attr('transform', d => `translate(${d.x0},${d.y0})`);
-
-        cell.append('rect')
-            .attr('width', d => d.x1 - d.x0)
-            .attr('height', d => d.y1 - d.y0)
-            .attr('fill', d => d.data.hcfc > 0 ? colorScale(d.data.hcfc) : '#e0e0e0')
-            .attr('rx', 4)
-            .attr('ry', 4)
+        // Dibujar burbujas
+        svg.selectAll('circle')
+            .data(data)
+            .enter()
+            .append('circle')
+            .attr('cx', d => xScale(d.salary))
+            .attr('cy', d => yScale(d.hcfc))
+            .attr('r', d => d.hcfc > 0 ? rScale(d.hcfc) : 6)
+            .attr('fill', d => {
+                if (d.hasSalary) return colorScale(d.salary);
+                return '#cccccc'; // gris si no tiene salario
+            })
             .attr('stroke', 'white')
-            .attr('stroke-width', 2)
+            .attr('stroke-width', 1.5)
+            .attr('opacity', 0.8)
             .style('cursor', 'pointer')
             .on('mouseover', function(event, d) {
-                d3.select(this).attr('opacity', 0.8);
-                tooltip
-                    .style('opacity', 1)
-                    .html(`
-                        <b>${d.data.label}</b> (${d.data.year})<br>
-                        💰 Salario medio: <b>$${d.data.avg_monthly_usd.toLocaleString()} USD/mes</b><br>
-                        💱 Moneda: ${d.data.currency}<br>
-                        🌿 HCFC: <b>${d.data.hcfc > 0 ? d.data.hcfc.toLocaleString() + ' ton' : 'Sin dato'}</b>
-                    `)
-                    .style('left', (event.pageX + 12) + 'px')
-                    .style('top', (event.pageY - 28) + 'px');
+                d3.select(this).attr('opacity', 1).attr('stroke', '#333');
+                tooltip.transition().duration(200).style('opacity', 0.95);
+                tooltip.html(`
+                    <strong>${d.country}</strong><br>
+                    💰 Salario: ${d.hasSalary ? `$${d.salary.toLocaleString()} USD/mes` : 'Sin dato'}<br>
+                    💱 Moneda: ${d.currency}<br>
+                    🌿 HCFC: ${d.hasHcfc ? `${d.hcfc.toLocaleString()} ton` : 'Sin dato'}<br>
+                    📅 Año: ${d.year}
+                `)
+                .style('left', (event.pageX + 12) + 'px')
+                .style('top', (event.pageY - 28) + 'px');
             })
             .on('mousemove', function(event) {
-                tooltip
-                    .style('left', (event.pageX + 12) + 'px')
+                tooltip.style('left', (event.pageX + 12) + 'px')
                     .style('top', (event.pageY - 28) + 'px');
             })
             .on('mouseout', function() {
-                d3.select(this).attr('opacity', 1);
-                tooltip.style('opacity', 0);
+                d3.select(this).attr('opacity', 0.8).attr('stroke', 'white');
+                tooltip.transition().duration(300).style('opacity', 0);
             });
 
-        cell.append('text')
-            .attr('x', d => (d.x1 - d.x0) / 2)
-            .attr('y', d => (d.y1 - d.y0) / 2 - 8)
-            .attr('text-anchor', 'middle')
-            .attr('dominant-baseline', 'middle')
-            .attr('fill', d => d.data.hcfc > 500000 ? 'white' : '#333')
-            .attr('font-size', d => Math.min((d.x1 - d.x0) / 7, 14) + 'px')
-            .attr('font-weight', 'bold')
-            .attr('font-family', 'Segoe UI, sans-serif')
-            .text(d => d.x1 - d.x0 > 60 ? d.data.label : '')
-            .style('pointer-events', 'none');
+        // Etiquetas de países más relevantes (opcional)
+        svg.selectAll('text.label')
+            .data(data.filter(d => d.hcfc > 5000 || d.salary > 5000))
+            .enter()
+            .append('text')
+            .attr('x', d => xScale(d.salary) + (d.hcfc > 0 ? rScale(d.hcfc) : 8))
+            .attr('y', d => yScale(d.hcfc) - 8)
+            .attr('font-size', '9px')
+            .attr('fill', '#333')
+            .text(d => d.country)
+            .attr('pointer-events', 'none');
 
-        cell.append('text')
-            .attr('x', d => (d.x1 - d.x0) / 2)
-            .attr('y', d => (d.y1 - d.y0) / 2 + 10)
-            .attr('text-anchor', 'middle')
-            .attr('dominant-baseline', 'middle')
-            .attr('fill', d => d.data.hcfc > 500000 ? 'white' : '#555')
-            .attr('font-size', d => Math.min((d.x1 - d.x0) / 9, 11) + 'px')
-            .attr('font-family', 'Segoe UI, sans-serif')
-            .text(d => d.x1 - d.x0 > 80 ? `$${d.data.avg_monthly_usd.toLocaleString()}` : '')
-            .style('pointer-events', 'none');
-
-        console.log('Treemap D3 renderizado correctamente');
+        rendered = true;
+        console.log('Bubble chart renderizado correctamente');
     }
+
+    $effect(() => {
+        if (!loading && chartData && container && !rendered) {
+            renderBubbleChart(chartData);
+        }
+    });
+
+    onMount(() => {
+        fetchData();
+    });
 </script>
 
 <svelte:head>
-    <title>Integración 5 - Salarios & Ozono</title>
+    <title>Integración 5 - Salarios vs HCFC (Bubble Chart)</title>
 </svelte:head>
 
 <div class="container">
-    <h1>💰 Salario Mensual Medio vs Consumo de HCFC</h1>
-    <p class="subtitle">Datos de <strong>API propia</strong> (consumo de HCFC por país) y <strong>SOS2526-24</strong> (salario mensual medio por país)</p>
+    <h1>💸 Relación: Salario Mensual vs Consumo de HCFC</h1>
+    <p class="subtitle">Cada burbuja es un país. <strong>Eje X = Salario</strong> (USD/mes). <strong>Eje Y = HCFC</strong> (toneladas). Tamaño y color azul/rojo indican las métricas.</p>
 
     <div class="info-api">
-        <p><strong>API 1 (propia):</strong> Ozone Depleting Substance Consumptions — <code>/api/v1/ozone-depleting-substance-consumptions</code></p>
-        <p><strong>API 2 (compañero SOS grupo 24):</strong> Average Monthly Wages — <code>https://sos2526-24.onrender.com/api/v1/average-monthly-wages/</code></p>
-        <p><strong>Integración:</strong> El tamaño de cada rectángulo representa el salario mensual medio en USD. El color azul indica el consumo de HCFC — más oscuro significa mayor consumo. Los países sin dato de HCFC aparecen en gris.</p>
+        <p><strong>API propia:</strong> Consumo de HCFC (ton/año) — <code>/api/v1/ozone-depleting-substance-consumptions</code></p>
+        <p><strong>API grupo 24:</strong> Salario mensual medio — <code>https://sos2526-24.onrender.com/api/v1/average-monthly-wages/</code></p>
+        <p><strong>Interpretación:</strong> Países arriba → mucho HCFC. Países a la derecha → salario alto. Burbujas grandes y rojas = alto HCFC y salario alto? El color rojo indica salario alto, azul salario bajo; el tamaño indica cantidad de HCFC (mayor tamaño = más HCFC). Países sin salario aparecen en X=0 (color gris), países sin HCFC aparecen en Y=0 (tamaño mínimo).</p>
     </div>
 
     {#if loading}
@@ -212,37 +270,30 @@
         </div>
     {:else if error}
         <div class="error-box">❌ Error: {error}</div>
-    {/if}
-
-    <!-- Contenedor siempre en el DOM -->
-    <div style="display: {loading || error ? 'none' : 'block'}">
+    {:else}
         <div class="legend">
-            <div class="legend-item">
-                <div class="legend-gradient"></div>
-                <span>Menor HCFC</span>
-                <span style="margin-left:1rem">Mayor HCFC</span>
-            </div>
-            <div class="legend-item" style="margin-top:0.3rem">
-                <span class="legend-box" style="background:#e0e0e0"></span>
-                <span>Sin dato de HCFC</span>
-            </div>
+            <div><span style="background:#d73027; display:inline-block; width:20px; height:12px;"></span> Salario alto (rojo)</div>
+            <div><span style="background:#4575b4; display:inline-block; width:20px; height:12px;"></span> Salario bajo (azul)</div>
+            <div><span style="background:#cccccc; display:inline-block; width:20px; height:12px;"></span> Sin dato de salario</div>
+            <div>◉ Tamaño de burbuja: mayor tamaño = mayor consumo de HCFC</div>
         </div>
 
         <div class="chart-card">
-            <div id="treemap-container" style="width:100%; height:520px;"></div>
+            <div bind:this={container} style="width:100%; height:520px; background:#ffffff;"></div>
         </div>
 
         <div class="info">
             <h3>📖 Sobre esta integración</h3>
             <ul>
-                <li><strong>Biblioteca:</strong> D3.js | <strong>Tipo:</strong> Treemap</li>
-                <li><strong>Tamaño del rectángulo:</strong> Salario mensual medio en USD — API SOS2526-24</li>
-                <li><strong>Color (azul):</strong> Consumo total de HCFC (toneladas) — API propia. Más oscuro = más consumo</li>
-                <li><strong>Gris:</strong> Países sin dato de HCFC en la API propia</li>
-                <li><strong>Tooltip:</strong> Al pasar el ratón muestra país, año, salario, moneda y HCFC</li>
+                <li><strong>Biblioteca:</strong> D3.js | <strong>Tipo:</strong> Bubble chart (gráfico de burbujas)</li>
+                <li><strong>Eje X:</strong> Salario mensual medio en USD (0 si no hay dato).</li>
+                <li><strong>Eje Y:</strong> Consumo de HCFC en toneladas (0 si no hay dato).</li>
+                <li><strong>Tamaño y color:</strong> Tamaño proporcional a HCFC. Color rojo/azul según salario (gris si no hay salario).</li>
+                <li><strong>Visibilidad:</strong> Todos los países aparecen. Los que solo tienen HCFC están en X=0 (borde izquierdo), los que solo tienen salario están en Y=0 (borde inferior).</li>
+                <li><strong>Tooltip interactivo:</strong> Pasa el ratón sobre cualquier burbuja para ver detalles completos.</li>
             </ul>
         </div>
-    </div>
+    {/if}
 </div>
 
 <style>
@@ -253,31 +304,34 @@
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         color: #333;
     }
-
-    h1 { color: #2085d8; text-align: center; margin-bottom: 0.5rem; font-size: 1.8rem; }
-    .subtitle { text-align: center; color: #666; margin-bottom: 1.5rem; }
-
+    h1 {
+        color: #2085d8;
+        text-align: center;
+        font-size: 1.8rem;
+        margin-bottom: 0.5rem;
+    }
+    .subtitle {
+        text-align: center;
+        color: #666;
+        margin-bottom: 1.5rem;
+    }
     .info-api {
         background: #f0f9ff;
         padding: 0.75rem 1rem;
         border-radius: 8px;
-        margin-bottom: 1.5rem;
+        margin-bottom: 1rem;
         font-size: 0.85rem;
         border-left: 4px solid #2085d8;
     }
-
     .info-api p { margin: 0.3rem 0; }
-    .info-api code { background: #e2e8f0; padding: 0.2rem 0.4rem; border-radius: 4px; font-size: 0.8rem; }
-
+    .info-api code { background: #e2e8f0; padding: 0.2rem 0.4rem; border-radius: 4px; }
     .loading-box {
         display: flex;
         flex-direction: column;
         align-items: center;
         padding: 60px 0;
-        color: #888;
         gap: 12px;
     }
-
     .spinner {
         border: 4px solid #f3f3f3;
         border-top: 4px solid #2085d8;
@@ -286,9 +340,7 @@
         height: 48px;
         animation: spin 0.8s linear infinite;
     }
-
     @keyframes spin { to { transform: rotate(360deg); } }
-
     .error-box {
         background: #fee2e2;
         color: #dc2626;
@@ -296,53 +348,27 @@
         border-radius: 8px;
         text-align: center;
     }
-
     .legend {
-        margin-bottom: 1rem;
-        font-size: 0.82rem;
-        color: #555;
-    }
-
-    .legend-item {
+        margin: 1rem 0;
         display: flex;
-        align-items: center;
-        gap: 0.5rem;
+        gap: 1.5rem;
+        flex-wrap: wrap;
+        font-size: 0.8rem;
+        background: #f8f9fa;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
     }
-
-    .legend-gradient {
-        width: 120px;
-        height: 14px;
-        border-radius: 4px;
-        background: linear-gradient(to right, #deebf7, #08519c);
-        border: 1px solid #ddd;
-    }
-
-    .legend-box {
-        width: 16px;
-        height: 16px;
-        border-radius: 3px;
-        display: inline-block;
-        border: 1px solid #ccc;
-    }
-
     .chart-card {
         background: white;
         border-radius: 12px;
-        padding: 20px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.07);
-        margin-bottom: 2rem;
-        border: 1px solid #f0f0f0;
-    }
-
-    .info {
-        margin-top: 1rem;
         padding: 1rem;
-        background: #f0f9ff;
-        border-radius: 12px;
-        border: 1px solid #bae6fd;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        margin-bottom: 1rem;
     }
-
+    .info {
+        background: #f0f9ff;
+        padding: 1rem;
+        border-radius: 12px;
+    }
     .info h3 { color: #2085d8; margin-top: 0; }
-    .info ul { margin: 0; padding-left: 1.5rem; }
-    .info li { margin: 0.5rem 0; color: #333; }
 </style>

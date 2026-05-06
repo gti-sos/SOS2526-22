@@ -1,333 +1,316 @@
 <script>
-    // @ts-nocheck
-    import { onMount, tick } from 'svelte';
-    import { browser } from '$app/environment';
-    import Plotly from 'plotly.js-dist';  
+    import { onMount } from 'svelte';
 
-    // svelte-ignore non_reactive_update
-        let error = null;
     let loading = $state(true);
-    let chartCreated = false;
+    let error = $state(null);
+    let container = $state(null);
+    let chartData = $state(null);
+    let rendered = $state(false);
 
-    // Función de transformación logarítmica que maneja negativos y cero
-    function transformY(y) {
-        if (y === 0) return 0;
-        const absVal = Math.abs(y);
-        const logVal = Math.log10(1 + absVal);
-        return y > 0 ? logVal : -logVal;
+    // Normalización de nombres de país para que coincidan entre APIs
+    function normalizeCountry(name) {
+        if (!name) return '';
+        let n = name.toLowerCase().trim();
+        const replacements = {
+            'usa': 'united-states',
+            'us': 'united-states',
+            'united states': 'united-states',
+            'uk': 'united-kingdom',
+            'united kingdom': 'united-kingdom',
+            'uae': 'united-arab-emirates',
+            'south korea': 'korea-south',
+            'russia': 'russian-federation',
+            'tanzania': 'united-republic-of-tanzania',
+            'congo': 'congo-brazzaville',
+            'ivory coast': 'cote-divoire'
+        };
+        if (replacements[n]) return replacements[n];
+        return n.replace(/[\s_]+/g, '-');
     }
 
-    onMount(async () => {
-        console.log('=== INICIO CARGA DE DATOS ===');
-        
-        // Pequeño retraso para asegurar DOM
-        await new Promise(resolve => setTimeout(resolve, 150));
-        
-        // Verificar que estamos en el navegador
-        if (!browser) {
-            console.log('No estamos en el navegador, saltando...');
-            return;
-        }
-        
+    async function fetchData() {
         try {
-            // 1. Obtener datos de tu API (ozono - HCFC)
-            console.log('📡 Cargando datos de Elena (HCFC)...');
-            const resElena = await fetch('/api/v2/ozone-depleting-substance-consumptions');
-            if (!resElena.ok) throw new Error(`HTTP ${resElena.status} - Elena`);
-            const elenaData = await resElena.json();
-            const ozonoData = Array.isArray(elenaData) ? elenaData : [];
-            console.log('   Datos Elena:', ozonoData.length);
+            loading = true;
+            error = null;
 
-            // Agrupar HCFC por país
-            const hcfcPorPais = {};
-            const aniosHCFCporPais = {};
-            
-            ozonoData.forEach(item => {
-                const country = item.country;
-                if (country === 'world' || country === 'asia') return;
-                const year = item.year;
-                let valor = Number(item.hcfc) || 0;
-                
-                if (!hcfcPorPais[country]) {
-                    hcfcPorPais[country] = 0;
-                    aniosHCFCporPais[country] = [];
-                }
-                hcfcPorPais[country] += valor;
-                aniosHCFCporPais[country].push(year);
+            // 1. Cargar HCFC (API propia)
+            console.log('📡 Cargando HCFC...');
+            const resOzone = await fetch('/api/v1/ozone-depleting-substance-consumptions');
+            if (!resOzone.ok) throw new Error(`HTTP ${resOzone.status} - Ozono`);
+            const ozone = await resOzone.json();
+            const hcfcByCountry = {};
+            ozone.forEach(item => {
+                let c = item.country;
+                if (c === 'world' || c === 'asia') return;
+                c = normalizeCountry(c);
+                const value = Math.abs(item.hcfc || 0);
+                hcfcByCountry[c] = (hcfcByCountry[c] || 0) + value;
             });
-            
-            console.log(`   HCFC - valores: ${Object.values(hcfcPorPais).map(v => v.toFixed(0)).join(', ')}`);
+            console.log('✅ HCFC por país:', hcfcByCountry);
 
-            // 2. Obtener datos de Military Stats
-            console.log('📡 Cargando Military Stats (grupo 13)...');
-            let militaryPorPais = {};
-            let aniosMilitaryPorPais = {};
-            
-            try {
-                const resMilitary = await fetch('https://sos2526-13.onrender.com/api/v2/military-stats');
-                if (resMilitary.ok) {
-                    const militaryData = await resMilitary.json();
-                    const militaryStats = Array.isArray(militaryData) ? militaryData : (militaryData.data || []);
-                    console.log('   Military Stats:', militaryStats.length);
-                    
-                    militaryStats.forEach(item => {
-                        const country = item.country;
-                        const year = item.year;
-                        
-                        if (!militaryPorPais[country]) {
-                            militaryPorPais[country] = {
-                                milex_total: 0,
-                                milex_gdp: 0,
-                                milex_per_capita: 0,
-                                count: 0
-                            };
-                            aniosMilitaryPorPais[country] = [];
-                        }
-                        
-                        militaryPorPais[country].milex_total += item.milex_total || 0;
-                        militaryPorPais[country].milex_gdp += item.milex_gdp || 0;
-                        militaryPorPais[country].milex_per_capita += item.milex_per_capita || 0;
-                        militaryPorPais[country].count++;
-                        aniosMilitaryPorPais[country].push(year);
-                    });
-                    
-                    for (const country in militaryPorPais) {
-                        const count = militaryPorPais[country].count;
-                        militaryPorPais[country].milex_gdp_avg = militaryPorPais[country].milex_gdp / count;
-                        militaryPorPais[country].milex_per_capita_avg = militaryPorPais[country].milex_per_capita / count;
-                    }
+            // 2. Cargar salarios (API grupo 24)
+            console.log('📡 Cargando salarios...');
+            const resWages = await fetch('https://sos2526-24.onrender.com/api/v1/average-monthly-wages/');
+            if (!resWages.ok) throw new Error(`HTTP ${resWages.status} - Wages`);
+            const wages = await resWages.json();
+            const wagesArray = Array.isArray(wages) ? wages : (wages.data || []);
+            const wagesByCountry = {};
+            wagesArray.forEach(item => {
+                let c = item.country;
+                if (!c) return;
+                c = normalizeCountry(c);
+                if (!wagesByCountry[c] || wagesByCountry[c].year < item.year) {
+                    wagesByCountry[c] = { ...item, country: c };
                 }
-            } catch (e) {
-                console.warn('Military API error:', e.message);
-            }
+            });
+            console.log('✅ Salarios por país:', Object.keys(wagesByCountry).length);
 
-            // 3. Preparar puntos
-            const puntos = [];
-            
-            for (const [pais, hcfcTotal] of Object.entries(hcfcPorPais)) {
-                const mil = militaryPorPais[pais];
-                const aniosHCFC = aniosHCFCporPais[pais] || [];
-                const aniosMil = aniosMilitaryPorPais[pais] || [];
-                
-                const x = mil ? mil.milex_per_capita_avg : 0;
-                const yOriginal = hcfcTotal;
-                const yTransformed = transformY(yOriginal);
-                const size = mil ? Math.max(Math.abs(mil.milex_total) / 1000, 8) : 8;
-                const allYears = [...new Set([...aniosHCFC, ...aniosMil])].sort((a,b) => a-b);
-                
-                puntos.push({
-                    country: pais.charAt(0).toUpperCase() + pais.slice(1),
-                    x: x,
-                    y: yTransformed,
-                    yOriginal: yOriginal,
-                    size: Math.min(size, 50),
-                    gastoTotal: mil ? mil.milex_total : 0,
-                    perCapita: x,
-                    pibPorcentaje: mil ? mil.milex_gdp_avg : 0,
-                    anios: allYears.join(', '),
-                    aniosHCFC: aniosHCFC.sort((a,b)=>a-b).join(', '),
-                    aniosMil: aniosMil.sort((a,b)=>a-b).join(', '),
-                    tieneMilitary: !!mil,
-                    origen: mil ? 'Ambas APIs' : 'Solo Ozono'
+            // 3. Unir todos los países (los que aparecen en al menos una API)
+            const allCountries = new Set([...Object.keys(hcfcByCountry), ...Object.keys(wagesByCountry)]);
+            console.log('🌍 Total países únicos:', allCountries.size);
+
+            const points = [];
+            for (const countryKey of allCountries) {
+                const hcfc = hcfcByCountry[countryKey] || 0;
+                const wageData = wagesByCountry[countryKey];
+                const salary = wageData ? wageData.avg_monthly_usd : 0;
+                const currency = wageData ? wageData.currency : 'N/A';
+                const year = wageData ? wageData.year : 'Sin dato';
+                const hasSalary = salary > 0;
+                const hasHcfc = hcfc > 0;
+
+                // Tamaño de burbuja: mínimo 8px, máximo 50px, escalado con sqrt(HCFC)
+                let bubbleSize = 8;
+                if (hasHcfc) {
+                    const maxHcfc = Math.max(...Array.from(hcfcByCountry.values()));
+                    const scale = d3 ? null : null; // luego usaremos d3, pero ahora solo calculamos
+                    // Previo a tener d3, hacemos un escalado simple
+                    bubbleSize = 8 + Math.min(42, Math.sqrt(hcfc) / 10);
+                    if (bubbleSize > 50) bubbleSize = 50;
+                }
+
+                points.push({
+                    countryKey,
+                    name: countryKey.split('-').map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' '),
+                    hcfc,
+                    salary,
+                    currency,
+                    year,
+                    hasSalary,
+                    hasHcfc,
+                    bubbleSize
                 });
             }
-            
-            for (const [pais, mil] of Object.entries(militaryPorPais)) {
-                if (!hcfcPorPais[pais]) {
-                    const aniosMil = aniosMilitaryPorPais[pais] || [];
-                    
-                    puntos.push({
-                        country: pais.charAt(0).toUpperCase() + pais.slice(1),
-                        x: mil.milex_per_capita_avg,
-                        y: transformY(0),
-                        yOriginal: 0,
-                        size: Math.min(Math.max(mil.milex_total / 1000, 8), 50),
-                        gastoTotal: mil.milex_total,
-                        perCapita: mil.milex_per_capita_avg,
-                        pibPorcentaje: mil.milex_gdp_avg,
-                        anios: aniosMil.sort((a,b)=>a-b).join(', '),
-                        aniosHCFC: 'Sin datos',
-                        aniosMil: aniosMil.sort((a,b)=>a-b).join(', '),
-                        tieneMilitary: true,
-                        origen: 'Solo Military'
-                    });
-                }
-            }
-            
-            console.log(`📊 Puntos totales: ${puntos.length}`);
-            
-            // Ticks personalizados
-            const tickValues = [-1000000, -100000, -10000, -1000, -100, -10, 0, 10, 100, 1000, 10000, 100000, 1000000];
-            const tickTransformed = tickValues.map(v => transformY(v));
-            const tickText = tickValues.map(v => {
-                if (v === 0) return '0';
-                if (v >= 1000000) return (v/1000000).toFixed(0) + 'M';
-                if (v >= 1000) return (v/1000).toFixed(0) + 'k';
-                if (v <= -1000000) return (v/1000000).toFixed(0) + 'M';
-                if (v <= -1000) return (v/1000).toFixed(0) + 'k';
-                return v.toString();
-            });
 
-            await tick();
-            
-            // ESPERAR A QUE EL CONTENEDOR EXISTA
-            let chartContainer = document.getElementById('scatter-chart');
-            let attempts = 0;
-            while (!chartContainer && attempts < 10) {
-                await new Promise(resolve => setTimeout(resolve, 100));
-                chartContainer = document.getElementById('scatter-chart');
-                attempts++;
-                console.log(`Esperando contenedor... intento ${attempts}`);
-            }
-            
-            if (!chartContainer) {
-                throw new Error('Contenedor #scatter-chart no encontrado después de 10 intentos');
-            }
-            
-            // Limpiar contenedor
-            while (chartContainer.firstChild) {
-                chartContainer.removeChild(chartContainer.firstChild);
-            }
-            
-            // ✅ Plotly ya está importado, no necesitas importarlo de nuevo
-            if (!chartCreated) {
-                console.log('✅ Usando Plotly (importado globalmente)');
-                
-                const trace = {
-                    x: puntos.map(p => p.x),
-                    y: puntos.map(p => p.y),
-                    mode: 'markers',
-                    marker: {
-                        size: puntos.map(p => p.size),
-                        color: puntos.map(p => {
-                            if (p.origen === 'Ambas APIs') return '#2085d8';
-                            if (p.origen === 'Solo Ozono') return '#10b981';
-                            return '#f59e0b';
-                        }),
-                        opacity: 0.8,
-                        line: { width: 1, color: 'white' },
-                        sizeref: 2,
-                        sizemin: 6,
-                        sizemode: 'area'
-                    },
-                    text: puntos.map(p => {
-                        if (p.origen === 'Solo Military') {
-                            return `<b>${p.country}</b><br>
-                                    📌 Solo Military<br>
-                                    📅 Años: ${p.anios}<br>
-                                    Gasto per cápita: ${p.perCapita.toFixed(2)} USD<br>
-                                    Gasto total: ${p.gastoTotal.toLocaleString()} M USD<br>
-                                    % PIB defensa: ${p.pibPorcentaje.toFixed(2)}%`;
-                        } else if (p.origen === 'Solo Ozono') {
-                            return `<b>${p.country}</b><br>
-                                    📌 Solo Ozono<br>
-                                    📅 Años: ${p.aniosHCFC}<br>
-                                    Consumo HCFC: ${p.yOriginal.toLocaleString()} toneladas`;
-                        } else {
-                            return `<b>${p.country}</b><br>
-                                    📌 Ambas APIs<br>
-                                    📅 Años HCFC: ${p.aniosHCFC}<br>
-                                    📅 Años Military: ${p.aniosMil}<br>
-                                    Consumo HCFC: ${p.yOriginal.toLocaleString()} toneladas<br>
-                                    Gasto per cápita: ${p.perCapita.toFixed(2)} USD<br>
-                                    Gasto total: ${p.gastoTotal.toLocaleString()} M USD<br>
-                                    % PIB defensa: ${p.pibPorcentaje.toFixed(2)}%`;
-                        }
-                    }),
-                    hoverinfo: 'text',
-                    type: 'scatter'
-                };
-
-                const layout = {
-                    xaxis: {
-                        title: { text: 'Gasto militar per cápita (USD)', font: { size: 12 } },
-                        zeroline: false,
-                        gridcolor: '#e0e0e0'
-                    },
-                    yaxis: {
-                        title: { text: 'Consumo de HCFC (toneladas) - escala logarítmica', font: { size: 12 } },
-                        type: 'linear',
-                        zeroline: true,
-                        gridcolor: '#e0e0e0',
-                        tickmode: 'array',
-                        tickvals: tickTransformed,
-                        ticktext: tickText,
-                        tickangle: 0
-                    },
-                    plot_bgcolor: '#ffffff',
-                    paper_bgcolor: '#ffffff',
-                    height: 550,
-                    margin: { t: 30, l: 100, r: 40, b: 60 }
-                };
-
-                const config = {
-                    responsive: true,
-                    displayModeBar: false,
-                    staticPlot: false
-                };
-
-                // ✅ Usar Plotly directamente (ya importado)
-                await Plotly.newPlot('scatter-chart', [trace], layout, config);
-                chartCreated = true;
-                console.log('✅ Gráfico creado con Plotly');
-            }
-            
+            console.log('📊 Puntos totales:', points.length);
+            chartData = points;
             loading = false;
-
         } catch (err) {
-            console.error('ERROR:', err);
+            console.error('❌ Error:', err);
             error = err.message;
             loading = false;
         }
+    }
+
+    async function renderBubbleChart(data) {
+        if (!container) return;
+        let width = container.clientWidth;
+        if (width === 0) {
+            setTimeout(() => renderBubbleChart(data), 100);
+            return;
+        }
+        const height = 520;
+        const margin = { top: 40, right: 30, bottom: 60, left: 80 };
+        const innerWidth = width - margin.left - margin.right;
+        const innerHeight = height - margin.top - margin.bottom;
+
+        const d3 = await import('d3');
+        container.innerHTML = '';
+
+        const svg = d3.select(container)
+            .append('svg')
+            .attr('width', width)
+            .attr('height', height)
+            .append('g')
+            .attr('transform', `translate(${margin.left},${margin.top})`);
+
+        // Escalas
+        const maxSalary = Math.max(...data.map(d => d.salary), 1);
+        const maxHcfc = Math.max(...data.map(d => d.hcfc), 1);
+
+        const xScale = d3.scaleLinear()
+            .domain([0, maxSalary * 1.05])
+            .range([0, innerWidth])
+            .nice();
+
+        const yScale = d3.scaleLinear()
+            .domain([0, maxHcfc * 1.05])
+            .range([innerHeight, 0])
+            .nice();
+
+        // Escala de tamaño (radio) basada en HCFC, con mínimo 6px
+        const rScale = d3.scaleSqrt()
+            .domain([0, maxHcfc])
+            .range([6, 45]);
+
+        // Escala de color: rojo (salario alto) a azul (salario bajo), gris si no hay salario
+        const colorScale = d3.scaleSequentialLog()
+            .domain([1, maxSalary])
+            .interpolator(d3.interpolateRdYlBu);
+
+        // Ejes
+        svg.append('g')
+            .attr('transform', `translate(0,${innerHeight})`)
+            .call(d3.axisBottom(xScale).ticks(8).tickFormat(d => d === 0 ? '0' : `$${d.toLocaleString()}`));
+
+        svg.append('g')
+            .call(d3.axisLeft(yScale).ticks(8).tickFormat(d => d.toLocaleString()));
+
+        // Etiquetas de ejes
+        svg.append('text')
+            .attr('x', innerWidth/2)
+            .attr('y', innerHeight + 40)
+            .attr('text-anchor', 'middle')
+            .style('font-size', '12px')
+            .style('fill', '#555')
+            .text('Salario mensual medio (USD) →');
+
+        svg.append('text')
+            .attr('transform', 'rotate(-90)')
+            .attr('x', -innerHeight/2)
+            .attr('y', -55)
+            .attr('text-anchor', 'middle')
+            .style('font-size', '12px')
+            .style('fill', '#555')
+            .text('↑ Consumo de HCFC (toneladas)');
+
+        // Tooltip
+        const tooltip = d3.select('body').append('div')
+            .style('opacity', 0)
+            .style('position', 'absolute')
+            .style('background', 'white')
+            .style('border', '1px solid #ccc')
+            .style('border-radius', '8px')
+            .style('padding', '8px 12px')
+            .style('font-size', '12px')
+            .style('pointer-events', 'none')
+            .style('box-shadow', '0 2px 6px rgba(0,0,0,0.1)')
+            .style('z-index', '1000');
+
+        // Dibujar burbujas
+        svg.selectAll('circle')
+            .data(data)
+            .enter()
+            .append('circle')
+            .attr('cx', d => xScale(d.salary))
+            .attr('cy', d => yScale(d.hcfc))
+            .attr('r', d => d.hasHcfc ? rScale(d.hcfc) : 6)
+            .attr('fill', d => {
+                if (d.hasSalary) return colorScale(d.salary);
+                if (d.hasHcfc) return '#aaaaaa'; // gris medio si solo HCFC
+                return '#e0e0e0'; // gris claro si solo salario
+            })
+            .attr('stroke', 'white')
+            .attr('stroke-width', 1.5)
+            .attr('opacity', 0.85)
+            .style('cursor', 'pointer')
+            .on('mouseover', function(event, d) {
+                d3.select(this).attr('opacity', 1).attr('stroke', '#333');
+                const salaryText = d.hasSalary ? `$${d.salary.toLocaleString()} USD/mes` : 'Sin dato';
+                tooltip.transition().duration(200).style('opacity', 0.95);
+                tooltip.html(`
+                    <strong>${d.name}</strong><br>
+                    💰 Salario: ${salaryText}<br>
+                    💱 Moneda: ${d.currency}<br>
+                    🌿 HCFC: ${d.hasHcfc ? `${d.hcfc.toLocaleString()} ton` : 'Sin dato'}<br>
+                    📅 Año: ${d.year}
+                `)
+                .style('left', (event.pageX + 12) + 'px')
+                .style('top', (event.pageY - 28) + 'px');
+            })
+            .on('mousemove', function(event) {
+                tooltip.style('left', (event.pageX + 12) + 'px')
+                    .style('top', (event.pageY - 28) + 'px');
+            })
+            .on('mouseout', function() {
+                d3.select(this).attr('opacity', 0.85).attr('stroke', 'white');
+                tooltip.transition().duration(300).style('opacity', 0);
+            });
+
+        // Etiquetas de países relevantes (opcional)
+        svg.selectAll('text.label')
+            .data(data.filter(d => d.hcfc > 5000 || d.salary > 5000))
+            .enter()
+            .append('text')
+            .attr('x', d => xScale(d.salary) + (d.hasHcfc ? rScale(d.hcfc) : 8))
+            .attr('y', d => yScale(d.hcfc) - 8)
+            .attr('font-size', '9px')
+            .attr('fill', '#333')
+            .text(d => d.name)
+            .attr('pointer-events', 'none');
+
+        rendered = true;
+        console.log('✅ Bubble chart renderizado correctamente');
+    }
+
+    $effect(() => {
+        if (!loading && chartData && container && !rendered) {
+            renderBubbleChart(chartData);
+        }
+    });
+
+    onMount(() => {
+        fetchData();
     });
 </script>
 
 <svelte:head>
-    <title>Integración 2 - Military Stats & Ozono</title>
+    <title>Integración 5 - Salarios vs HCFC (Bubble Chart D3)</title>
 </svelte:head>
 
 <div class="container">
-    <h1>🎯 Gasto Militar vs Consumo de HCFC</h1>
-    <p class="subtitle">Datos de <strong>API propia</strong> (Consumo de HCFC por país) y <strong>SOS2526-13</strong> (Gasto militar per cápita por país)</p>
-
-    <div class="legend">
-        <div class="legend-item"><span style="background: #2085d8;"></span> Ambas APIs</div>
-        <div class="legend-item"><span style="background: #10b981;"></span> Solo Ozono (sin datos militares)</div>
-        <div class="legend-item"><span style="background: #f59e0b;"></span> Solo Military (sin HCFC)</div>
-    </div>
+    <h1>💸 Relación: Salario Mensual vs Consumo de HCFC</h1>
+    <p class="subtitle">Gráfico de burbujas con D3.js. Cada burbuja es un país. <strong>Eje X = Salario</strong> (USD/mes). <strong>Eje Y = HCFC</strong> (toneladas). Tamaño y color indican las métricas.</p>
 
     <div class="info-api">
-        <p><strong>API 1 (propia):</strong> Ozone Depleting Substance Consumptions — <code>/api/v1/ozone-depleting-substance-consumptions</code></p>
-        <p><strong>API 2 (compañero SOS grupo 13):</strong> Military Stats — <code>https://sos2526-13.onrender.com/api/v1/military-stats</code></p>
-        <p><strong>Integración:</strong> Se cruzan los datos de HCFC por país con el gasto militar per cápita.</p>
+        <p><strong>API propia:</strong> Consumo de HCFC (ton/año) — <code>/api/v1/ozone-depleting-substance-consumptions</code></p>
+        <p><strong>API grupo 24:</strong> Salario mensual medio — <code>https://sos2526-24.onrender.com/api/v1/average-monthly-wages/</code></p>
+        <p><strong>Interpretación:</strong> Países arriba → mucho HCFC. Países a la derecha → salario alto. Burbujas grandes y rojas = alto HCFC y salario alto. Color rojo = salario alto, azul = salario bajo, gris = sin dato. Países sin salario aparecen en X=0; países sin HCFC en Y=0 (tamaño mínimo).</p>
     </div>
 
-    <div class="chart-card">
-        <div id="scatter-chart" style="width: 100%; min-height: 550px;"></div>
-        
-        {#if loading}
-            <div class="loading-overlay">
-                <div class="spinner"></div>
-                <p>Cargando datos...</p>
-            </div>
-        {/if}
-    </div>
-
-    {#if error}
+    {#if loading}
+        <div class="loading-box">
+            <div class="spinner"></div>
+            <p>Cargando datos...</p>
+        </div>
+    {:else if error}
         <div class="error-box">❌ Error: {error}</div>
-    {/if}
+    {:else}
+        <div class="legend">
+            <div><span style="background:#d73027; display:inline-block; width:20px; height:12px;"></span> Salario alto (rojo)</div>
+            <div><span style="background:#4575b4; display:inline-block; width:20px; height:12px;"></span> Salario bajo (azul)</div>
+            <div><span style="background:#aaaaaa; display:inline-block; width:20px; height:12px;"></span> Solo HCFC (sin salario)</div>
+            <div><span style="background:#e0e0e0; display:inline-block; width:20px; height:12px;"></span> Solo salario (sin HCFC)</div>
+            <div>⚫ Tamaño de burbuja = proporcional a HCFC (mayor tamaño = más HCFC)</div>
+        </div>
 
-    <div class="info">
-        <h3>Sobre esta integración</h3>
-        <ul>
-            <li><strong>Biblioteca:</strong> Plotly.js | <strong>Tipo:</strong> Bubble Chart (gráfico de burbujas)</li>
-            <li><strong>🔵 Azul:</strong> Países con datos en ambas APIs</li>
-            <li><strong>🟢 Verde:</strong> Países solo en API Ozono (sin datos militares)</li>
-            <li><strong>🟠 Naranja:</strong> Países solo en API Military (sin HCFC)</li>
-            <li><strong>Eje X:</strong> Gasto militar per cápita (USD)</li>
-            <li><strong>Eje Y:</strong> Consumo de HCFC (toneladas) - Escala logarítmica</li>
-        </ul>
-    </div>
+        <div class="chart-card">
+            <div bind:this={container} style="width:100%; height:520px; background:#ffffff;"></div>
+        </div>
+
+        <div class="info">
+            <h3>📖 Sobre esta integración</h3>
+            <ul>
+                <li><strong>Biblioteca:</strong> D3.js | <strong>Tipo:</strong> Bubble chart (gráfico de burbujas)</li>
+                <li><strong>Eje X:</strong> Salario mensual medio en USD (0 si no hay dato).</li>
+                <li><strong>Eje Y:</strong> Consumo de HCFC en toneladas (0 si no hay dato).</li>
+                <li><strong>Tamaño:</strong> Proporcional al HCFC (los países sin HCFC tienen tamaño mínimo 6px).</li>
+                <li><strong>Color:</strong> Rojo/azul según salario (gris si no hay salario).</li>
+                <li><strong>Visibilidad total:</strong> Todos los países de ambas APIs aparecen (en X=0 o Y=0 si les falta una métrica).</li>
+                <li><strong>Tooltip interactivo:</strong> Muestra país, salario, moneda, HCFC y año.</li>
+            </ul>
+        </div>
+    {/if}
 </div>
 
 <style>
@@ -338,79 +321,73 @@
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         color: #333;
     }
-    h1 { color: #2085d8; text-align: center; margin-bottom: 0.5rem; font-size: 1.8rem; }
-    .subtitle { text-align: center; color: #666; margin-bottom: 1rem; }
-    
-    .legend {
-        display: flex;
-        justify-content: center;
-        gap: 2rem;
+    h1 {
+        color: #2085d8;
+        text-align: center;
+        font-size: 1.8rem;
+        margin-bottom: 0.5rem;
+    }
+    .subtitle {
+        text-align: center;
+        color: #666;
         margin-bottom: 1.5rem;
-        flex-wrap: wrap;
     }
-    .legend-item {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        font-size: 0.85rem;
-    }
-    
-    .legend-item span {
-        width: 18px;
-        height: 18px;
-        border-radius: 50%;
-        display: inline-block;
-    }
-    
     .info-api {
         background: #f0f9ff;
         padding: 0.75rem 1rem;
         border-radius: 8px;
-        margin-bottom: 1.5rem;
+        margin-bottom: 1rem;
         font-size: 0.85rem;
         border-left: 4px solid #2085d8;
     }
     .info-api p { margin: 0.3rem 0; }
-    .info-api code { background: #e2e8f0; padding: 0.2rem 0.4rem; border-radius: 4px; font-size: 0.8rem; }
-    
+    .info-api code { background: #e2e8f0; padding: 0.2rem 0.4rem; border-radius: 4px; }
+    .loading-box {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 60px 0;
+        gap: 12px;
+    }
+    .spinner {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #2085d8;
+        border-radius: 50%;
+        width: 48px;
+        height: 48px;
+        animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .error-box {
+        background: #fee2e2;
+        color: #dc2626;
+        padding: 16px;
+        border-radius: 8px;
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+    .legend {
+        margin: 1rem 0;
+        display: flex;
+        gap: 1.5rem;
+        flex-wrap: wrap;
+        font-size: 0.8rem;
+        background: #f8f9fa;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+    }
     .chart-card {
         background: white;
         border-radius: 12px;
-        padding: 20px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.07);
-        margin-bottom: 2rem;
-        border: 1px solid #f0f0f0;
-        position: relative;
-        min-height: 550px;
+        padding: 1rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        margin-bottom: 1rem;
     }
-    
-    .loading-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(255, 255, 255, 0.95);
-        display: flex;
-        justify-content: center;
-        align-items: center;
+    .info {
+        background: #f0f9ff;
+        padding: 1rem;
         border-radius: 12px;
-        z-index: 10;
+        margin-top: 1rem;
     }
-    
-    .spinner {
-        width: 50px;
-        height: 50px;
-        border: 4px solid #e0e0e0;
-        border-top-color: #2085d8;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    
-    .error-box { background: #fee2e2; color: #dc2626; padding: 16px; border-radius: 8px; text-align: center; margin-bottom: 1rem; }
-    .info { margin-top: 1rem; padding: 1rem; background: #f0f9ff; border-radius: 12px; border: 1px solid #bae6fd; }
     .info h3 { color: #2085d8; margin-top: 0; }
-    .info ul { margin: 0; padding-left: 1.5rem; }
-    .info li { margin: 0.5rem 0; }
 </style>
