@@ -35,7 +35,7 @@
             error = null;
 
             console.log('📡 Cargando HCFC...');
-            const resOzone = await fetch('/api/v1/ozone-depleting-substance-consumptions');
+            const resOzone = await fetch('/api/v1/ozone-depleting-substance-consumptions/loadInitialData');
             if (!resOzone.ok) throw new Error(`HTTP ${resOzone.status} - Ozono`);
             const ozone = await resOzone.json();
             const hcfcByCountry = {};

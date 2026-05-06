@@ -50,7 +50,7 @@
         try {
             // 1. Datos HCFC (API propia)
             console.log('📡 Solicitando HCFC desde API propia...');
-            const resOzone = await fetch('/api/v1/ozone-depleting-substance-consumptions');
+            const resOzone = await fetch('/api/v1/ozone-depleting-substance-consumptions/loadInitialData');
             if (!resOzone.ok) throw new Error(`HTTP ${resOzone.status} - Ozono`);
             const ozoneData = await resOzone.json();
             console.log(`✅ HCFC recibidos: ${ozoneData.length} registros`);

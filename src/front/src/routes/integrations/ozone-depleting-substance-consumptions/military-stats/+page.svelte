@@ -32,7 +32,7 @@
         try {
             // 1. Obtener datos de tu API (ozono - HCFC)
             console.log('📡 Cargando datos de Elena (HCFC)...');
-            const resElena = await fetch('/api/v2/ozone-depleting-substance-consumptions');
+            const resElena = await fetch('/api/v1/ozone-depleting-substance-consumptions/loadInitialData');
             if (!resElena.ok) throw new Error(`HTTP ${resElena.status} - Elena`);
             const elenaData = await resElena.json();
             const ozonoData = Array.isArray(elenaData) ? elenaData : [];

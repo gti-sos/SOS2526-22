@@ -36,7 +36,7 @@
             loading = true;
 
             console.log('Cargando datos de ozono...');
-            const resOzone = await fetch('/api/v1/ozone-depleting-substance-consumptions');
+            const resOzone = await fetch('/api/v1/ozone-depleting-substance-consumptions/loadInitialData');
             if (!resOzone.ok) throw new Error(`HTTP ${resOzone.status} - Ozono`);
             const ozoneData = await resOzone.json();
             const ozoneValidos = ozoneData.filter(d => countryToLanguage[d.country]);
