@@ -210,7 +210,7 @@
     <div class="info-api">
         <p><strong>API 1 (propia):</strong> Ozone Depleting Substance Consumptions — <code>/api/v1/ozone-depleting-substance-consumptions</code></p>
         <p><strong>API 2 (compañero SOS grupo 10):</strong> Deaths by risk factors — <code>https://sos2526-10.onrender.com/api/v2/deaths-by-risk-factors</code></p>
-        <p><strong>Integración:</strong> Comparativa entre el ranking de consumo de HCFC y el ranking de muertes por contaminación del aire.</p>
+        <p><strong>Integración:</strong> Comparativa entre el ranking de consumo de HCFC y el ranking de muertes por contaminación del aire (solo países con datos comunes).</p>
     </div>
 
     <div class="chart-card" style="position: relative;">
@@ -234,7 +234,7 @@
             <li><strong>Ejes:</strong> Eje angular (circular) = países ; Eje radial = posición relativa (0-100%)</li>
             <li><strong>🔵 Azul:</strong> Ranking de consumo de HCFC (toneladas)</li>
             <li><strong>🟠 Naranja:</strong> Ranking de muertes por contaminación del aire</li>
-            <li><strong>Escala:</strong> Ranking normalizado a porcentaje (1º puesto = 100%, 10º puesto = 0%)</li>
+            <li><strong>Escala:</strong> Ranking normalizado a porcentaje </li>
             <li><strong>Tooltip:</strong> Muestra el ranking y el valor real original (toneladas/muertes)</li>
         </ul>
     </div>

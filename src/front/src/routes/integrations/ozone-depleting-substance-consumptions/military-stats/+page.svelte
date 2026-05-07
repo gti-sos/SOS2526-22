@@ -2,7 +2,7 @@
     // @ts-nocheck
     import { onMount, tick } from 'svelte';
     import { browser } from '$app/environment';
-    import Plotly from 'plotly.js-dist';  
+    let Plotly;
 
     // svelte-ignore non_reactive_update
         let error = null;
@@ -19,6 +19,8 @@
 
     onMount(async () => {
         console.log('=== INICIO CARGA DE DATOS ===');
+        Plotly = await import('plotly.js-dist');
+
         
         // Pequeño retraso para asegurar DOM
         await new Promise(resolve => setTimeout(resolve, 150));
@@ -298,7 +300,7 @@
 
     <div class="info-api">
         <p><strong>API 1 (propia):</strong> Ozone Depleting Substance Consumptions — <code>/api/v1/ozone-depleting-substance-consumptions</code></p>
-        <p><strong>API 2 (compañero SOS grupo 13):</strong> Military Stats — <code>https://sos2526-13.onrender.com/api/v1/military-stats</code></p>
+        <p><strong>API 2 (compañero SOS grupo 13):</strong> Military Stats — <code>https://sos2526-13.onrender.com/api/v2/military-stats</code></p>
         <p><strong>Integración:</strong> Se cruzan los datos de HCFC por país con el gasto militar per cápita.</p>
     </div>
 

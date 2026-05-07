@@ -251,7 +251,7 @@
             <div><span class="legend-color salary-low"></span> Salario &lt; $2000</div>
             <div><span class="legend-color hcfc-only"></span> Solo HCFC (sin salario)</div>
             <div><span class="legend-color no-data"></span> Sin salario ni HCFC (raro)</div>
-            <div>🔵 Tamaño = consumo HCFC (transformado)</div>
+            <div>Tamaño = consumo HCFC</div>
             <div>📌 Países sin HCFC tienen tamaño equivalente a 20 toneladas (inferior a Bangladesh)</div>
         </div>
 

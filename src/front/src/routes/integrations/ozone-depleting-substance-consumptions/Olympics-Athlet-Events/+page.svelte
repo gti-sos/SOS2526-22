@@ -4,13 +4,13 @@
 
     // svelte-ignore non_reactive_update
     let error = null;
-    let loading = $state(true);  // ✅ Estado de carga añadido
+    let loading = $state(true);  
 
     onMount(async () => {
         console.log('1. Iniciando carga de datos...');
         
         try {
-            // 1. Obtener datos de ozono (API propia)
+            // 1. Obtener datos de ozono 
             console.log('2. Cargando datos de Elena (methyl_bromide)...');
             const resElena = await fetch('/api/v1/ozone-depleting-substance-consumptions/loadInitialData');
             if (!resElena.ok) throw new Error(`HTTP ${resElena.status} - Elena`);
@@ -71,12 +71,12 @@
                 bindto: '#chart',
                 data: {
                     columns: [
-                        ['Consumo Methyl Bromide (toneladas)', ...methylValues],
+                        ['Consumo Methyl Bromide', ...methylValues],
                         ['Atletas Olímpicos', ...atletasValues]
                     ],
                     type: 'bar',
                     colors: {
-                        'Consumo Methyl Bromide (toneladas)': '#2085d8',
+                        'Consumo Methyl Bromide': '#2085d8',
                         'Atletas Olímpicos': '#fb8c00'
                     }
                 },
@@ -92,7 +92,7 @@
                         }
                     },
                     y: {
-                        label: { text: 'Valor (escala logarítmica)', position: 'outer-middle' },
+                        label: { text: 'Valor', position: 'outer-middle' },
                         type: 'log',
                         tick: {
                             format: v => {
@@ -190,8 +190,8 @@
             <li><strong>Biblioteca:</strong> c3.js + d3.js | <strong>Tipo:</strong> Bar (barras agrupadas)</li>
             <li><strong>Eje X:</strong> Año</li>
             <li><strong>Eje Y:</strong> Valor en escala logarítmica</li>
-            <li><strong>Azul:</strong> Consumo total de Methyl Bromide (toneladas) por año — API de ozono</li>
-            <li><strong>Naranja:</strong> Número de atletas olímpicos por año — API Olympics</li>
+            <li><strong>🔵 Azul:</strong> Consumo total de Methyl Bromide por año</li>
+            <li><strong>🟠 Naranja:</strong> Número de atletas olímpicos por año</li>
         </ul>
     </div>
 </div>

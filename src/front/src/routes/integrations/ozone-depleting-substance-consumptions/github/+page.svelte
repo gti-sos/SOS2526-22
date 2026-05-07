@@ -28,6 +28,17 @@
         'singapore': 'Singapur'
     };
 
+    // Valores de fallback (datos reales obtenidos previamente vía proxy)
+    const fallbackRepos = {
+        'Python': 28915715,
+        'JavaScript': 43988933,
+        'TypeScript': 15283823,
+        'PHP': 6117522,
+        'Java': 20792007,
+        'Ruby': 2955404,
+        'Go': 2305789
+    };
+
     // Escala logarítmica (base 10) con desplazamiento para evitar log(0)
     function applyLog(value) {
         return Math.log10(value + 1);
@@ -57,21 +68,39 @@
             });
             console.log('   Suma por país:', sumByCountry);
 
-            // 3. Cargar datos de GitHub por lenguaje (proxy)
-            console.log('🐙 Cargando datos de GitHub...');
+            // 3. Cargar datos de GitHub por lenguaje (solo proxy, sin fallback)
+            console.log('🐙 Cargando datos de GitHub vía proxy...');
             const reposMap = {};
+
             for (const country of Object.keys(countryToLanguage)) {
                 const language = countryToLanguage[country];
                 if (reposMap[language] !== undefined) continue;
-                try {
-                    const res = await fetch(`/api/proxy/github?language=${language.toLowerCase()}`);
-                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                    const data = await res.json();
-                    reposMap[language] = data.total_count || 0;
-                    console.log(`   ${language}: ${reposMap[language]} repos`);
-                } catch (e) {
-                    console.error(`   Error con ${language}:`, e);
-                    reposMap[language] = 0;
+                
+                let success = false;
+                let retries = 3;  // aumentado a 3 reintentos
+                let lastError = null;
+                
+                while (retries >= 0 && !success) {
+                    try {
+                        const res = await fetch(`/api/proxy/github?language=${language.toLowerCase()}`);
+                        if (res.ok) {
+                            const data = await res.json();
+                            reposMap[language] = data.total_count || 0;
+                            console.log(`   ✅ ${language}: ${reposMap[language].toLocaleString()} repos (proxy)`);
+                            success = true;
+                        } else {
+                            throw new Error(`HTTP ${res.status}`);
+                        }
+                    } catch (e) {
+                        lastError = e;
+                        console.warn(`   ⚠️ Error con ${language} (intento ${4-retries}/4):`, e.message);
+                        retries--;
+                        if (retries < 0) {
+                            throw new Error(`No se pudo obtener datos de GitHub para ${language} después de 4 intentos. Proxy no disponible.`);
+                        } else {
+                            await new Promise(r => setTimeout(r, 2000)); // espera 2 segundos
+                        }
+                    }
                 }
                 await new Promise(r => setTimeout(r, 800));
             }
@@ -86,21 +115,19 @@
             }));
             console.log('   Datos raw:', raw);
 
-            // 5. Aplicar escala logarítmica al HCFC (log10) y a los repos (también log para simetría? No, los repos ya tienen rangos más pequeños; pero podemos aplicar log también para que ambas escalas sean logarítmicas y comparables)
-            // Para mantener la coherencia, aplicamos log a AMBAS variables, así ambas están en escala logarítmica.
+            // 5. Escala logarítmica
             const logHcfc = raw.map(d => applyLog(d.hcfcRaw));
             const logRepos = raw.map(d => applyLog(d.reposRaw));
             const maxLogHcfc = Math.max(...logHcfc);
             const maxLogRepos = Math.max(...logRepos);
             console.log('   Máximos log: HCFC=', maxLogHcfc, 'Repos=', maxLogRepos);
 
-            // 6. Normalizar a porcentaje (0-100) dentro de cada escala
+            // 6. Normalizar a 0-100
             const normalizedHcfc = logHcfc.map(v => (v / maxLogHcfc) * 100);
             const normalizedRepos = logRepos.map(v => (v / maxLogRepos) * 100);
-            console.log('   Normalizados HCFC (log):', normalizedHcfc);
-            console.log('   Normalizados Repos (log):', normalizedRepos);
+            console.log('   Normalizados HCFC:', normalizedHcfc);
+            console.log('   Normalizados Repos:', normalizedRepos);
 
-            // Guardar también para la tabla
             combinedData = raw.map((d, idx) => ({
                 ...d,
                 totalHCFC: d.hcfcRaw,
@@ -109,35 +136,26 @@
                 reposNorm: normalizedRepos[idx]
             }));
 
-            // Ordenar por nombre para el radar
+            // 7. Ordenar para el radar
             const sorted = [...combinedData].sort((a, b) => a.label.localeCompare(b.label));
             const categories = sorted.map(c => `${c.label} (${c.language})`);
             const hcfcValues = sorted.map(c => c.hcfcNorm);
             const reposValues = sorted.map(c => c.reposNorm);
             console.log('   Categorías:', categories);
-            console.log('   Valores HCFC radar (log/norm):', hcfcValues);
-            console.log('   Valores Repos radar (log/norm):', reposValues);
+            console.log('   Valores HCFC radar:', hcfcValues);
+            console.log('   Valores Repos radar:', reposValues);
 
-            // 7. Renderizar gráfico radar con ECharts
+            // 8. Renderizar gráfico radar con ECharts
             if (!chartContainer) throw new Error('Contenedor no disponible');
             if (chart) chart.dispose();
             chart = echarts.init(chartContainer);
             chart.setOption({
-                tooltip: {
-                    trigger: 'item',
-                    formatter: (params) => {
-                        const country = categories[params.dataIndex];
-                        const hcfcRaw = sorted[params.dataIndex].totalHCFC;
-                        const reposRaw = sorted[params.dataIndex].repos;
-                        return `${country}<br/>HCFC: ${hcfcRaw.toLocaleString()} ton<br/>Repositorios: ${reposRaw.toLocaleString()}<br/>Escala: log10(valor+1) normalizada`;
-                    }
-                },
                 radar: {
                     indicator: categories.map(c => ({ name: c, max: 100 })),
                     shape: 'circle',
                     center: ['50%', '50%'],
                     radius: '65%',
-                    axisName: { fontSize: 10 }   // propiedad actualizada (evita la advertencia)
+                    axisName: { fontSize: 10 }
                 },
                 series: [{
                     type: 'radar',
@@ -152,7 +170,7 @@
             });
 
             loading = false;
-            console.log('✅ Gráfico renderizado correctamente (escala logarítmica)');
+            console.log('✅ Gráfico renderizado correctamente (escala logarítmica con proxy)');
         } catch (err) {
             console.error('❌ Error en fetchData:', err);
             error = err.message;
@@ -176,20 +194,18 @@
     });
 </script>
 
-<!-- El resto (HTML, CSS) se mantiene exactamente igual, solo cambio la descripción -->
-
 <svelte:head>
-    <title>Integración 3 - GitHub & Ozono (Radar ECharts)</title>
+    <title>Integración 3 - GitHub & Ozono (Radar ECharts con Proxy)</title>
 </svelte:head>
 
 <div class="container">
     <h1>🐙 Repositorios GitHub vs Consumo de HCFC por País</h1>
-    <p class="subtitle">Datos de <strong>API propia</strong> (HCFC) y <strong>GitHub API</strong> (repositorios por lenguaje asociado). Escala comprimida (potencia 0.3) para hacer visibles las diferencias.</p>
+    <p class="subtitle">Datos de <strong>API propia</strong> (consumo de HCFC por país) y <strong>GitHub Search API</strong> (repositorios por lenguaje de programación asociado al país) a través de <strong>proxy propio</strong>.</p>
 
     <div class="info-api">
-        <p><strong>API propia:</strong> HCFC — <code>/api/v1/ozone-depleting-substance-consumptions</code></p>
-        <p><strong>API GitHub (proxy):</strong> <code>/api/proxy/github?language=python</code></p>
-        <p><strong>Integración:</strong> A cada país se asocia un lenguaje de programación. Se aplica compresión (x^0.3) al HCFC para que los valores pequeños no queden ocultos. Ambos se normalizan a 0-100% y se comparan en un radar.</p>
+        <p><strong>API 1 (propia):</strong> Ozone Depleting Substance Consumptions — <code>/api/v1/ozone-depleting-substance-consumptions</code></p>
+        <p><strong>API 2 (GitHub, con proxy):</strong> GitHub Search API — <code>/api/proxy/github?language=python</code></p>
+        <p><strong>Integración:</strong> A cada país de la API de ozono se le asocia un lenguaje de programación. Se obtiene el HCFC total del país y el número de repositorios GitHub en ese lenguaje. Ambos valores se normalizan con escala logarítmica a 0-100% para compararlos en el radar.</p>
     </div>
 
     <!-- Contenedor siempre presente con overlay de carga -->
@@ -199,14 +215,14 @@
             <div class="loading-overlay">
                 <div class="spinner"></div>
                 <p>Cargando datos de ambas APIs...</p>
-                <p class="loading-note">Consultando GitHub para cada lenguaje de programación...</p>
+                <p class="loading-note">Consultando GitHub a través de proxy propio...</p>
             </div>
         {/if}
     </div>
 
     {#if !loading && !error}
         <div class="table-container">
-            <h3>📋 Datos integrados por país (valores reales)</h3>
+            <h3>Datos integrados por país (valores reales)</h3>
             <div class="table-wrapper">
                 <table>
                     <thead>
@@ -232,12 +248,13 @@
     {/if}
 
     <div class="info">
-        <h3>📖 Sobre esta integración</h3>
+        <h3>Sobre esta integración</h3>
         <ul>
             <li><strong>Biblioteca:</strong> ECharts | <strong>Tipo:</strong> radar (área y líneas)</li>
-            <li><strong>Transformación:</strong> Los valores de HCFC se comprimen con potencia 0.3 antes de normalizar, para que los países con bajo HCFC sean visibles (ej. Japón ya no queda oculto por China).</li>
-            <li><strong>Proxy:</strong> Las peticiones a GitHub se realizan mediante nuestro proxy para evitar CORS.</li>
-            <li><strong>Interpretación:</strong> El polígono azul (HCFC) y el naranja (repos) se comparan en el mismo radar. La compresión permite ver mejor la forma de cada uno.</li>
+            <li><strong>Proxy:</strong> Las peticiones a GitHub se realizan mediante proxy para evitar CORS.</li>
+            <li><strong>🔵 Polígono azul:</strong> Consumo de HCFC normalizado</li>
+            <li><strong>🟠 Polígono naranja:</strong> Repositorios GitHub normalizados</li>
+            <li><strong>Cada eje:</strong> Un país con su lenguaje de programación asociado</li>
         </ul>
     </div>
 </div>

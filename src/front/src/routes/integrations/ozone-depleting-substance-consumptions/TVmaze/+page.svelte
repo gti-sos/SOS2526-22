@@ -31,9 +31,14 @@
         'Hulk': 'hulk'
     };
 
+    // Transformación logarítmica para escalar los datos
+    function transformLog(value) {
+        return Math.log10(value + 1);
+    }
+
     async function fetchHCFCData() {
         console.log('📡 Obteniendo datos de HCFC...');
-        const res = await fetch('https://sos2526-22.onrender.com/api/v1/ozone-depleting-substance-consumptions');
+        const res = await fetch('https://sos2526-22.onrender.com/api/v1/ozone-depleting-substance-consumptions/loadInitialData');
         if (!res.ok) throw new Error(`HCFC API error: ${res.status}`);
         const data = await res.json();
         
@@ -41,7 +46,6 @@
         const allYearsSet = new Set();
         
         data.forEach(item => {
-            // Excluir world y asia
             if (item.country === 'world' || item.country === 'asia') return;
             
             const year = item.year;
@@ -66,21 +70,6 @@
         
         const allYears = Array.from(allYearsSet).sort((a, b) => a - b);
         console.log(`✅ Años disponibles: ${allYears.length} años`, allYears);
-        console.log(`✅ Sustancias por año: ${bySubstanceAndYear.size} entradas`);
-        
-        // Debug por sustancia
-        for (const substance of Object.keys(sustanciaToFranquicia)) {
-            const yearsWithData = [];
-            for (const year of allYears) {
-                const key = `${substance}|${year}`;
-                if (bySubstanceAndYear.get(key) > 0) {
-                    yearsWithData.push(year);
-                }
-            }
-            if (yearsWithData.length > 0) {
-                console.log(`   📍 ${substance}: años ${yearsWithData.join(', ')}`);
-            }
-        }
         
         return { bySubstanceAndYear, allYears };
     }
@@ -108,10 +97,8 @@
             loading = true;
             error = null;
 
-            // Obtener datos de HCFC
             const { bySubstanceAndYear, allYears } = await fetchHCFCData();
             
-            // Obtener shows de TVmaze
             const showsTemp = new Map();
             for (const [franquicia, searchTerm] of Object.entries(franquiciaToSearchTerm)) {
                 const count = await fetchShowsByFranquicia(franquicia, searchTerm);
@@ -119,7 +106,6 @@
             }
             showsByFranquicia = showsTemp;
             
-            // Usar los años reales de tu API
             const yearsArray = allYears;
             years = yearsArray;
             console.log(`📅 Años a mostrar: ${years.length} años`, years);
@@ -128,7 +114,7 @@
                 throw new Error('No se encontraron datos de HCFC');
             }
             
-            // Preparar datos para heatmap
+            // Preparar datos para heatmap con ESCALA LOGARÍTMICA
             const heatDataTemp = [];
             const tableItems = [];
             
@@ -142,25 +128,27 @@
                 for (let j = 0; j < years.length; j++) {
                     const year = years[j];
                     const key = `${sustancia}|${year}`;
-                    const consumo = bySubstanceAndYear.get(key) || 0;
+                    const consumoRaw = bySubstanceAndYear.get(key) || 0;
+                    // Aplicamos transformación logarítmica para escalar
+                    const consumoLog = transformLog(consumoRaw);
                     
-                    heatDataTemp.push([i, j, consumo]);
+                    heatDataTemp.push([i, j, consumoLog, consumoRaw]); // guardamos también el raw para tooltip y label
                     
                     tableItems.push({
                         franquicia,
                         sustancia,
                         year,
-                        consumo,
+                        consumo: consumoRaw,
                         shows: showsCount
                     });
                 }
             }
             
-            heatData = heatDataTemp;
-            console.log(`📊 Heatmap data points: ${heatData.length} (${franquicias.length} franquicias x ${years.length} años)`);
-            console.log(`🔥 Ejemplo de datos:`, heatData.slice(0, 5));
+            // Usamos los valores logarítmicos para el color, pero guardamos los raw
+            heatData = heatDataTemp.map(([i, j, logVal, rawVal]) => [i, j, logVal, rawVal]);
+            console.log(`📊 Heatmap data points: ${heatData.length} (log transform applied)`);
             
-            // Calcular resumen para la tabla
+            // Calcular resumen para la tabla (usando valores raw)
             const summary = [];
             for (const [sustancia, franquicia] of Object.entries(sustanciaToFranquicia)) {
                 const items = tableItems.filter(t => t.franquicia === franquicia);
@@ -190,33 +178,16 @@
             return;
         }
         
-        console.log('🎨 Dibujando heatmap...');
+        console.log('🎨 Dibujando heatmap con escala logarítmica...');
         
         if (chart) chart.dispose();
         chart = echarts.init(chartContainer);
         
-        const maxConsumo = Math.max(...heatData.map(d => d[2]), 1000);
-        console.log(`🎨 Escala: max consumo = ${maxConsumo}`);
+        // El máximo ahora es el valor logarítmico máximo
+        const maxLogVal = Math.max(...heatData.map(d => d[2]), 0.1);
+        console.log(`🎨 Escala log: max = ${maxLogVal}`);
         
         chart.setOption({
-            title: {
-                text: '🎬 Consumo de sustancias vs Franquicias cinematográficas',
-                subtext: 'Heatmap de consumo (toneladas) por sustancia/franquicia y año',
-                left: 'center'
-            },
-            tooltip: {
-                trigger: 'item',
-                formatter: (params) => {
-                    const franquicia = franquicias[params.data[0]];
-                    const year = years[params.data[1]];
-                    const consumo = params.data[2];
-                    const shows = showsByFranquicia.get(franquicia);
-                    if (consumo === 0) {
-                        return `<strong>${franquicia}</strong><br/>Año: ${year}<br/>Sin datos de consumo<br/>Shows: ${shows}`;
-                    }
-                    return `<strong>${franquicia}</strong><br/>Año: ${year}<br/>Consumo: ${consumo.toLocaleString()} toneladas<br/>Shows: ${shows}`;
-                }
-            },
             xAxis: {
                 type: 'category',
                 data: franquicias,
@@ -231,30 +202,31 @@
             },
             visualMap: {
                 min: 0,
-                max: maxConsumo,
+                max: maxLogVal,
                 calculable: true,
                 orient: 'horizontal',
                 left: 'center',
                 bottom: 10,
                 inRange: {
-                    color: ['#f0f0f0', '#ffcccc', '#ff9999', '#ff6666', '#ff3333', '#cc0000']
+                    color: ['#ffffcc', '#a1dab4', '#41b6c4', '#2c7fb8', '#253494', '#c03b2b']
                 },
                 outOfRange: { color: '#f0f0f0' },
-                text: ['Alto consumo', 'Bajo consumo'],
+                text: ['Alto consumo (log)', 'Bajo consumo (log)'],
                 textStyle: { color: '#333' }
             },
             series: [{
                 name: 'Consumo (toneladas)',
                 type: 'heatmap',
-                data: heatData,
+                data: heatData.map(d => [d[0], d[1], d[2]]), // pasamos solo i,j,logVal para el color
                 label: {
                     show: true,
                     formatter: (params) => {
-                        const consumo = params.data[2];
-                        if (consumo === 0) return '—';
-                        if (consumo > 1000000) return `${(consumo / 1000000).toFixed(1)}M`;
-                        if (consumo > 1000) return `${(consumo / 1000).toFixed(0)}k`;
-                        return consumo.toString();
+                        // Buscar el valor raw correspondiente
+                        const rawValue = heatData.find(d => d[0] === params.data[0] && d[1] === params.data[1])?.[3] || 0;
+                        if (rawValue === 0) return '—';
+                        if (rawValue > 1000000) return `${(rawValue / 1000000).toFixed(1)}M`;
+                        if (rawValue > 1000) return `${(rawValue / 1000).toFixed(0)}k`;
+                        return rawValue.toString();
                     },
                     fontSize: 9,
                     color: '#333'
@@ -280,11 +252,10 @@
             }
         });
         
-        console.log('🎉 Heatmap renderizado correctamente');
+        console.log('🎉 Heatmap renderizado correctamente con escala logarítmica');
         setTimeout(() => chart?.resize(), 100);
     }
 
-    // $effect para dibujar cuando el contenedor esté listo
     $effect(() => {
         if (chartContainer && heatData.length > 0 && years.length > 0) {
             console.log('✅ Contenedor y datos listos, dibujando...');
@@ -297,9 +268,15 @@
     });
 </script>
 
-<div class="heatmap-container">
-    <h2>🎬 Franquicias vs 🌍 Consumo de sustancias</h2>
-    <p class="desc">Cada sustancia está asociada a una franquicia. El color rojo indica mayor consumo. El número en cada celda es el consumo en toneladas (k = miles, M = millones).</p>
+<div class="container">
+    <h1>🎬 Franquicias cinematográficas vs Consumo de Sustancias de Ozono</h1>
+    <p class="subtitle">Datos de <strong>API propia</strong> (consumo de sustancias por año) y <strong>TVMaze API</strong> (número de shows por franquicia)</p>
+
+    <div class="info-api">
+        <p><strong>API 1 (propia):</strong> Ozone Depleting Substance Consumptions — <code>/api/v1/ozone-depleting-substance-consumptions</code></p>
+        <p><strong>API 2 (externa):</strong> TVMaze Search API — <code>https://api.tvmaze.com/search/shows?q=batman</code></p>
+        <p><strong>Integración:</strong> A cada sustancia de la API de ozono se le asocia una franquicia cinematográfica. El heatmap muestra el consumo de cada sustancia por año. El número de shows encontrados en TVMaze para cada franquicia aparece en la tabla.</p>
+    </div>
     
     {#if loading}
         <div class="status">📡 Cargando datos de HCFC y buscando series en TVmaze...</div>
@@ -328,12 +305,12 @@
                 {/each}
             </tbody>
         </table>
-        <p class="note">* Datos de HCFC de la API propia (excluyendo world/asia). Series de TVmaze (búsqueda directa por nombre de franquicia).</p>
+        <p class="note">* Datos de HCFC de la API propia (excluyendo world/asia). Series de TVmaze (búsqueda directa por nombre de franquicia). La escala de colores usa log10(consumo+1) para equilibrar visualmente.</p>
     {/if}
 </div>
 
 <style>
-    .heatmap-container {
+    .container {
         max-width: 1100px;
         margin: 2rem auto;
         padding: 1.5rem;
@@ -342,17 +319,19 @@
         box-shadow: 0 8px 20px rgba(0,0,0,0.08);
         font-family: system-ui, sans-serif;
     }
-    h2 {
+    h1 {
+        color: #2085d8;
         text-align: center;
-        margin-bottom: 0.25rem;
-        font-size: 1.3rem;
+        margin-bottom: 0.5rem;
+        font-size: 1.8rem;
     }
-    .desc {
+
+    .subtitle {
         text-align: center;
-        color: #555;
-        font-size: 0.85rem;
+        color: #666;
         margin-bottom: 1.5rem;
     }
+   
     .status {
         background: #f5f5f5;
         padding: 2rem;

@@ -287,7 +287,7 @@
 
     {#if !loading && !error}
         <div class="table-container">
-            <h3>📋 Datos agregados por año (mundial)</h3>
+            <h3>Datos por año (mundial)</h3>
             <div class="table-wrapper">
                 <table>
                     <thead>
