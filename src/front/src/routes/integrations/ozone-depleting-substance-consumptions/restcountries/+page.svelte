@@ -8,6 +8,11 @@
     let sankeyData = $state({ nodes: [], links: [] });
     let countryDetails = $state([]);
     
+    // Función de escala logarítmica
+    function logScale(value) {
+        return Math.log10(value + 1);
+    }
+    
     onMount(async () => {
         await fetchData();
     });
@@ -17,14 +22,14 @@
             loading = true;
             
             // 1. Obtener datos de Ozone
-            const ozoneRes = await fetch('https://sos2526-22.onrender.com/api/v1/ozone-depleting-substance-consumptions');
+            const ozoneRes = await fetch('https://sos2526-22.onrender.com/api/v1/ozone-depleting-substance-consumptions/loadInitialData');
             const ozoneData = await ozoneRes.json();
             
             // 2. Agrupar HCFC por país
             const countryHCFC = {};
             ozoneData.forEach(item => {
                 const country = item.country;
-                const hcfc = item.hcfc || 0;
+                const hcfc = Math.abs(item.hcfc || 0);
                 if (country && country !== 'world' && country !== 'asia' && hcfc > 0) {
                     countryHCFC[country] = (countryHCFC[country] || 0) + hcfc;
                 }
@@ -47,8 +52,11 @@
                 
                 try {
                     let countryName = country;
-                    if (country === 'United States') countryName = 'usa';
-                    if (country === 'United Kingdom') countryName = 'uk';
+                    if (country === 'united-states') countryName = 'usa';
+                    if (country === 'united-kingdom') countryName = 'uk';
+                    if (country === 'china') countryName = 'china';
+                    if (country === 'japan') countryName = 'japan';
+                    if (country === 'mexico') countryName = 'mexico';
                     
                     const restRes = await fetch(`https://restcountries.com/v3.1/name/${encodeURIComponent(countryName)}`);
                     if (restRes.ok) {
@@ -62,9 +70,13 @@
                     console.log(`Error con ${country}:`, e);
                 }
                 
+                // Aplicar escala logarítmica para visualización
+                const hcfcScaled = logScale(hcfc);
+                
                 countriesData.push({
                     name: country,
                     hcfc: hcfc,
+                    hcfcScaled: hcfcScaled,  // ← Valor escalado para el Sankey
                     population: population,
                     area: area,
                     gini: gini,
@@ -78,19 +90,19 @@
             
             countryDetails = countriesData;
             
-            // 5. Preparar datos para Sankey
+            // Preparar datos para Sankey con ESCALA LOGARÍTMICA
             const nodes = [];
             const links = [];
             
             // Nodo raíz
             nodes.push({ name: 'Consumo HCFC Mundial', itemStyle: { color: '#1e3a8a' } });
             
-            // Nodos de países (con su consumo)
+            // Nodos de países (con su consumo escalado)
             countriesData.forEach(c => {
                 nodes.push({ 
                     name: c.name, 
                     itemStyle: { color: c.hcfc > 10000 ? '#dc2626' : c.hcfc > 1000 ? '#f97316' : '#10b981' },
-                    value: c.hcfc
+                    value: c.hcfcScaled  // ← Usamos valor escalado
                 });
             });
             
@@ -100,27 +112,28 @@
                 nodes.push({ name: `Población: ${cat}`, itemStyle: { color: '#8b5cf6' } });
             });
             
-            // Links: Mundo -> País
+            // Links: Mundo -> País (usando valor escalado)
             countriesData.forEach(c => {
                 links.push({
                     source: 'Consumo HCFC Mundial',
                     target: c.name,
-                    value: c.hcfc
+                    value: c.hcfcScaled  // ← Usamos valor escalado
                 });
             });
             
-            // Links: País -> Categoría de población
+            // Links: País -> Categoría de población (usando valor escalado)
             countriesData.forEach(c => {
                 links.push({
                     source: c.name,
                     target: `Población: ${c.populationGroup}`,
-                    value: c.hcfc
+                    value: c.hcfcScaled  // ← Usamos valor escalado
                 });
             });
             
             sankeyData = { nodes, links };
             
-            console.log('Sankey Data:', sankeyData);
+            console.log('Sankey Data (con escala logarítmica):', sankeyData);
+            console.log('Valores originales HCFC:', countriesData.map(c => ({ name: c.name, original: c.hcfc, logScaled: c.hcfcScaled.toFixed(2) })));
             
             setTimeout(() => {
                 createSankeyChart();
@@ -151,14 +164,6 @@
         chart = echarts.init(container);
         
         const option = {
-            title: {
-                text: 'Flujo: Consumo HCFC y Población por País',
-                subtext: 'Grosor = Consumo (t) | Color rojo = alto consumo | Morado = categoría población',
-                left: 'center',
-                top: 5,
-                textStyle: { fontSize: 16, color: '#0369a1', fontFamily: 'Arial, sans-serif' },
-                subtextStyle: { fontSize: 12, color: '#666', fontFamily: 'Arial, sans-serif' }
-            },
             tooltip: {
                 trigger: 'item',
                 triggerOn: 'mousemove',
@@ -168,14 +173,19 @@
                         if (country) {
                             return `<b>${country.name}</b><br/>
                                     💨 HCFC: ${country.hcfc.toLocaleString()} t<br/>
+                                    📊 log10(HCFC+1): ${country.hcfcScaled.toFixed(2)}<br/>
                                     👥 Población: ${country.population.toLocaleString()}<br/>
                                     🗺️ Área: ${country.area.toLocaleString()} km²<br/>
                                     📊 GINI: ${country.gini}<br/>
                                     📈 Per cápita: ${country.hcfcPerCapita.toFixed(2)} kg`;
                         }
-                        return `<b>${params.name}</b><br/>Valor: ${params.value?.toLocaleString() || 0}`;
+                        return `<b>${params.name}</b><br/>Valor escalado: ${params.value?.toFixed(2) || 0}`;
                     } else {
-                        return `<b>${params.data.source} → ${params.data.target}</b><br/>Consumo: ${params.data.value.toLocaleString()} t`;
+                        const originalCountry = countryDetails.find(c => c.name === params.data.target);
+                        const originalValue = originalCountry ? originalCountry.hcfc : 0;
+                        return `<b>${params.data.source} → ${params.data.target}</b><br/>
+                                Consumo escalado: ${params.data.value.toFixed(2)}<br/>
+                                Consumo original: ${originalValue.toLocaleString()} t`;
                     }
                 }
             },
@@ -209,7 +219,6 @@
                     borderWidth: 1,
                     borderColor: '#fff'
                 },
-                // Nivel de detalle: cuanto más alto, más se ven los valores
                 nodeAlign: 'justify'
             }]
         };
@@ -219,18 +228,17 @@
     }
 </script>
 
-<div class="integration-container">
-    <h1>Consumo HCFC vs Datos Demográficos</h1>
-    <p class="subtitle">Sankey Chart: Flujo de consumo por país y categoría de población</p>
-    
+<div class="container">
+    <h1>📈 Consumo HCFC vs Datos Demográficos</h1>
+    <p class="subtitle">Datos de <strong>API propia</strong> (consumo de HCFC por país) y <strong>REST Countries API</strong> (población, área y GINI por país)</p>
+
     <div class="info-api">
-        <p><strong>API 1:</strong> Ozone Depleting Substance - Consumo HCFC (Grupo 22)</p>
-        <p><strong>API 2:</strong> REST Countries - Población, Área y GINI</p>
-        <p><strong>Widget:</strong> Sankey con <strong>ECharts</strong></p>
-        <p><strong>Interpretación:</strong> El grosor de las líneas representa el consumo de HCFC | Los nodos muestran país y consumo | El color rojo indica alto consumo</p>
+        <p><strong>API 1 (propia):</strong> Ozone Depleting Substance Consumptions — <code>/api/v1/ozone-depleting-substance-consumptions</code></p>
+        <p><strong>API 2 (restCountry):</strong> REST Countries API— <code>https://restcountries.com/v3.1/name/mexico</code></p>
+        <p><strong>Integración:</strong> La gráfica muestra el flujo desde el consumo mundial de HFCF hacia cada país y de ahí hacia su categoría de población.</p>
     </div>
     
-    <div class="loading-overlay">
+    <div class="loading-overlay" style="display: flex;">
         <div class="spinner"></div>
         <p>Cargando datos...</p>
     </div>
@@ -248,6 +256,7 @@
                         <tr>
                             <th>País</th>
                             <th>HCFC (t)</th>
+                            <th>log10(HCFC+1)</th>
                             <th>Población</th>
                             <th>Área (km²)</th>
                             <th>GINI</th>
@@ -260,6 +269,7 @@
                             <tr>
                                 <td><strong>{item.name}</strong></td>
                                 <td>{item.hcfc.toLocaleString()}</td>
+                                <td>{item.hcfcScaled.toFixed(2)}</td>
                                 <td>{item.population.toLocaleString()}</td>
                                 <td>{item.area.toLocaleString()}</td>
                                 <td>{item.gini}</td>
@@ -273,41 +283,39 @@
         </div>
         
         <div class="info">
-            <h3>Interpretación</h3>
+            <h3>Sobre esta integración</h3>
             <ul>
-                <li><strong>Sankey Diagram:</strong> Flujo desde consumo mundial → países → categorías de población</li>
-                <li><strong>Grosor de línea:</strong> Volumen de consumo de HCFC en toneladas</li>
-                <li><strong>Color de países:</strong> Rojo = alto consumo, Naranja = medio, Verde = bajo</li>
-                <li><strong>Node detail:</strong> Cada país muestra su nombre y consumo en la etiqueta</li>
-                <li><strong>Tooltip:</strong> Al pasar el ratón muestra población, área, GINI y consumo per cápita</li>
+                <li><strong>Biblioteca:</strong> ECharts | <strong>Tipo:</strong> Sankey (diagrama de flujo)</li>
+                <li><strong>Nodo izquierdo:</strong> Consumo HCFC mundial</li>
+                <li><strong>Nodos centrales:</strong> Países</li>
+                <li><strong>Nodos derecha:</strong> Categorías de población (>100M, 50M-100M, 10M-50M)</li>
+                <li><strong>📏 Grosor de líneas:</strong> Proporcional a log10(HCFC+1) (escala logarítmica)</li>
+                <li><strong>🎨 Color nodo país:</strong> rojo = alto, naranja = medio, verde = bajo</li>
             </ul>
+            
         </div>
     {/if}
 </div>
 
 <style>
-    .integration-container {
-        max-width: 1200px;
+    .container {
+        max-width: 1000px;
         margin: 0 auto;
         padding: 2rem;
-        background: white;
-        border-radius: 16px;
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-        position: relative;
-        min-height: 600px;
+        font-family: 'Segoe UI', sans-serif;
+        color: #333;
     }
-    
-    h1 { color: #0369a1; text-align: center; margin-bottom: 0.5rem; }
-    .subtitle { text-align: center; color: #666; margin-bottom: 1rem; }
-    
+    h1 { color: #2085d8; text-align: center; margin-bottom: 0.5rem; font-size: 1.8rem; }
+    .subtitle { text-align: center; color: #666; margin-bottom: 1.5rem; }
     .info-api {
         background: #f0f9ff;
         padding: 0.75rem 1rem;
         border-radius: 8px;
         margin-bottom: 1.5rem;
-        font-size: 0.85rem;
-        border-left: 4px solid #0284c7;
+        border-left: 4px solid #2085d8;
     }
+    .info-api p { margin: 0.3rem 0; }
+    .info-api code { background: #e2e8f0; padding: 0.2rem 0.4rem; border-radius: 4px; }
     
     .loading-overlay {
         position: absolute;

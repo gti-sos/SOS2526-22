@@ -28,16 +28,7 @@
         'singapore': 'Singapur'
     };
 
-    // Valores de fallback (datos reales obtenidos previamente vía proxy)
-    const fallbackRepos = {
-        'Python': 28915715,
-        'JavaScript': 43988933,
-        'TypeScript': 15283823,
-        'PHP': 6117522,
-        'Java': 20792007,
-        'Ruby': 2955404,
-        'Go': 2305789
-    };
+
 
     // Escala logarítmica (base 10) con desplazamiento para evitar log(0)
     function applyLog(value) {
@@ -52,7 +43,7 @@
 
             // 1. Cargar HCFC (tu API)
             console.log('📡 Solicitando HCFC...');
-            const resOzone = await fetch('/api/v1/ozone-depleting-substance-consumptions');
+            const resOzone = await fetch('/api/v1/ozone-depleting-substance-consumptions/loadInitialData');
             if (!resOzone.ok) throw new Error(`HTTP ${resOzone.status} - Ozono`);
             const ozoneData = await resOzone.json();
             const ozoneValidos = ozoneData.filter(d => countryToLanguage[d.country]);
@@ -77,7 +68,7 @@
                 if (reposMap[language] !== undefined) continue;
                 
                 let success = false;
-                let retries = 3;  // aumentado a 3 reintentos
+                let retries = 7;  // aumentado a 7 reintentos
                 let lastError = null;
                 
                 while (retries >= 0 && !success) {
@@ -93,10 +84,10 @@
                         }
                     } catch (e) {
                         lastError = e;
-                        console.warn(`   ⚠️ Error con ${language} (intento ${4-retries}/4):`, e.message);
+                        console.warn(`   ⚠️ Error con ${language} (intento ${7-retries}/7):`, e.message);
                         retries--;
                         if (retries < 0) {
-                            throw new Error(`No se pudo obtener datos de GitHub para ${language} después de 4 intentos. Proxy no disponible.`);
+                            throw new Error(`No se pudo obtener datos de GitHub para ${language} después de 7 intentos. Proxy no disponible.`);
                         } else {
                             await new Promise(r => setTimeout(r, 2000)); // espera 2 segundos
                         }

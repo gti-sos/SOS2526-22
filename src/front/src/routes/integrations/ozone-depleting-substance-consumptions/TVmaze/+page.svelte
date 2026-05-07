@@ -7,32 +7,9 @@
     let chartContainer = $state(null);
     let chart = null;
     let tableData = $state([]);
-    let franquiciaSummary = $state([]);
-    let heatData = $state([]);
-    let years = $state([]);
-    let showsByFranquicia = $state(new Map());
 
-    const sustanciaToFranquicia = {
-        'hcfc': 'Batman',
-        'methyl_bromide': 'Superman',
-        'carbon_tetrachloride': 'Spiderman',
-        'halon': 'Ironman',
-        'cfc': 'Thor',
-        'methyl_chloroform': 'Hulk'
-    };
-
-    const franquicias = Object.values(sustanciaToFranquicia);
-    const franquiciaToSearchTerm = {
-        'Batman': 'batman',
-        'Superman': 'superman',
-        'Spiderman': 'spiderman',
-        'Ironman': 'ironman',
-        'Thor': 'thor',
-        'Hulk': 'hulk'
-    };
-
-    // Transformación logarítmica para escalar los datos
-    function transformLog(value) {
+    // Función de escala logarítmica
+    function logScale(value) {
         return Math.log10(value + 1);
     }
 
@@ -42,54 +19,56 @@
         if (!res.ok) throw new Error(`HCFC API error: ${res.status}`);
         const data = await res.json();
         
-        const bySubstanceAndYear = new Map();
-        const allYearsSet = new Set();
-        
+        const byYear = new Map();
         data.forEach(item => {
             if (item.country === 'world' || item.country === 'asia') return;
-            
             const year = item.year;
-            allYearsSet.add(year);
-            
-            const substances = {
-                'hcfc': Math.abs(item.hcfc || 0),
-                'methyl_bromide': Math.abs(item.methyl_bromide || 0),
-                'carbon_tetrachloride': Math.abs(item.carbon_tetrachloride || 0),
-                'halon': Math.abs(item.halon || 0),
-                'cfc': Math.abs(item.cfc || 0),
-                'methyl_chloroform': Math.abs(item.methyl_chloroform || 0)
-            };
-            
-            for (const [substance, value] of Object.entries(substances)) {
-                if (value > 0) {
-                    const key = `${substance}|${year}`;
-                    bySubstanceAndYear.set(key, (bySubstanceAndYear.get(key) || 0) + value);
-                }
-            }
+            const hcfc = Math.abs(item.hcfc || 0);
+            byYear.set(year, (byYear.get(year) || 0) + hcfc);
         });
         
-        const allYears = Array.from(allYearsSet).sort((a, b) => a - b);
-        console.log(`✅ Años disponibles: ${allYears.length} años`, allYears);
-        
-        return { bySubstanceAndYear, allYears };
+        console.log('✅ HCFC por año (valores originales):', Array.from(byYear.entries()));
+        return byYear;
     }
 
-    async function fetchShowsByFranquicia(franquicia, searchTerm) {
-        console.log(`🔍 Buscando ${franquicia} (${searchTerm})...`);
-        const url = `https://api.tvmaze.com/search/shows?q=${encodeURIComponent(searchTerm)}`;
+    async function fetchBatmanData() {
+        console.log('🦇 Buscando Batman en TVmaze...');
+        const url = 'https://api.tvmaze.com/search/shows?q=batman';
         const res = await fetch(url);
         if (!res.ok) throw new Error(`TVmaze error: ${res.status}`);
         const data = await res.json();
         
-        const uniqueShows = new Set();
-        data.forEach(item => {
-            if (item.show && item.show.id) {
-                uniqueShows.add(item.show.id);
+        // Primeros 10 resultados
+        const top10 = data.slice(0, 10);
+        console.log('Top 10 resultados:', top10.map(t => ({ name: t.show.name, weight: t.show.weight, year: t.show.premiered?.split('-')[0] })));
+        
+        // Agrupar weight por año de estreno
+        const byYear = new Map();
+        top10.forEach(item => {
+            const show = item.show;
+            const premiered = show?.premiered;
+            const weight = show?.weight || 0;
+            
+            if (premiered) {
+                const year = parseInt(premiered.split('-')[0]);
+                if (!isNaN(year)) {
+                    const existing = byYear.get(year) || { 
+                        totalWeight: 0, 
+                        count: 0, 
+                        shows: [],
+                        maxWeight: 0 
+                    };
+                    existing.totalWeight += weight;
+                    existing.count++;
+                    existing.shows.push(`${show.name} (weight: ${weight})`);
+                    if (weight > existing.maxWeight) existing.maxWeight = weight;
+                    byYear.set(year, existing);
+                }
             }
         });
         
-        console.log(`   ${franquicia}: ${uniqueShows.size} shows encontrados`);
-        return uniqueShows.size;
+        console.log('Weight por año:', Array.from(byYear.entries()).map(([y, d]) => ({ year: y, totalWeight: d.totalWeight, count: d.count })));
+        return byYear;
     }
 
     async function loadData() {
@@ -97,67 +76,152 @@
             loading = true;
             error = null;
 
-            const { bySubstanceAndYear, allYears } = await fetchHCFCData();
+            const [hcfcByYear, batmanByYear] = await Promise.all([
+                fetchHCFCData(),
+                fetchBatmanData()
+            ]);
             
-            const showsTemp = new Map();
-            for (const [franquicia, searchTerm] of Object.entries(franquiciaToSearchTerm)) {
-                const count = await fetchShowsByFranquicia(franquicia, searchTerm);
-                showsTemp.set(franquicia, count);
-            }
-            showsByFranquicia = showsTemp;
+            const allYearsSet = new Set();
+            for (const year of hcfcByYear.keys()) allYearsSet.add(year);
+            for (const year of batmanByYear.keys()) allYearsSet.add(year);
             
-            const yearsArray = allYears;
-            years = yearsArray;
-            console.log(`📅 Años a mostrar: ${years.length} años`, years);
+            const years = Array.from(allYearsSet).sort((a, b) => a - b);
             
-            if (years.length === 0) {
-                throw new Error('No se encontraron datos de HCFC');
-            }
+            const hcfcOriginal = [];
+            const hcfcScaled = [];      // ← Escala logarítmica
+            const batmanWeightValues = [];
+            const batmanDetails = [];
             
-            // Preparar datos para heatmap con ESCALA LOGARÍTMICA
-            const heatDataTemp = [];
-            const tableItems = [];
-            
-            for (let i = 0; i < franquicias.length; i++) {
-                const franquicia = franquicias[i];
-                const sustancia = Object.keys(sustanciaToFranquicia).find(
-                    key => sustanciaToFranquicia[key] === franquicia
-                );
-                const showsCount = showsTemp.get(franquicia) || 0;
+            for (const year of years) {
+                const hcfc = hcfcByYear.get(year) || 0;
+                const batmanData = batmanByYear.get(year);
+                const batmanWeight = batmanData ? batmanData.totalWeight : 0;
                 
-                for (let j = 0; j < years.length; j++) {
-                    const year = years[j];
-                    const key = `${sustancia}|${year}`;
-                    const consumoRaw = bySubstanceAndYear.get(key) || 0;
-                    // Aplicamos transformación logarítmica para escalar
-                    const consumoLog = transformLog(consumoRaw);
-                    
-                    heatDataTemp.push([i, j, consumoLog, consumoRaw]); // guardamos también el raw para tooltip y label
-                    
-                    tableItems.push({
-                        franquicia,
-                        sustancia,
-                        year,
-                        consumo: consumoRaw,
-                        shows: showsCount
-                    });
-                }
+                hcfcOriginal.push(hcfc);
+                hcfcScaled.push(logScale(hcfc));      // ← Aplicamos log10(valor + 1)
+                batmanWeightValues.push(batmanWeight);
+                batmanDetails.push(batmanData ? batmanData.shows : []);
+                
+                tableData.push({
+                    year,
+                    hcfc: hcfc.toLocaleString(),
+                    hcfcLog: logScale(hcfc).toFixed(2),
+                    batmanWeight,
+                    batmanCount: batmanData ? batmanData.count : 0,
+                    batmanShows: batmanData ? batmanData.shows.join('; ') : 'Sin datos'
+                });
             }
             
-            // Usamos los valores logarítmicos para el color, pero guardamos los raw
-            heatData = heatDataTemp.map(([i, j, logVal, rawVal]) => [i, j, logVal, rawVal]);
-            console.log(`📊 Heatmap data points: ${heatData.length} (log transform applied)`);
+            console.log('Valores escalados (log10):', hcfcScaled);
+            console.log('Valores Batman weight:', batmanWeightValues);
             
-            // Calcular resumen para la tabla (usando valores raw)
-            const summary = [];
-            for (const [sustancia, franquicia] of Object.entries(sustanciaToFranquicia)) {
-                const items = tableItems.filter(t => t.franquicia === franquicia);
-                const totalConsumo = items.reduce((sum, t) => sum + t.consumo, 0);
-                const shows = items[0]?.shows || 0;
-                summary.push({ sustancia, franquicia, totalConsumo, shows });
+            if (chartContainer) {
+                if (chart) chart.dispose();
+                chart = echarts.init(chartContainer);
+                
+                chart.setOption({
+                    tooltip: {
+                        trigger: 'axis',
+                        axisPointer: { type: 'shadow' },
+                        formatter: (params) => {
+                            const idx = params[0].dataIndex;
+                            const year = years[idx];
+                            let result = `<strong>Año ${year}</strong><br/>`;
+                            params.forEach(p => {
+                                const value = p.value;
+                                if (p.seriesName.includes('HCFC')) {
+                                    const originalValue = hcfcOriginal[idx];
+                                    result += `${p.marker} Consumo HCFC: ${originalValue.toLocaleString()} toneladas<br/>`;
+                                    result += `<span style="margin-left:20px">📊 log10(${originalValue.toLocaleString()}+1) = ${value.toFixed(2)}</span><br/>`;
+                                } else {
+                                    result += `${p.marker} Weight Batman (acumulado): ${value}<br/>`;
+                                    const shows = batmanDetails[idx];
+                                    if (shows.length > 0) {
+                                        result += `<span style="margin-left:20px">📺 ${shows.join('<br/>  ')}</span><br/>`;
+                                    }
+                                }
+                            });
+                            return result;
+                        }
+                    },
+                    legend: {
+                        data: ['log10(HCFC + 1)', 'Weight Batman (acumulado)'],
+                        left: 'left',
+                        top: 40
+                    },
+                    grid: {
+                        containLabel: true,
+                        left: '8%',
+                        right: '8%',
+                        top: '18%',
+                        bottom: '8%'
+                    },
+                    yAxis: {
+                        type: 'category',
+                        data: years,
+                        name: 'Año',
+                        nameLocation: 'middle',
+                        nameGap: 50,
+                        axisLabel: { fontSize: 11 }
+                    },
+                    // DOS ESCALAS INDEPENDIENTES (ahora ambas en rangos similares)
+                    xAxis: [
+                        {
+                            type: 'value',
+                            name: 'log10(HCFC + 1)',
+                            nameLocation: 'middle',
+                            nameGap: 35,
+                            position: 'bottom',
+                            axisLabel: { formatter: (v) => v.toFixed(1) },
+                            min: 0,
+                            max: Math.max(...hcfcScaled, 6)
+                        },
+                        {
+                            type: 'value',
+                            name: 'Weight Batman (acumulado)',
+                            nameLocation: 'middle',
+                            nameGap: 35,
+                            position: 'top',
+                            axisLabel: { formatter: (v) => v.toFixed(0) },
+                            splitLine: { show: false },
+                            min: 0,
+                            max: Math.max(...batmanWeightValues, 100)
+                        }
+                    ],
+                    series: [
+                        {
+                            name: 'log10(HCFC + 1)',
+                            type: 'bar',
+                            data: hcfcScaled,
+                            itemStyle: { color: '#2085d8', borderRadius: [0, 4, 4, 0] },
+                            xAxisIndex: 0,
+                            barWidth: '35%',
+                            label: {
+                                show: true,
+                                position: 'right',
+                                formatter: (p) => p.value.toFixed(2),
+                                fontSize: 9
+                            }
+                        },
+                        {
+                            name: 'Weight Batman (acumulado)',
+                            type: 'bar',
+                            data: batmanWeightValues,
+                            itemStyle: { color: '#f59e0b', borderRadius: [0, 4, 4, 0] },
+                            xAxisIndex: 1,
+                            barWidth: '35%',
+                            label: {
+                                show: true,
+                                position: 'right',
+                                formatter: (p) => p.value.toFixed(0),
+                                fontSize: 9
+                            }
+                        }
+                    ]
+                });
             }
-            franquiciaSummary = summary;
-            tableData = tableItems;
+            
+            console.log('🎉 Gráfico con escala logarítmica renderizado correctamente');
             
         } catch (err) {
             console.error('❌ Error:', err);
@@ -167,157 +231,55 @@
         }
     }
 
-    function drawChart() {
-        if (!chartContainer) {
-            console.log('⏳ Esperando contenedor...');
-            return;
-        }
-        
-        if (heatData.length === 0 || years.length === 0) {
-            console.log('⏳ Sin datos aún...');
-            return;
-        }
-        
-        console.log('🎨 Dibujando heatmap con escala logarítmica...');
-        
-        if (chart) chart.dispose();
-        chart = echarts.init(chartContainer);
-        
-        // El máximo ahora es el valor logarítmico máximo
-        const maxLogVal = Math.max(...heatData.map(d => d[2]), 0.1);
-        console.log(`🎨 Escala log: max = ${maxLogVal}`);
-        
-        chart.setOption({
-            xAxis: {
-                type: 'category',
-                data: franquicias,
-                name: 'Franquicia / Sustancia',
-                axisLabel: { rotate: 45, interval: 0, fontSize: 11 }
-            },
-            yAxis: {
-                type: 'category',
-                data: years,
-                name: 'Año',
-                axisLabel: { fontSize: 11 }
-            },
-            visualMap: {
-                min: 0,
-                max: maxLogVal,
-                calculable: true,
-                orient: 'horizontal',
-                left: 'center',
-                bottom: 10,
-                inRange: {
-                    color: ['#ffffcc', '#a1dab4', '#41b6c4', '#2c7fb8', '#253494', '#c03b2b']
-                },
-                outOfRange: { color: '#f0f0f0' },
-                text: ['Alto consumo (log)', 'Bajo consumo (log)'],
-                textStyle: { color: '#333' }
-            },
-            series: [{
-                name: 'Consumo (toneladas)',
-                type: 'heatmap',
-                data: heatData.map(d => [d[0], d[1], d[2]]), // pasamos solo i,j,logVal para el color
-                label: {
-                    show: true,
-                    formatter: (params) => {
-                        // Buscar el valor raw correspondiente
-                        const rawValue = heatData.find(d => d[0] === params.data[0] && d[1] === params.data[1])?.[3] || 0;
-                        if (rawValue === 0) return '—';
-                        if (rawValue > 1000000) return `${(rawValue / 1000000).toFixed(1)}M`;
-                        if (rawValue > 1000) return `${(rawValue / 1000).toFixed(0)}k`;
-                        return rawValue.toString();
-                    },
-                    fontSize: 9,
-                    color: '#333'
-                },
-                emphasis: {
-                    itemStyle: {
-                        shadowBlur: 10,
-                        shadowColor: 'rgba(0,0,0,0.5)'
-                    }
-                },
-                itemStyle: {
-                    borderColor: '#fff',
-                    borderWidth: 1
-                }
-            }],
-            backgroundColor: '#ffffff',
-            grid: {
-                containLabel: true,
-                top: 60,
-                bottom: 60,
-                left: 80,
-                right: 20
-            }
-        });
-        
-        console.log('🎉 Heatmap renderizado correctamente con escala logarítmica');
-        setTimeout(() => chart?.resize(), 100);
-    }
-
-    $effect(() => {
-        if (chartContainer && heatData.length > 0 && years.length > 0) {
-            console.log('✅ Contenedor y datos listos, dibujando...');
-            drawChart();
-        }
-    });
-
     onMount(() => {
         loadData();
     });
 </script>
 
 <div class="container">
-    <h1>🎬 Franquicias cinematográficas vs Consumo de Sustancias de Ozono</h1>
-    <p class="subtitle">Datos de <strong>API propia</strong> (consumo de sustancias por año) y <strong>TVMaze API</strong> (número de shows por franquicia)</p>
+    <h1>🦇 Series de Batman vs 🌍 Consumo de HCFC</h1>
+    <p class="subtitle">Datos de <strong>API propia</strong> (consumo de HCFC por país) y <strong>TVmaze API</strong> (repositorios de series de Batman por año).</p>
+
 
     <div class="info-api">
         <p><strong>API 1 (propia):</strong> Ozone Depleting Substance Consumptions — <code>/api/v1/ozone-depleting-substance-consumptions</code></p>
-        <p><strong>API 2 (externa):</strong> TVMaze Search API — <code>https://api.tvmaze.com/search/shows?q=batman</code></p>
-        <p><strong>Integración:</strong> A cada sustancia de la API de ozono se le asocia una franquicia cinematográfica. El heatmap muestra el consumo de cada sustancia por año. El número de shows encontrados en TVMaze para cada franquicia aparece en la tabla.</p>
+        <p><strong>API 2 (externa):</strong> TVmaze — <code>https://api.tvmaze.com/search/shows?q=batman</code></p>
+        <p><strong>Integración:</strong> Comparativa por año del consumo de HCFC (escala logarítmica) vs el weight acumulado de los primeros 10 resultados de series de Batman.</p>
     </div>
-    
-    {#if loading}
-        <div class="status">📡 Cargando datos de HCFC y buscando series en TVmaze...</div>
-    {:else if error}
-        <div class="status error">❌ Error: {error}</div>
-    {:else}
-        <div bind:this={chartContainer} class="heatmap-chart"></div>
-        
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>Sustancia</th>
-                    <th>Franquicia</th>
-                    <th>Shows encontrados</th>
-                    <th>Consumo total (toneladas)</th>
-                </tr>
-            </thead>
-            <tbody>
-                {#each franquiciaSummary as item}
-                    <tr>
-                        <td><strong>{item.sustancia.replace('_', ' ').toUpperCase()}</strong></td>
-                        <td>{item.franquicia}</td>
-                        <td>{item.shows}</td>
-                        <td>{item.totalConsumo.toLocaleString()}</td>
-                    </tr>
-                {/each}
-            </tbody>
-        </table>
-        <p class="note">* Datos de HCFC de la API propia (excluyendo world/asia). Series de TVmaze (búsqueda directa por nombre de franquicia). La escala de colores usa log10(consumo+1) para equilibrar visualmente.</p>
+
+    <div class="chart-card" style="position: relative;">
+        <div bind:this={chartContainer} id="batman-chart" style="width:100%; height:600px;"></div>
+        {#if loading}
+            <div class="loading-overlay">
+                <div class="spinner"></div>
+                <p>Cargando datos de HCFC y Batman...</p>
+            </div>
+        {/if}
+    </div>
+
+    {#if error}
+        <div class="error-box">❌ Error: {error}</div>
     {/if}
+
+    <div class="info">
+        <h3>Sobre esta integración</h3>
+        <ul>
+            <li><strong>Biblioteca:</strong> ECharts | <strong>Tipo:</strong> Horizontal Bar</li>
+            <li><strong>Eje Y:</strong> Año </li>
+            <li><strong>🔵 Azul:</strong> Consumo HCFC</li>
+            <li><strong>🟠 Naranja:</strong> Weight acumulado de las series de Batman</li>
+            <li><strong>Tooltip:</strong> Muestra el valor original de HCFC y el valor logarítmico</li>
+        </ul>
+    </div>
 </div>
 
 <style>
     .container {
-        max-width: 1100px;
-        margin: 2rem auto;
-        padding: 1.5rem;
-        background: #ffffff;
-        border-radius: 24px;
-        box-shadow: 0 8px 20px rgba(0,0,0,0.08);
-        font-family: system-ui, sans-serif;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        color: #333;
     }
     h1 {
         color: #2085d8;
@@ -325,52 +287,79 @@
         margin-bottom: 0.5rem;
         font-size: 1.8rem;
     }
-
     .subtitle {
         text-align: center;
         color: #666;
         margin-bottom: 1.5rem;
     }
-   
-    .status {
-        background: #f5f5f5;
-        padding: 2rem;
-        text-align: center;
-        border-radius: 16px;
-        font-size: 1.1rem;
-    }
-    .status.error {
-        background: #ffe6e6;
-        color: #c00;
-    }
-    .heatmap-chart {
-        width: 100%;
-        height: 550px;
-        margin-bottom: 1.5rem;
-        background: #fafafa;
+    .info-api {
+        background: #f0f9ff;
+        padding: 0.75rem 1rem;
         border-radius: 8px;
-    }
-    .data-table {
-        width: 100%;
-        border-collapse: collapse;
-        background: #fefefe;
-        border-radius: 16px;
-        overflow: hidden;
+        margin-bottom: 1.5rem;
         font-size: 0.85rem;
+        border-left: 4px solid #2085d8;
     }
-    .data-table th, .data-table td {
-        padding: 10px;
+    .info-api p { margin: 0.3rem 0; }
+    .info-api code {
+        background: #e2e8f0;
+        padding: 0.2rem 0.4rem;
+        border-radius: 4px;
+        font-size: 0.8rem;
+    }
+    .chart-card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.07);
+        margin-bottom: 2rem;
+        border: 1px solid #f0f0f0;
+        position: relative;
+        min-height: 650px;
+    }
+    .loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.95);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        border-radius: 12px;
+        z-index: 10;
+        backdrop-filter: blur(4px);
+    }
+    .spinner {
+        width: 50px;
+        height: 50px;
+        border: 4px solid #e0e0e0;
+        border-top-color: #2085d8;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 1rem;
+    }
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    .error-box {
+        background: #fee2e2;
+        color: #dc2626;
+        padding: 16px;
+        border-radius: 8px;
         text-align: center;
-        border-bottom: 1px solid #eaeaea;
+        margin-bottom: 1rem;
     }
-    .data-table th {
-        background-color: #f8f9fa;
-        font-weight: 600;
-    }
-    .note {
-        font-size: 0.7rem;
-        color: #888;
-        text-align: center;
+    .info {
         margin-top: 1rem;
+        padding: 1rem;
+        background: #f0f9ff;
+        border-radius: 12px;
+        border: 1px solid #bae6fd;
     }
+    .info h3 { color: #2085d8; margin-top: 0; }
+    .info ul { margin: 0; padding-left: 1.5rem; }
+    .info li { margin: 0.5rem 0; color: #333; }
 </style>
