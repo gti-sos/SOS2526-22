@@ -1,12 +1,12 @@
 <header class="navbar">
     <div class="brand">🌍 Grupo 22</div>
     <nav>
-        <a href="/">🏠 Inicio</a>
-        <a href="/global-agriculture-climate-impacts">🌱 Agricultura</a>
-        <a href="/ozone-depleting-substance-consumptions">🛡️ Ozono</a>
-        <a href="/co2-emissions-stats">💨 Emisiones CO2</a>
-        <a href="/analytics">📊 Analytics</a>
-        <a href="/integrations">🔗 Integrations</a>
+        <a href="/" rel="external">🏠 Inicio</a>
+        <a href="/global-agriculture-climate-impacts" rel="external">🌱 Agricultura</a>
+        <a href="/ozone-depleting-substance-consumptions" rel="external">🛡️ Ozono</a>
+        <a href="/co2-emissions-stats" rel="external">💨 Emisiones CO2</a>
+        <a href="/analytics" rel="external">📊 Analytics</a>
+        <a href="/integrations" rel="external">🔗 Integrations</a>
     </nav>
 </header>
 

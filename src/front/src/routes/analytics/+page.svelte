@@ -1,5 +1,8 @@
 <script>
     import { onMount } from 'svelte';
+    import { resolve } from '$app/paths';
+
+    
     
     let loading = $state(true);
     let error = $state(null);
@@ -146,8 +149,9 @@
     <h1>Visualización Integrada del Equipo</h1>
     
     <div class="individual-links">
-        <a href="/analytics/ozone-depleting-substance-consumptions" class="link-btn">Elena - Consumo HCFC</a>
-        <a href="/analytics/global-agriculture-climate-impacts" class="link-btn">Celia - Temperatura media</a>
+        <a href={resolve("/analytics/ozone-depleting-substance-consumptions")} class="link-btn">Elena - Consumo HCFC</a>
+        <a href={resolve('/analytics/global-agriculture-climate-impacts')} class="link-btn">Celia - Temperatura media</a>
+        
     </div>
     
     

@@ -1,5 +1,7 @@
     <script>
         import { onMount } from 'svelte';
+        import { resolve } from '$app/paths';
+
 
         onMount(async () => {
             const Highcharts = (await import('highcharts')).default;
@@ -177,7 +179,7 @@
     </div>
 
     <div class="map-link">
-    <a href="/analytics/ozone-depleting-substance-consumptions/map" class="link-btn map-btn">
+    <a href={resolve("/analytics/ozone-depleting-substance-consumptions/map")} class="link-btn map-btn">
         Ver mapa geoespacial (Elena)
     </a>
     </div>

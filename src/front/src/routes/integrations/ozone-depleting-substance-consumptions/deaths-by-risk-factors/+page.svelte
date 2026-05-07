@@ -1,15 +1,19 @@
+
 <script>
     import { onMount } from 'svelte';
     import * as echarts from 'echarts';
 
     let loading = $state(true);
     let error = $state(null);
+    // @ts-ignore
     let chart = null;
     let container = $state(null);
+    
 
     const RISK_FACTOR = 'air_pollution';
     const FACTOR_NAME = 'Contaminación del aire (muertes)';
 
+    // @ts-ignore
     function normalizeCountryName(name) {
         return name.toLowerCase().replace(/[\s_]+/g, '-');
     }
@@ -56,10 +60,12 @@
             console.log(`✅ HCFC recibidos: ${ozoneData.length} registros`);
             
             const hcfcByCountry = {};
+            // @ts-ignore
             ozoneData.forEach(item => {
                 const country = item.country;
                 if (country === 'world' || country === 'asia') return;
                 const value = Math.abs(item.hcfc || 0);
+                // @ts-ignore
                 hcfcByCountry[country] = (hcfcByCountry[country] || 0) + value;
             });
             console.log(`📊 HCFC agregados por país: ${Object.keys(hcfcByCountry).length} países`);
@@ -68,12 +74,15 @@
             const riskArray = await fetchRiskData();
 
             const riskByCountry = {};
+            // @ts-ignore
             riskArray.forEach(item => {
                 const entity = item.entity;
                 if (!entity || entity === 'World') return;
                 const year = item.year;
                 const normalized = normalizeCountryName(entity);
+                // @ts-ignore
                 if (!riskByCountry[normalized] || riskByCountry[normalized].year < year) {
+                    // @ts-ignore
                     riskByCountry[normalized] = {
                         year: year,
                         [RISK_FACTOR]: Number(item[RISK_FACTOR]) || 0
@@ -84,10 +93,14 @@
 
             // 3. Combinar países con ambas métricas positivas
             const countries = [];
+            // @ts-ignore
             const hcfcValues = [];
+            // @ts-ignore
             const riskValues = [];
             for (const country of Object.keys(hcfcByCountry)) {
+                // @ts-ignore
                 const hcfc = hcfcByCountry[country];
+                // @ts-ignore
                 const risk = riskByCountry[country]?.[RISK_FACTOR] || 0;
                 if (hcfc > 0 && risk > 0) {
                     countries.push(country.charAt(0).toUpperCase() + country.slice(1));
@@ -99,6 +112,7 @@
             if (countries.length === 0) throw new Error('No hay países con datos en ambas APIs');
 
             // 4. Top 10 por HCFC
+            // @ts-ignore
             const combined = countries.map((c, i) => ({ country: c, hcfc: hcfcValues[i], risk: riskValues[i] }));
             combined.sort((a, b) => b.hcfc - a.hcfc);
             const top10 = combined.slice(0, 10);
@@ -118,11 +132,13 @@
             console.log('📈 Rankings y valores de barra calculados');
 
             if (!container) throw new Error('Contenedor no disponible');
+            // @ts-ignore
             if (chart) chart.dispose();
             chart = echarts.init(container);
             chart.setOption({
                 tooltip: {
                     trigger: 'item',
+                    // @ts-ignore
                     formatter: (params) => {
                         const idx = params.dataIndex;
                         const country = topCountries[idx];
@@ -162,6 +178,7 @@
                         coordinateSystem: 'polar',
                         barCategoryGap: '20%',
                         itemStyle: { color: '#2085d8', borderRadius: [4, 4, 0, 0] },
+                        // @ts-ignore
                         label: { show: true, position: 'outside', formatter: (p) => `${p.value.toFixed(0)}%`, fontSize: 9 }
                     },
                     {
@@ -171,11 +188,13 @@
                         coordinateSystem: 'polar',
                         barCategoryGap: '20%',
                         itemStyle: { color: '#fb8c00', borderRadius: [4, 4, 0, 0] },
+                        // @ts-ignore
                         label: { show: true, position: 'outside', formatter: (p) => `${p.value.toFixed(0)}%`, fontSize: 9 }
                     }
                 ]
             });
 
+            // @ts-ignore
             const resizeHandler = () => chart?.resize();
             window.removeEventListener('resize', resizeHandler);
             window.addEventListener('resize', resizeHandler);
@@ -184,6 +203,7 @@
             console.log('🎉 Gráfico renderizado correctamente');
         } catch (err) {
             console.error('❌ Error en loadDataAndRender:', err);
+            // @ts-ignore
             error = err.message;
             loading = false;
         }
@@ -214,6 +234,7 @@
     </div>
 
     <div class="chart-card" style="position: relative;">
+    
         <div bind:this={container} id="radial-bar-chart" style="width:100%; height:600px;"></div>
         {#if loading}
             <div class="loading-overlay">

@@ -1,5 +1,6 @@
 <script>
     import { onMount, tick } from 'svelte';
+    // @ts-ignore
     import * as d3 from 'd3';
 
     const GRAPH_TYPE = 'area';
@@ -7,8 +8,10 @@
     let loading = $state(true);
     let error = $state(null);
     let container = $state(null);
+    // @ts-ignore
     let tableData = $state([]);
 
+    // @ts-ignore
     const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
     async function fetchTouristData() {
@@ -59,10 +62,12 @@
             if (!resOzone.ok) throw new Error(`HTTP ${resOzone.status} - Ozono`);
             const ozone = await resOzone.json();
             const hcfcByYear = {};
+            // @ts-ignore
             ozone.forEach(item => {
                 if (item.country === 'world' || item.country === 'asia') return;
                 const year = item.year;
                 const value = Math.abs(item.hcfc || 0);
+                // @ts-ignore
                 hcfcByYear[year] = (hcfcByYear[year] || 0) + value;
             });
             console.log(`   HCFC: ${Object.keys(hcfcByYear).length} años con datos`, hcfcByYear);
@@ -71,9 +76,11 @@
             console.log('📡 Solicitando turismo...');
             const touristArray = await fetchTouristData();
             const touristByYear = {};
+            // @ts-ignore
             touristArray.forEach(item => {
                 const year = item.year;
                 const total = (item.air_arrival || 0) + (item.water_arrival || 0) + (item.land_arrival || 0);
+                // @ts-ignore
                 touristByYear[year] = (touristByYear[year] || 0) + total;
             });
             console.log(`   Turismo: ${Object.keys(touristByYear).length} años con datos`, touristByYear);
@@ -85,7 +92,9 @@
             
             // 4. Transformación logarítmica
             const dataForAreas = allYears.map(year => {
+                // @ts-ignore
                 const hcfc = hcfcByYear[year] || 0;
+                // @ts-ignore
                 const tourist = touristByYear[year] || 0;
                 const logHcfc = Math.log10(hcfc + 1);
                 const logTourist = Math.log10(tourist + 1);
@@ -110,13 +119,16 @@
             loading = false;
         } catch (err) {
             console.error('❌ fetchData error:', err);
+            // @ts-ignore
             error = err.message;
             loading = false;
         }
     }
 
+    // @ts-ignore
     async function renderStackedArea(data) {
         console.log('🎨 renderStackedArea: inicio');
+        // @ts-ignore
         const width = container.clientWidth || 900;
         const height = 500;
         const margin = { top: 40, right: 30, bottom: 50, left: 70 };
@@ -124,7 +136,8 @@
         const innerHeight = height - margin.top - margin.bottom;
         console.log(`   Dimensiones: ancho=${width}, alto=${height}, área interior=${innerWidth}x${innerHeight}`);
 
-        container.innerHTML = '';
+        const existingSvg = d3.select(container).select('svg');
+        if (!existingSvg.empty()) existingSvg.remove();
         const svg = d3.select(container)
             .append('svg')
             .attr('width', width)
@@ -135,9 +148,11 @@
 
         // Escalas
         const xScale = d3.scaleLinear()
+            // @ts-ignore
             .domain(d3.extent(data, d => d.year))
             .range([0, innerWidth])
             .nice();
+        // @ts-ignore
         const yMax = d3.max(data, d => Math.max(d.hcfc, d.tourist));
         const yScale = d3.scaleLinear()
             .domain([0, yMax * 1.05])
@@ -145,9 +160,12 @@
         console.log(`   Escalas: x = [${xScale.domain()}], y = [0, ${yMax}]`);
 
         // Generador de área
+        // @ts-ignore
         const areaGenerator = (key) => d3.area()
+            // @ts-ignore
             .x(d => xScale(d.year))
             .y0(innerHeight)
+            // @ts-ignore
             .y1(d => yScale(d[key]))
             .curve(d3.curveMonotoneX);
 
@@ -175,6 +193,7 @@
 
         // Ejes
         const xAxis = d3.axisBottom(xScale).tickFormat(d3.format('d'));
+        // @ts-ignore
         const yAxis = d3.axisLeft(yScale).tickFormat(d => d.toFixed(1));
         svg.append('g').attr('transform', `translate(0, ${innerHeight})`).call(xAxis)
             .append('text').attr('x', innerWidth / 2).attr('y', 35).attr('fill', '#333').attr('text-anchor', 'middle').text('Año');
@@ -294,7 +313,7 @@
                         <tr><th>Año</th><th>HCFC total (ton)</th><th>Llegadas turísticas totales</th></tr>
                     </thead>
                     <tbody>
-                        {#each tableData as d}
+                        {#each tableData as d (d.year)}
                             <tr>
                                 <td>{d.year}</td>
                                 <td class={!d.hasHcfc ? 'missing' : ''}>{d.hasHcfc ? d.hcfc.toLocaleString() : 'Sin dato'}</td>

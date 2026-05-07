@@ -18,7 +18,7 @@
                 <h3>Celia Leal Salvago</h3>
                 <p class="data-source">Fuente propia: <br><code>global-agriculture-climate-impacts</code></p>
                 <div class="links">
-                    <a href="/integrations/global-agriculture-climate-impacts" class="link-btn main-btn">
+                    <a href="/integrations/global-agriculture-climate-impacts" rel="external" class="link-btn main-btn">
                         🌱 Ver integraciones de Celia
                     </a>
                 </div>
@@ -28,7 +28,7 @@
                 <h3>Elena Martínez Moreno</h3>
                 <p class="data-source">Fuente propia: <br><code>ozone-depleting-substance-consumptions</code></p>
                 <div class="links">
-                    <a href="/integrations/ozone-depleting-substance-consumptions" class="link-btn main-btn">
+                    <a href="/integrations/ozone-depleting-substance-consumptions" rel="external" class="link-btn main-btn">
                         🛡️ Ver integraciones de Elena
                     </a>
                 </div>

@@ -21,21 +21,21 @@
                 <h3>Celia Leal Salvago</h3>
                 <p class="data-source">Fuente: <br><code>global-agriculture-climate-impacts</code></p>
                 <div class="links">
-                    <a href="/global-agriculture-climate-impacts" class="link-btn main-btn">🖥️ Front-end Svelte</a>
+                    <a href="/global-agriculture-climate-impacts" rel="external" class="link-btn main-btn">🖥️ Front-end Svelte</a>
                     
                     <div class="api-group">
                         <span class="api-label">API v1</span>
                         <div class="api-buttons">
-                            <a href="/api/v1/global-agriculture-climate-impacts" target="_blank" class="link-btn outline small">🔗 URL Base</a>
-                            <a href="/api/v1/global-agriculture-climate-impacts/docs" target="_blank" class="link-btn outline small">📚 Docs</a>
+                            <a href="/api/v1/global-agriculture-climate-impacts" rel="external" target="_blank" class="link-btn outline small">🔗 URL Base</a>
+                            <a href="/api/v1/global-agriculture-climate-impacts/docs" rel="external" target="_blank" class="link-btn outline small">📚 Docs</a>
                         </div>
                     </div>
 
                     <div class="api-group">
                         <span class="api-label">API v2</span>
                         <div class="api-buttons">
-                            <a href="/api/v2/global-agriculture-climate-impacts" target="_blank" class="link-btn outline small">🔗 URL Base</a>
-                            <a href="/api/v2/global-agriculture-climate-impacts/docs" target="_blank" class="link-btn outline small">📚 Docs</a>
+                            <a href="/api/v2/global-agriculture-climate-impacts" rel="external" target="_blank" class="link-btn outline small">🔗 URL Base</a>
+                            <a href="/api/v2/global-agriculture-climate-impacts/docs" rel="external" target="_blank" class="link-btn outline small">📚 Docs</a>
                         </div>
                     </div>
                 </div>
@@ -45,21 +45,21 @@
                 <h3>Elena Martínez Moreno</h3>
                 <p class="data-source">Fuente: <br><code>ozone-depleting-substance-consumptions</code></p>
                 <div class="links">
-                    <a href="/ozone-depleting-substance-consumptions" class="link-btn main-btn">🖥️ Front-end Svelte</a>
+                    <a href="/ozone-depleting-substance-consumptions" rel="external" class="link-btn main-btn">🖥️ Front-end Svelte</a>
                     
                     <div class="api-group">
                         <span class="api-label">API v1</span>
                         <div class="api-buttons">
-                            <a href="/api/v1/ozone-depleting-substance-consumptions" target="_blank" class="link-btn outline small">🔗 URL Base</a>
-                            <a href="/api/v1/ozone-depleting-substance-consumptions/docs" target="_blank" class="link-btn outline small">📚 Docs</a>
+                            <a href="/api/v1/ozone-depleting-substance-consumptions" rel="external" target="_blank" class="link-btn outline small">🔗 URL Base</a>
+                            <a href="/api/v1/ozone-depleting-substance-consumptions/docs" rel="external" target="_blank" class="link-btn outline small">📚 Docs</a>
                         </div>
                     </div>
 
                     <div class="api-group">
                         <span class="api-label">API v2</span>
                         <div class="api-buttons">
-                            <a href="/api/v2/ozone-depleting-substance-consumptions" target="_blank" class="link-btn outline small">🔗 URL Base</a>
-                            <a href="/api/v2/ozone-depleting-substance-consumptions/docs" target="_blank" class="link-btn outline small">📚 Docs</a>
+                            <a href="/api/v2/ozone-depleting-substance-consumptions" rel="external" target="_blank" class="link-btn outline small">🔗 URL Base</a>
+                            <a href="/api/v2/ozone-depleting-substance-consumptions/docs" rel="external" target="_blank" class="link-btn outline small">📚 Docs</a>
                         </div>
                     </div>
                 </div>
@@ -69,21 +69,21 @@
                 <h3>Julio Morales Vela</h3>
                 <p class="data-source">Fuente: <br><code>co2-emission-gap-among-countries-clustering-pca</code></p>
                 <div class="links">
-                    <a href="/co2-emissions-stats" class="link-btn main-btn">🖥️ Front-end Svelte</a>
+                    <a href="/co2-emissions-stats" rel="external" class="link-btn main-btn">🖥️ Front-end Svelte</a>
                     
                     <div class="api-group">
                         <span class="api-label">API v1</span>
                         <div class="api-buttons">
-                            <a href="/api/v1/co2-emission-gap-among-countries-clustering-pca" target="_blank" class="link-btn outline small">🔗 URL Base</a>
-                            <a href="/api/v1/co2-emission-gap-among-countries-clustering-pca/docs" target="_blank" class="link-btn outline small">📚 Docs</a>
+                            <a href="/api/v1/co2-emission-gap-among-countries-clustering-pca" rel="external" target="_blank" class="link-btn outline small">🔗 URL Base</a>
+                            <a href="/api/v1/co2-emission-gap-among-countries-clustering-pca/docs" rel="external" target="_blank" class="link-btn outline small">📚 Docs</a>
                         </div>
                     </div>
 
                     <div class="api-group">
                         <span class="api-label">API v2</span>
                         <div class="api-buttons">
-                            <a href="/api/v2/co2-emission-gap-among-countries-clustering-pca" target="_blank" class="link-btn outline small">🔗 URL Base</a>
-                            <a href="/api/v2/co2-emission-gap-among-countries-clustering-pca/docs" target="_blank" class="link-btn outline small">📚 Docs</a>
+                            <a href="/api/v2/co2-emission-gap-among-countries-clustering-pca" rel="external" target="_blank" class="link-btn outline small">🔗 URL Base</a>
+                            <a href="/api/v2/co2-emission-gap-among-countries-clustering-pca/docs" rel="external" target="_blank" class="link-btn outline small">📚 Docs</a>
                         </div>
                     </div>
                 </div>
