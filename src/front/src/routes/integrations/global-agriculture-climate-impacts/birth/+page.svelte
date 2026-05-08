@@ -5,7 +5,6 @@
     let loading = $state(true);
     let tableData = $state([]);
 
-    // Función para colores aleatorios
     function getRandomColor() {
         const colors = ["#4e79a7", "#e15759", "#76b7b2", "#59a14f", "#edc949", "#af7aa1", "#ff9da7", "#9c755f", "#bab0ab"];
         return colors[Math.floor(Math.random() * colors.length)];
@@ -23,6 +22,11 @@
 
     async function init() {
         const d3 = await loadD3();
+        
+        // 1. Cargamos datos iniciales en la API de agricultura por si está vacía
+        await fetch("https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts/loadInitialData");
+
+        // 2. Ahora pedimos los datos reales (arrays)
         const [r1, r2] = await Promise.all([
             fetch("https://sos2526-12.onrender.com/api/v2/birth-death-growth-rates"),
             fetch("https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts")
@@ -31,34 +35,37 @@
         const data1 = await r1.json();
         const data2 = await r2.json();
 
-        // Mezclamos y asignamos colores aleatorios a cada burbuja
+        // 3. Validación: Comprobamos que sean arrays antes de usar .map
+        const cleanData1 = Array.isArray(data1) ? data1 : [];
+        const cleanData2 = Array.isArray(data2) ? data2 : [];
+
         tableData = [
-            ...data1.map(d => ({
+            ...cleanData1.map(d => ({
                 label: d.country_name || d.country,
-                value: parseFloat(d.growth_rate) || 0,
+                value: parseFloat(d.growth_rate) || 0.1, // Valor mínimo para que se vea la burbuja
                 group: 'Demografía',
                 color: getRandomColor()
             })),
-            ...data2.map(d => ({
+            ...cleanData2.map(d => ({
                 label: d.country,
-                value: parseFloat(d.average_temperature_c) || 0,
+                value: parseFloat(d.average_temperature_c) || 0.1,
                 group: 'Agricultura',
                 color: getRandomColor()
             }))
         ].filter(d => d.label);
 
         loading = false;
-        setTimeout(() => renderChart(d3, tableData), 100);
+        // Pequeño delay para asegurar que el contenedor DOM esté listo
+        setTimeout(() => renderChart(d3, tableData), 50);
     }
 
     function renderChart(d3, data) {
-        if (!container) return;
+        if (!container || data.length === 0) return;
         const width = container.clientWidth;
         const height = 500;
 
         d3.select(container).selectAll("*").remove();
 
-        // Tooltip para ver el número al pasar el ratón
         const tooltip = d3.select("body").append("div")
             .style("position", "absolute")
             .style("visibility", "hidden")
@@ -75,17 +82,16 @@
         const simulation = d3.forceSimulation(data)
             .force("x", d3.forceX(width / 2).strength(0.05))
             .force("y", d3.forceY(height / 2).strength(0.05))
-            .force("collide", d3.forceCollide(d => Math.sqrt(Math.abs(d.value)) * 8 + 4));
+            .force("collide", d3.forceCollide(d => Math.sqrt(Math.abs(d.value)) * 15 + 5)); // Ajustado el multiplicador
 
         const node = svg.append("g")
             .selectAll("circle")
             .data(data)
             .join("circle")
-            .attr("r", d => Math.sqrt(Math.abs(d.value)) * 8)
-            .attr("fill", d => d.color) // Color aleatorio aplicado aquí
+            .attr("r", d => Math.sqrt(Math.abs(d.value)) * 15)
+            .attr("fill", d => d.color)
             .attr("stroke", "#fff")
             .attr("stroke-width", 2)
-            .style("cursor", "pointer")
             .on("mouseover", (event, d) => {
                 tooltip.style("visibility", "visible").text(`${d.label}: ${d.value}`);
             })
@@ -107,7 +113,10 @@
     <p style="text-align: center; color: #666;">Pasa el ratón sobre las burbujas para ver el dato</p>
 
     {#if loading}
-        <p style="text-align: center;">Cargando simulación...</p>
+        <div class="loader-container">
+            <div class="spinner"></div>
+            <p>Cargando simulación y datos...</p>
+        </div>
     {:else}
         <div bind:this={container} class="chart-area"></div>
 
@@ -138,14 +147,21 @@
 </div>
 
 <style>
-    .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); max-width: 900px; margin: auto; font-family: sans-serif; }
+    .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); max-width: 900px; margin: 20px auto; font-family: sans-serif; }
     h2 { text-align: center; color: #333; }
-    .chart-area { width: 100%; height: 500px; background: #f9f9f9; border-radius: 10px; margin-bottom: 20px; }
+    .chart-area { width: 100%; height: 500px; background: #f9f9f9; border-radius: 10px; margin-bottom: 20px; border: 1px solid #eee; }
     
+    .loader-container { text-align: center; padding: 50px; }
+    .spinner { 
+        width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #3498db; 
+        border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
     .table-section { margin-top: 20px; }
-    .table-scroll { max-height: 300px; overflow-y: auto; border: 1px solid #eee; }
+    .table-scroll { max-height: 300px; overflow-y: auto; border: 1px solid #eee; border-radius: 8px; }
     table { width: 100%; border-collapse: collapse; }
-    th { background: #f4f4f4; padding: 10px; position: sticky; top: 0; }
+    th { background: #f4f4f4; padding: 12px; position: sticky; top: 0; z-index: 1; }
     td { padding: 10px; border-bottom: 1px solid #eee; text-align: center; }
     
     .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; }
