@@ -10,8 +10,17 @@
 
     async function loadData() {
         try {
+
+              // 1. Cargamos datos iniciales en la API de agricultura por si está vacía
+            await fetch("https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts/loadInitialData");
+
+
+
             const adaUrl = "https://api.apis.guru/v2/specs/adafruit.com/2.0.0/swagger.json";
             const agriUrl = "https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts";
+
+            
+
 
             const [resAda, resAgri] = await Promise.all([
                 fetch(adaUrl),

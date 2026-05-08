@@ -9,6 +9,10 @@
     async function load() {
         try {
             // Intentamos cargar las APIs
+
+            // 1. Cargamos datos iniciales en la API de agricultura por si está vacía
+            await fetch("https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts/loadInitialData");
+
             const [res1, res2] = await Promise.all([
                 fetch("https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts"),
                 fetch("https://sos2526-13.onrender.com/api/v1/exportations-stats")

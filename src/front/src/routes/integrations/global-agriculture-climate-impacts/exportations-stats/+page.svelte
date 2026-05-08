@@ -10,6 +10,11 @@
     async function loadIntegration() {
         console.log("--- Iniciando carga con campos corregidos ---");
         try {
+
+              // 1. Cargamos datos iniciales en la API de agricultura por si está vacía
+            await fetch("https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts/loadInitialData");
+
+
             const [resExport, resAgri] = await Promise.all([
                 fetch("https://sos2526-13.onrender.com/api/v1/exportations-stats"),
                 fetch("https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts")

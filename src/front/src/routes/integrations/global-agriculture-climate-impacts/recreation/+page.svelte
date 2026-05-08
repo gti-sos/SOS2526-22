@@ -10,6 +10,10 @@
     async function loadData() {
         loading = true;
         try {
+              // 1. Cargamos datos iniciales en la API de agricultura por si está vacía
+            await fetch("https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts/loadInitialData");
+
+
             // Usamos allSettled para que si una API cae, la otra no bloquee todo
             const results = await Promise.allSettled([
                 fetch("https://sos2526-13.onrender.com/api/v1/exportations-stats").then(r => r.json()),
