@@ -127,7 +127,7 @@
              <div class="member-card">
                 <div class="card-header">
                     <span class="icon">🏕️</span>
-                    <h3>Impacto Agrícola vs Recreación</h3>
+                    <h3>Impacto Agrícola vs Birth</h3>
                 </div>
                 <div class="card-content">
                     <p>Datos sobre parques nacionales y actividades al aire libre vs Clima.</p>
@@ -136,11 +136,32 @@
                         <code>ridb.recreation.gov/api</code>
                     </div>
                 </div>
-                <a href="/integrations/global-agriculture-climate-impacts/ajm" class="link-btn">
+                <a href="/integrations/global-agriculture-climate-impacts/birth" class="link-btn">
                     Ver Análisis Gráfico
                 </a>
             </div>
 
+
+
+
+
+
+            <div class="member-card">
+                <div class="card-header">
+                    <span class="icon">🏕️</span>
+                    <h3>Impacto Agrícola vs Protests</h3>
+                </div>
+                <div class="card-content">
+                    <p>Datos sobre parques nacionales y actividades al aire libre vs Clima.</p>
+                    <div class="endpoints">
+                        <code>/agriculture-climate-impacts</code>
+                        <code>ridb.recreation.gov/api</code>
+                    </div>
+                </div>
+                <a href="/integrations/global-agriculture-climate-impacts/protests" class="link-btn">
+                    Ver Análisis Gráfico
+                </a>
+            </div>
 
 
 

@@ -1,310 +1,149 @@
 <script>
     import { onMount } from 'svelte';
 
-    let cheatersList = $state([]);
-    let agriData = $state([]);
     let loading = $state(true);
+    let chartContainer = $state();
+    let integratedData = $state([]);
 
-    // Procesamiento de datos SOLO con datos reales
-    let integratedData = $derived.by(() => {
-        if (agriData.length === 0 && cheatersList.length === 0) return [];
-
-        const allYears = [...new Set([
-            ...agriData.map(d => d.year),
-            ...cheatersList.map(d => d.year)
-        ])]
-            .filter(y => y)
-            .sort((a, b) => a - b);
-
-        return allYears.map(year => {
-            const agriForYear = agriData.filter(d => d.year === year);
-            const cheatForYear = cheatersList.filter(d => d.year === year);
-
-            // Solo incluir años con datos en ambas APIs
-            if (agriForYear.length === 0 || cheatForYear.length === 0) return null;
-
-            const agriVal =
-                agriForYear.reduce(
-                    (acc, curr) => acc + (curr.average_temperature_c ?? 0),
-                    0
-                ) / agriForYear.length;
-
-            const cheatersVal = cheatForYear.reduce(
-                (acc, curr) => acc + (curr.confirmed_bans ?? 0),
-                0
-            );
-
-            return {
-                year,
-                agriVal,
-                cheatersVal
-            };
-        }).filter(Boolean);
-    });
-
-    // Escalas dinámicas sin valores artificiales
-    let maxCheat = $derived(
-        integratedData.length > 0
-            ? Math.max(...integratedData.map(d => d.cheatersVal))
-            : 0
-    );
-
-    let maxAgri = $derived(
-        integratedData.length > 0
-            ? Math.max(...integratedData.map(d => d.agriVal))
-            : 0
-    );
-
-    onMount(async () => {
+    async function loadData() {
         try {
             const [resAgri, resProxy] = await Promise.all([
                 fetch("https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts"),
                 fetch("/cheaters-stats-proxy/loadInitialData")
             ]);
 
-            agriData = await resAgri.json();
-
+            const agriData = await resAgri.json();
             const rawCheaters = await resProxy.json();
-            cheatersList = Array.isArray(rawCheaters) ? rawCheaters : [];
+            const cheatersList = Array.isArray(rawCheaters) ? rawCheaters : [];
+
+            // Unión de datos por año
+            const years = [...new Set([...agriData.map(d => d.year), ...cheatersList.map(d => d.year)])]
+                .filter(y => y)
+                .sort((a, b) => a - b);
+
+            integratedData = years.map(year => {
+                const agri = agriData.find(d => d.year === year);
+                const cheat = cheatersList.find(d => d.year === year);
+                if (!agri || !cheat) return null;
+
+                return {
+                    year: String(year),
+                    agri: agri.average_temperature_c,
+                    cheat: cheat.confirmed_bans
+                };
+            }).filter(Boolean).slice(-10); // Mostramos los últimos 10 años para no saturar el radar
+
+            loading = false;
+            setTimeout(renderChart, 100);
         } catch (e) {
-            console.error("Error cargando datos:", e);
-        } finally {
+            console.error("Error cargando APIs:", e);
             loading = false;
         }
+    }
+
+    function renderChart() {
+        if (!chartContainer || integratedData.length === 0) return;
+
+        // @ts-ignore
+        bb.generate({
+            bindto: chartContainer,
+            data: {
+                x: "x",
+                columns: [
+                    ["x", ...integratedData.map(d => d.year)],
+                    ["Temperatura (ºC)", ...integratedData.map(d => d.agri)],
+                    ["Baneos (Escalado /10)", ...integratedData.map(d => d.cheat / 10)] 
+                ],
+                type: "radar", // ESTILO NO LINEAL
+                labels: true
+            },
+            radar: {
+                axis: { max: 40 },
+                level: { depth: 4 },
+                direction: { clockwise: true }
+            },
+            color: {
+                pattern: ["#e74c3c", "#3498db"]
+            },
+            legend: { position: "bottom" }
+        });
+    }
+
+    onMount(() => {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'https://cdn.jsdelivr.net/npm/billboard.js/dist/billboard.min.css';
+        document.head.appendChild(link);
+
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/billboard.js/dist/billboard.pkgd.min.js';
+        script.onload = loadData;
+        document.head.appendChild(script);
     });
 </script>
 
 <main>
-    <h1>Análisis de Burbujas: Impacto vs Trampas</h1>
+    <div class="card">
+        <h1>Análisis Radial: Impacto Climático vs Cheaters</h1>
+        <p class="subtitle">Biblioteca: <strong>Billboard.js</strong> | Estilo: <strong>Radar Chart (No Lineal)</strong></p>
 
-    {#if loading}
-        <div class="loading">Cargando datos desde APIs...</div>
-
-    {:else if integratedData.length === 0}
-        <div class="loading">No hay datos disponibles para mostrar</div>
-
-    {:else}
-        <section class="bubble-chart-container">
-            <h2>Relación Temporal (Altura: Agri | Tamaño: Cheaters)</h2>
-
-            <div class="svg-container">
-                <svg viewBox="0 0 700 400">
-                    <!-- Ejes -->
-                    <line x1="60" y1="340" x2="650" y2="340" stroke="#ddd" stroke-width="2" />
-                    <line x1="60" y1="40" x2="60" y2="340" stroke="#ddd" stroke-width="2" />
-
-                    <text
-                        x="20"
-                        y="200"
-                        transform="rotate(-90 20,200)"
-                        text-anchor="middle"
-                        class="axis-title"
-                    >
-                        Impacto Agrícola (ºC)
-                    </text>
-
-                    {#each integratedData as d, i}
-                        {@const xPos = 100 + (i * (500 / (integratedData.length - 1 || 1)))}
-
-                        {@const yPos = maxAgri > 0
-                            ? 340 - ((d.agriVal / maxAgri) * 260)
-                            : 340}
-
-                        {@const radius = maxCheat > 0
-                            ? 5 + ((d.cheatersVal / maxCheat) * 35)
-                            : 5}
-
-                        <line
-                            x1={xPos}
-                            y1="340"
-                            x2={xPos}
-                            y2={yPos}
-                            stroke="#f0f0f0"
-                            stroke-dasharray="4"
-                        />
-
-                        <circle
-                            cx={xPos}
-                            cy={yPos}
-                            r={radius}
-                            class="bubble"
-                        >
-                            <title>
-                                Año: {d.year}
-                                Impacto Agri: {d.agriVal.toFixed(2)}
-                                Baneos Cheaters: {d.cheatersVal}
-                            </title>
-                        </circle>
-
-                        <text
-                            x={xPos}
-                            y="365"
-                            text-anchor="middle"
-                            class="year-label"
-                        >
-                            {d.year}
-                        </text>
-                    {/each}
-                </svg>
+        {#if loading}
+            <div class="loader">
+                <div class="spinner"></div>
+                <p>Cruzando datos de APIs...</p>
             </div>
+        {:else}
+            <div bind:this={chartContainer} class="radar-view"></div>
 
-            <div class="legend">
-                <div class="legend-item">
-                    <span class="box agri-box"></span>
-                    <strong>Altura:</strong> Valor API Agricultura
-                </div>
-
-                <div class="legend-item">
-                    <span class="circle-sample"></span>
-                    <strong>Tamaño:</strong> API Cheaters
-                </div>
-            </div>
-        </section>
-
-        <section class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Año</th>
-                        <th>Métrica Agrícola</th>
-                        <th>Baneos</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {#each integratedData as d}
+            <section class="table-container">
+                <h3>Detalle de Datos Integrados</h3>
+                <table>
+                    <thead>
                         <tr>
-                            <td>{d.year}</td>
-                            <td>{d.agriVal.toFixed(2)}</td>
-                            <td class="cheat-val">{d.cheatersVal}</td>
+                            <th>Año de Referencia</th>
+                            <th>Temperatura Media (ºC)</th>
+                            <th>Baneos Confirmados</th>
                         </tr>
-                    {/each}
-                </tbody>
-            </table>
-        </section>
-    {/if}
+                    </thead>
+                    <tbody>
+                        {#each integratedData as d}
+                            <tr>
+                                <td><strong>{d.year}</strong></td>
+                                <td class="val-agri">{d.agri.toFixed(2)} ºC</td>
+                                <td class="val-cheat">{d.cheat.toLocaleString()}</td>
+                            </tr>
+                        {/each}
+                    </tbody>
+                </table>
+            </section>
+        {/if}
+    </div>
 </main>
 
 <style>
-    main {
-        padding: 2rem;
-        max-width: 1000px;
-        margin: auto;
-        font-family: 'Inter', sans-serif;
-    }
+    main { padding: 40px 20px; background: #f4f7f6; min-height: 100vh; font-family: 'Segoe UI', Tahoma, sans-serif; }
+    .card { background: white; max-width: 900px; margin: auto; padding: 30px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
+    
+    h1 { text-align: center; color: #2c3e50; margin-bottom: 5px; }
+    .subtitle { text-align: center; color: #7f8c8d; margin-bottom: 30px; }
+    
+    .radar-view { height: 450px; width: 100%; margin-bottom: 40px; }
 
-    h1 {
-        text-align: center;
-        color: #1a202c;
-        font-weight: 800;
-        margin-bottom: 2rem;
-    }
+    .table-container { margin-top: 20px; border-top: 2px solid #eee; padding-top: 20px; }
+    .table-container h3 { color: #34495e; font-size: 1.1rem; margin-bottom: 15px; }
 
-    .bubble-chart-container {
-        background: white;
-        padding: 30px;
-        border-radius: 20px;
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-        border: 1px solid #edf2f7;
-        margin-bottom: 3rem;
-    }
+    table { width: 100%; border-collapse: collapse; background: #fff; }
+    th { background: #34495e; color: white; padding: 12px; text-align: center; font-size: 0.9rem; }
+    td { padding: 12px; text-align: center; border-bottom: 1px solid #f1f1f1; }
+    
+    .val-agri { color: #e74c3c; font-weight: bold; }
+    .val-cheat { color: #3498db; font-weight: bold; }
 
-    .svg-container {
-        width: 100%;
-        height: 400px;
+    .loader { text-align: center; padding: 100px; }
+    .spinner { 
+        width: 50px; height: 50px; border: 5px solid #f3f3f3; 
+        border-top: 5px solid #3498db; border-radius: 50%; 
+        animation: spin 1s linear infinite; margin: 0 auto 20px;
     }
-
-    svg {
-        width: 100%;
-        height: 100%;
-        overflow: visible;
-    }
-
-    .bubble {
-        fill: rgba(46, 204, 113, 0.6);
-        stroke: #27ae60;
-        stroke-width: 2;
-        transition: all 0.3s ease;
-        cursor: pointer;
-    }
-
-    .bubble:hover {
-        fill: rgba(231, 76, 60, 0.7);
-        stroke: #c0392b;
-        filter: drop-shadow(0 0 8px rgba(231, 76, 60, 0.5));
-    }
-
-    .axis-title {
-        font-size: 14px;
-        fill: #718096;
-        font-weight: 600;
-    }
-
-    .year-label {
-        font-size: 12px;
-        fill: #4a5568;
-        font-weight: bold;
-    }
-
-    .legend {
-        display: flex;
-        justify-content: center;
-        gap: 40px;
-        margin-top: 30px;
-        padding-top: 20px;
-        border-top: 1px solid #f7fafc;
-    }
-
-    .legend-item {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        font-size: 0.95rem;
-    }
-
-    .agri-box {
-        width: 15px;
-        height: 15px;
-        background: #2ecc71;
-        border-radius: 3px;
-    }
-
-    .circle-sample {
-        width: 15px;
-        height: 15px;
-        border: 2px solid #c0392b;
-        border-radius: 50%;
-    }
-
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        background: white;
-        border-radius: 12px;
-        overflow: hidden;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-    }
-
-    th, td {
-        padding: 15px;
-        text-align: center;
-        border-bottom: 1px solid #f0f0f0;
-    }
-
-    th {
-        background: #2d3748;
-        color: white;
-        font-weight: 500;
-    }
-
-    .cheat-val {
-        font-weight: bold;
-        color: #c0392b;
-    }
-
-    .loading {
-        text-align: center;
-        font-size: 1.3rem;
-        color: #718096;
-        padding: 100px;
-    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 </style>

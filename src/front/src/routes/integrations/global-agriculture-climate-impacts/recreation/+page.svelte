@@ -8,51 +8,45 @@
     let loading = $state(true);
 
     async function loadData() {
+        loading = true;
         try {
-            // Fetch directo a las APIs sin datos precargados
-            const [resExp, resAgri] = await Promise.all([
-                fetch("https://sos2526-13.onrender.com/api/v1/exportations-stats"),
-                fetch("https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts")
+            // Usamos allSettled para que si una API cae, la otra no bloquee todo
+            const results = await Promise.allSettled([
+                fetch("https://sos2526-13.onrender.com/api/v1/exportations-stats").then(r => r.json()),
+                fetch("https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts").then(r => r.json())
             ]);
 
-            const dataExp = await resExp.json();
-            const dataAgri = await resAgri.json();
+            const dataExp = results[0].status === 'fulfilled' ? results[0].value : [];
+            const dataAgri = results[1].status === 'fulfilled' ? results[1].value : [];
 
-            // Procesamiento dinámico de campos (soporta 'year' y 'year_of_order')
-            const yearMap = new Map();
+            const merger = {};
 
-            dataExp.forEach(d => {
-                const year = d.year_of_order || d.year;
-                if (year) {
-                    if (!yearMap.has(year)) yearMap.set(year, { year, exports: 0, temp: 0 });
-                    yearMap.get(year).exports += Number(d.tiv_total_order || 0);
-                }
+            // 1. Procesar Clima (Línea)
+            dataAgri.forEach(item => {
+                const y = parseInt(item.year);
+                if (isNaN(y)) return;
+                if (!merger[y]) merger[y] = { year: y, temp: null, exports: 0 };
+                // Limpieza de datos: manejar "N/D" o valores no numéricos
+                const val = parseFloat(item.average_temperature_c);
+                merger[y].temp = isNaN(val) ? null : val;
             });
 
-            dataAgri.forEach(d => {
-                const year = d.year;
-                if (year) {
-                    // Si el año ya existe de las exportaciones, añadimos la temp
-                    if (yearMap.has(year)) {
-                        yearMap.get(year).temp = parseFloat(d.average_temperature_c || 0);
-                    } else {
-                        // Si no existe, lo creamos (para que la gráfica no salga vacía)
-                        yearMap.set(year, { year, exports: 0, temp: parseFloat(d.average_temperature_c || 0) });
-                    }
-                }
+            // 2. Procesar Exportaciones (Barras)
+            dataExp.forEach(item => {
+                const y = parseInt(item.year_of_order || item.year);
+                if (isNaN(y)) return;
+                if (!merger[y]) merger[y] = { year: y, temp: null, exports: 0 };
+                const val = parseFloat(item.tiv_total_order || 0);
+                merger[y].exports += isNaN(val) ? 0 : val;
             });
 
-            // Convertimos a array, filtramos años basura y ordenamos cronológicamente
-            combinedData = Array.from(yearMap.values())
-                .filter(d => d.year > 1900 && (d.exports > 0 || d.temp > 0))
-                .sort((a, b) => a.year - b.year)
-                .slice(-15); // Mostramos los últimos 15 años registrados para que no sature
+            combinedData = Object.values(merger).sort((a, b) => a.year - b.year);
 
-            await tick();
+            loading = false;
+            await tick(); // Esperar a que Svelte cree el canvas en el DOM
             renderChart();
         } catch (e) {
-            console.error("Error integrando APIs:", e);
-        } finally {
+            console.error("Error crítico en la carga:", e);
             loading = false;
         }
     }
@@ -61,21 +55,29 @@
         if (!canvas || combinedData.length === 0) return;
         if (chartInstance) chartInstance.destroy();
 
-        chartInstance = new Chart(canvas, {
-            type: 'bar', // ESTILO BARRAS (No lineal)
+        const ctx = canvas.getContext('2d');
+        chartInstance = new Chart(ctx, {
+            type: 'bar',
             data: {
                 labels: combinedData.map(d => d.year),
                 datasets: [
                     {
                         label: 'Exportaciones (TIV)',
                         data: combinedData.map(d => d.exports),
-                        backgroundColor: '#4299e1',
+                        backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                        borderRadius: 5,
                         yAxisID: 'y'
                     },
                     {
-                        label: 'Temp. Media (°C)',
+                        label: 'Temperatura (°C)',
                         data: combinedData.map(d => d.temp),
-                        backgroundColor: '#f56565',
+                        type: 'line',
+                        borderColor: '#FF0000',
+                        backgroundColor: '#FF0000',
+                        borderWidth: 3,
+                        pointRadius: 4,
+                        tension: 0.3,
+                        spanGaps: true, // Une puntos aunque falten años intermedios
                         yAxisID: 'y1'
                     }
                 ]
@@ -84,18 +86,20 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: {
-                    y: {
+                    y: { 
                         type: 'linear',
                         display: true,
                         position: 'left',
-                        title: { display: true, text: 'Volumen de Exportación' }
+                        title: { display: true, text: 'TIV (Exportaciones)' }
                     },
                     y1: {
                         type: 'linear',
                         display: true,
                         position: 'right',
+                        min: 0,
+                        max: 45, // Ajustado para que la curva de temperatura sea visible
                         grid: { drawOnChartArea: false },
-                        title: { display: true, text: 'Grados Celsius' }
+                        title: { display: true, text: 'Promedio Temp °C' }
                     }
                 }
             }
@@ -105,61 +109,42 @@
     onMount(loadData);
 </script>
 
-<main class="container">
-    <div class="chart-wrapper">
+<div style="padding: 20px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 1000px; margin: auto;">
+    <h2 style="text-align: center; color: #333;">Dashboard Integrado: Clima y Comercio</h2>
+    
+    <div style="height: 450px; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); position: relative;">
         {#if loading}
-            <div class="status">Cargando datos reales de las APIs...</div>
-        {:else if combinedData.length === 0}
-            <div class="status error">No se han encontrado datos coincidentes.</div>
+            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+                <strong>Sincronizando APIs...</strong>
+            </div>
         {/if}
         <canvas bind:this={canvas}></canvas>
     </div>
 
-    <div class="table-container">
-        <table>
+    <div style="margin-top: 30px; overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
             <thead>
-                <tr>
-                    <th>Año</th>
-                    <th>Temperatura Registrada</th>
-                    <th>Exportaciones Totales</th>
+                <tr style="background: #1a252f; color: white;">
+                    <th style="padding: 12px;">Año</th>
+                    <th>Exportaciones (TIV)</th>
+                    <th>Temperatura</th>
                 </tr>
             </thead>
             <tbody>
-                {#each combinedData as row}
-                    <tr>
-                        <td>{row.year}</td>
-                        <td class="val-temp">{row.temp > 0 ? row.temp.toFixed(2) + ' °C' : 'N/D'}</td>
-                        <td class="val-exp">{row.exports > 0 ? row.exports.toLocaleString() : 'N/D'}</td>
+                {#each combinedData as d}
+                    <tr style="border-bottom: 1px solid #f2f2f2; text-align: center;">
+                        <td style="padding: 10px; font-weight: bold; background: #f9f9f9;">{d.year}</td>
+                        <td style="color: #2980b9;">{d.exports > 0 ? d.exports.toLocaleString() : '0'}</td>
+                        <td style="color: #c0392b; font-weight: bold;">
+                            {d.temp !== null ? d.temp.toFixed(1) + ' °C' : 'N/D'}
+                        </td>
                     </tr>
                 {/each}
             </tbody>
         </table>
     </div>
-</main>
+</div>
 
 <style>
-    .container { padding: 20px; max-width: 1000px; margin: auto; font-family: sans-serif; }
-    
-    .chart-wrapper { 
-        height: 400px; 
-        background: #fff; 
-        padding: 20px; 
-        border: 1px solid #ddd; 
-        border-radius: 10px;
-        margin-bottom: 20px;
-        position: relative;
-    }
-
-    .status { 
-        position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-        color: #666; font-weight: bold;
-    }
-
-    .table-container { border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-    table { width: 100%; border-collapse: collapse; background: white; }
-    th { background: #2d3748; color: white; padding: 12px; text-align: left; }
-    td { padding: 12px; border-bottom: 1px solid #edf2f7; }
-
-    .val-temp { color: #e53e3e; font-weight: bold; }
-    .val-exp { color: #3182ce; font-weight: bold; }
+    canvas { width: 100% !important; height: 100% !important; }
 </style>
