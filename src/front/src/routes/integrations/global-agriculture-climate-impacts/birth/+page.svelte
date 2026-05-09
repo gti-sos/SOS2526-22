@@ -5,11 +5,6 @@
     let loading = $state(true);
     let tableData = $state([]);
 
-    function getRandomColor() {
-        const colors = ["#4e79a7", "#e15759", "#76b7b2", "#59a14f", "#edc949", "#af7aa1", "#ff9da7", "#9c755f", "#bab0ab"];
-        return colors[Math.floor(Math.random() * colors.length)];
-    }
-
     async function loadD3() {
         if (window.d3) return window.d3;
         return new Promise((resolve) => {
@@ -23,77 +18,89 @@
     async function init() {
         const d3 = await loadD3();
         
-        // 1. Cargamos datos iniciales en la API de agricultura por si está vacía
+        // 1. Carga inicial de agricultura
         await fetch("https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts/loadInitialData");
 
-        // 2. Ahora pedimos los datos reales (arrays)
-        const [r1, r2] = await Promise.all([
-            fetch("https://sos2526-12.onrender.com/api/v2/birth-death-growth-rates"),
-            fetch("https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts")
-        ]);
+        try {
+            // 2. Fetch de ambas APIs
+            const [resBirth, resAgri] = await Promise.all([
+                fetch("https://sos2526-12.onrender.com/api/v2/birth-death-growth-rates"),
+                fetch("https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts")
+            ]);
 
-        const data1 = await r1.json();
-        const data2 = await r2.json();
+            const dataBirth = await resBirth.json();
+            const dataAgri = await resAgri.json();
 
-        // 3. Validación: Comprobamos que sean arrays antes de usar .map
-        const cleanData1 = Array.isArray(data1) ? data1 : [];
-        const cleanData2 = Array.isArray(data2) ? data2 : [];
+            // 3. Procesar datos de BIRTH (Usa crude_birth_rate para el tamaño)
+            const birthNodes = (Array.isArray(dataBirth) ? dataBirth : []).map(d => {
+                const birthVal = parseFloat(d.crude_birth_rate || d.growth_rate || 0);
+                return {
+                    label: d.country_name || d.country || "Desconocido",
+                    value: birthVal,
+                    info: `Natalidad: ${birthVal}`,
+                    year: d.year,
+                    group: "DEMOGRAFÍA",
+                    color: "#3182ce", // Azul
+                    // Ajustamos el radio para que la tasa de natalidad sea muy visible
+                    radius: (birthVal * 3) + 15 
+                };
+            });
 
-        tableData = [
-            ...cleanData1.map(d => ({
-                label: d.country_name || d.country,
-                value: parseFloat(d.growth_rate) || 0.1, // Valor mínimo para que se vea la burbuja
-                group: 'Demografía',
-                color: getRandomColor()
-            })),
-            ...cleanData2.map(d => ({
-                label: d.country,
-                value: parseFloat(d.average_temperature_c) || 0.1,
-                group: 'Agricultura',
-                color: getRandomColor()
-            }))
-        ].filter(d => d.label);
+            // 4. Procesar datos de AGRICULTURA
+            const agriNodes = (Array.isArray(dataAgri) ? dataAgri : []).map(d => {
+                const tempVal = parseFloat(d.average_temperature_c || 0);
+                return {
+                    label: d.country || "Desconocido",
+                    value: tempVal,
+                    info: `Temp: ${tempVal}ºC`,
+                    year: d.year,
+                    group: "AGRICULTURA",
+                    color: "#e53e3e", // Rojo
+                    radius: (tempVal * 1.5) + 10
+                };
+            });
 
-        loading = false;
-        // Pequeño delay para asegurar que el contenedor DOM esté listo
-        setTimeout(() => renderChart(d3, tableData), 50);
+            // Unimos todo en una sola nube
+            tableData = [...birthNodes, ...agriNodes].filter(d => d.value !== 0);
+
+            loading = false;
+            setTimeout(() => renderChart(d3, tableData), 100);
+
+        } catch (error) {
+            console.error("Error:", error);
+            loading = false;
+        }
     }
 
     function renderChart(d3, data) {
         if (!container || data.length === 0) return;
         const width = container.clientWidth;
-        const height = 500;
+        const height = 550;
 
         d3.select(container).selectAll("*").remove();
+        const svg = d3.select(container).append("svg").attr("width", width).attr("height", height);
 
         const tooltip = d3.select("body").append("div")
-            .style("position", "absolute")
-            .style("visibility", "hidden")
-            .style("background", "#333")
-            .style("color", "#fff")
-            .style("padding", "5px 10px")
-            .style("border-radius", "5px")
-            .style("font-size", "12px")
-            .style("z-index", "10");
-
-        const svg = d3.select(container).append("svg")
-            .attr("width", width).attr("height", height);
+            .style("position", "absolute").style("visibility", "hidden")
+            .style("background", "#2d3748").style("color", "#fff")
+            .style("padding", "8px").style("border-radius", "5px").style("font-size", "12px");
 
         const simulation = d3.forceSimulation(data)
-            .force("x", d3.forceX(width / 2).strength(0.05))
-            .force("y", d3.forceY(height / 2).strength(0.05))
-            .force("collide", d3.forceCollide(d => Math.sqrt(Math.abs(d.value)) * 15 + 5)); // Ajustado el multiplicador
+            .force("center", d3.forceCenter(width / 2, height / 2))
+            .force("charge", d3.forceManyBody().strength(5))
+            .force("collide", d3.forceCollide(d => d.radius + 2));
 
-        const node = svg.append("g")
+        const nodes = svg.append("g")
             .selectAll("circle")
             .data(data)
             .join("circle")
-            .attr("r", d => Math.sqrt(Math.abs(d.value)) * 15)
+            .attr("r", d => d.radius)
             .attr("fill", d => d.color)
             .attr("stroke", "#fff")
             .attr("stroke-width", 2)
             .on("mouseover", (event, d) => {
-                tooltip.style("visibility", "visible").text(`${d.label}: ${d.value}`);
+                tooltip.style("visibility", "visible")
+                       .html(`<b>${d.group}</b><br>${d.label} (${d.year})<br>${d.info}`);
             })
             .on("mousemove", (event) => {
                 tooltip.style("top", (event.pageY - 10) + "px").style("left", (event.pageX + 10) + "px");
@@ -101,7 +108,7 @@
             .on("mouseout", () => tooltip.style("visibility", "hidden"));
 
         simulation.on("tick", () => {
-            node.attr("cx", d => d.x).attr("cy", d => d.y);
+            nodes.attr("cx", d => d.x).attr("cy", d => d.y);
         });
     }
 
@@ -109,60 +116,53 @@
 </script>
 
 <div class="card">
-    <h2>Visualización de Burbujas Dinámicas</h2>
-    <p style="text-align: center; color: #666;">Pasa el ratón sobre las burbujas para ver el dato</p>
+    <h2>Relación Global: Natalidad vs Clima</h2>
+    <div class="legend">
+        <span class="badge blue">API Birth (Crude Birth Rate)</span>
+        <span class="badge red">API Agri (Temperatura ºC)</span>
+    </div>
 
     {#if loading}
-        <div class="loader-container">
-            <div class="spinner"></div>
-            <p>Cargando simulación y datos...</p>
-        </div>
+        <p style="text-align:center;">Cargando nube de datos...</p>
     {:else}
-        <div bind:this={container} class="chart-area"></div>
+        <div bind:this={container} class="chart-container"></div>
 
-        <section class="table-section">
-            <h3>Datos Detallados</h3>
-            <div class="table-scroll">
-                <table>
-                    <thead>
+        <div class="table-box">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Categoría</th>
+                        <th>País</th>
+                        <th>Año</th>
+                        <th>Dato Clave</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {#each tableData as item}
                         <tr>
-                            <th>País</th>
-                            <th>Categoría</th>
-                            <th>Valor</th>
+                            <td><span class="dot" style="background:{item.color}"></span> {item.group}</td>
+                            <td>{item.label}</td>
+                            <td>{item.year}</td>
+                            <td><strong>{item.info}</strong></td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        {#each tableData as item}
-                            <tr>
-                                <td>{item.label}</td>
-                                <td><span class="dot" style="background: {item.color}"></span> {item.group}</td>
-                                <td><strong>{item.value}</strong></td>
-                            </tr>
-                        {/each}
-                    </tbody>
-                </table>
-            </div>
-        </section>
+                    {/each}
+                </tbody>
+            </table>
+        </div>
     {/if}
 </div>
 
 <style>
-    .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); max-width: 900px; margin: 20px auto; font-family: sans-serif; }
-    h2 { text-align: center; color: #333; }
-    .chart-area { width: 100%; height: 500px; background: #f9f9f9; border-radius: 10px; margin-bottom: 20px; border: 1px solid #eee; }
-    
-    .loader-container { text-align: center; padding: 50px; }
-    .spinner { 
-        width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #3498db; 
-        border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px;
-    }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-    .table-section { margin-top: 20px; }
-    .table-scroll { max-height: 300px; overflow-y: auto; border: 1px solid #eee; border-radius: 8px; }
+    .card { background: #fff; padding: 25px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); max-width: 900px; margin: auto; font-family: sans-serif; }
+    h2 { text-align: center; }
+    .legend { display: flex; justify-content: center; gap: 15px; margin-bottom: 20px; }
+    .badge { padding: 5px 12px; border-radius: 20px; color: white; font-size: 0.8rem; font-weight: bold; }
+    .blue { background: #3182ce; }
+    .red { background: #e53e3e; }
+    .chart-container { width: 100%; height: 550px; background: #f9fafb; border-radius: 10px; border: 1px solid #eee; }
+    .table-box { margin-top: 25px; max-height: 300px; overflow-y: auto; }
     table { width: 100%; border-collapse: collapse; }
-    th { background: #f4f4f4; padding: 12px; position: sticky; top: 0; z-index: 1; }
-    td { padding: 10px; border-bottom: 1px solid #eee; text-align: center; }
-    
-    .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; }
+    th { background: #f3f4f6; padding: 10px; position: sticky; top: 0; }
+    td { padding: 8px; border-bottom: 1px solid #eee; text-align: center; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; }
 </style>
