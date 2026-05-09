@@ -4,32 +4,41 @@
 
     let canvas = $state();
     let chartInstance = null;
+    
+    // CORRECCIÓN: Todas las variables que cambian y afectan al HTML deben ser $state
     let tableData = $state([]);
     let errorMessage = $state("");
+    let loading = $state(true); 
 
     async function loadIntegration() {
         console.log("--- Iniciando carga con flujo corregido ---");
+        loading = true;
+        errorMessage = "";
+
         try {
-            // 1. CARGA INICIAL: Esperamos obligatoriamente a que la API se rellene
+            // 1. CARGA INICIAL
             const resLoad = await fetch("https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts/loadInitialData");
             
-            // Si no es OK ni 409 (ya existente), avisamos en consola pero intentamos seguir
             if (!resLoad.ok && resLoad.status !== 409) {
                 console.warn("La precarga de agricultura no devolvió el estado esperado.");
             }
 
-            // 2. PETICIÓN DE DATOS: Ahora que el paso 1 terminó, pedimos los JSON
+            // 2. PETICIÓN DE DATOS
             const [resExport, resAgri] = await Promise.all([
                 fetch("https://sos2526-13.onrender.com/api/v1/exportations-stats"),
                 fetch("https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts")
             ]);
+
+            // Verificación de estados
+            if (!resExport.ok) console.error("Error en API Exportaciones:", resExport.status);
+            if (!resAgri.ok) console.error("Error en API Agricultura:", resAgri.status);
 
             const dataExport = resExport.ok ? await resExport.json() : [];
             const dataAgri = resAgri.ok ? await resAgri.json() : [];
 
             const yearMap = new Map();
 
-            // 1. PROCESAR EXPORTACIONES
+            // PROCESAR EXPORTACIONES
             dataExport.forEach(item => {
                 const year = item.year_of_order || item.year; 
                 if (year) {
@@ -42,7 +51,7 @@
                 }
             });
 
-            // 2. PROCESAR AGRICULTURA
+            // PROCESAR AGRICULTURA
             dataAgri.forEach(item => {
                 const year = item.year; 
                 if (year) {
@@ -57,16 +66,21 @@
                 }
             });
 
-            // 3. FILTRADO Y ORDENACIÓN
-            tableData = Array.from(yearMap.values())
+            // FILTRADO Y ORDENACIÓN
+            const processedData = Array.from(yearMap.values())
                 .filter(d => d.exportVal > 0 || d.temp !== 0)
                 .sort((a, b) => a.year - b.year);
 
-            if (tableData.length === 0) {
+            if (processedData.length === 0) {
                 errorMessage = "No se han podido cruzar los datos o las APIs están vacías.";
+                loading = false;
                 return;
             }
 
+            tableData = processedData;
+            loading = false;
+
+            // Renderizado de la gráfica
             await tick();
             if (canvas) {
                 if (chartInstance) chartInstance.destroy();
@@ -101,23 +115,27 @@
             }
         } catch (error) {
             console.error("Error en la integración:", error);
-            errorMessage = "Error de conexión con las APIs.";
+            errorMessage = "Error de conexión con las APIs. Revisa la consola.";
+            loading = false;
         }
     }
 
-    onMount(loadIntegration);
+    onMount(() => {
+        loadIntegration();
+        return () => { if (chartInstance) chartInstance.destroy(); };
+    });
 </script>
 
 <div class="container">
     {#if errorMessage}
         <div class="error-banner">
             <strong>Atención:</strong> {errorMessage}
-            <p style="font-size: 0.8rem; margin-top: 5px;">Revisa la consola (F12) para más detalles.</p>
         </div>
     {/if}
 
-    {#if tableData.length === 0 && !errorMessage}
+    {#if loading}
         <div class="loading-state">
+            <div class="spinner"></div>
             <p>Conectando con APIs y procesando datos...</p>
         </div>
     {:else if tableData.length > 0}
@@ -154,6 +172,7 @@
 </div>
 
 <style>
+    /* Estilos base */
     .container { display: flex; flex-direction: column; align-items: center; gap: 2rem; padding: 20px; font-family: sans-serif; }
     .error-banner { width: 100%; max-width: 600px; padding: 15px; background-color: #fff5f5; color: #c53030; border: 1px solid #feb2b2; border-radius: 8px; text-align: center; }
     .chart-wrapper { position: relative; height: 450px; width: 100%; max-width: 600px; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
@@ -164,5 +183,11 @@
     .text-temp { color: #e53e3e; font-weight: bold; }
     .text-export { color: #3182ce; font-weight: bold; }
     .text-muted { color: #718096; font-size: 0.85rem; }
+    
     .loading-state { text-align: center; margin-top: 50px; color: #555; }
+    .spinner { 
+        width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #3498db; 
+        border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 10px;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 </style>
