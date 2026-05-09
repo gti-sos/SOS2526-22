@@ -8,13 +8,17 @@
     let errorMessage = $state("");
 
     async function loadIntegration() {
-        console.log("--- Iniciando carga con campos corregidos ---");
+        console.log("--- Iniciando carga con flujo corregido ---");
         try {
+            // 1. CARGA INICIAL: Esperamos obligatoriamente a que la API se rellene
+            const resLoad = await fetch("https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts/loadInitialData");
+            
+            // Si no es OK ni 409 (ya existente), avisamos en consola pero intentamos seguir
+            if (!resLoad.ok && resLoad.status !== 409) {
+                console.warn("La precarga de agricultura no devolvió el estado esperado.");
+            }
 
-              // 1. Cargamos datos iniciales en la API de agricultura por si está vacía
-            await fetch("https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts/loadInitialData");
-
-
+            // 2. PETICIÓN DE DATOS: Ahora que el paso 1 terminó, pedimos los JSON
             const [resExport, resAgri] = await Promise.all([
                 fetch("https://sos2526-13.onrender.com/api/v1/exportations-stats"),
                 fetch("https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts")
@@ -25,9 +29,8 @@
 
             const yearMap = new Map();
 
-            // 1. PROCESAR EXPORTACIONES (Usando year_of_order)
+            // 1. PROCESAR EXPORTACIONES
             dataExport.forEach(item => {
-                // Priorizamos year_of_order según tu JSON
                 const year = item.year_of_order || item.year; 
                 if (year) {
                     if (!yearMap.has(year)) {
@@ -35,21 +38,18 @@
                     }
                     const val = Number(item.tiv_total_order || 0);
                     yearMap.get(year).exportVal += val;
-                    // Usamos supplier o recipient según lo que quieras trackear, 
-                    // aquí pongo ambos para que veas el flujo
                     if(item.supplier) yearMap.get(year).countries.add(item.supplier);
                 }
             });
 
             // 2. PROCESAR AGRICULTURA
             dataAgri.forEach(item => {
-                const year = item.year; // En agricultura suele ser 'year'
+                const year = item.year; 
                 if (year) {
                     if (!yearMap.has(year)) {
                         yearMap.set(year, { year, exportVal: 0, temp: 0, countries: new Set() });
                     }
                     const currentData = yearMap.get(year);
-                    // Solo actualizamos si hay un valor de temperatura real
                     if (item.average_temperature_c) {
                         currentData.temp = Number(item.average_temperature_c);
                     }
@@ -58,15 +58,12 @@
             });
 
             // 3. FILTRADO Y ORDENACIÓN
-            // Ordenamos por año para que la gráfica tenga sentido cronológico
             tableData = Array.from(yearMap.values())
                 .filter(d => d.exportVal > 0 || d.temp !== 0)
                 .sort((a, b) => a.year - b.year);
 
-            console.log("Datos procesados correctamente:", tableData);
-
             if (tableData.length === 0) {
-                errorMessage = "No se han podido cruzar los datos. Revisa la consola.";
+                errorMessage = "No se han podido cruzar los datos o las APIs están vacías.";
                 return;
             }
 
@@ -157,7 +154,6 @@
 </div>
 
 <style>
-    /* Se mantienen los estilos anteriores */
     .container { display: flex; flex-direction: column; align-items: center; gap: 2rem; padding: 20px; font-family: sans-serif; }
     .error-banner { width: 100%; max-width: 600px; padding: 15px; background-color: #fff5f5; color: #c53030; border: 1px solid #feb2b2; border-radius: 8px; text-align: center; }
     .chart-wrapper { position: relative; height: 450px; width: 100%; max-width: 600px; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }

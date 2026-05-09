@@ -6,13 +6,17 @@
     let integratedData = $state([]);
 
     async function loadData() {
-          // 1. Cargamos datos iniciales en la API de agricultura por si está vacía
-        await fetch("https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts/loadInitialData");
-
+         
 
 
 
         try {
+
+
+             // 1. Cargamos datos iniciales en la API de agricultura por si está vacía
+            await fetch("https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts/loadInitialData");
+
+
             const [resAgri, resProxy] = await Promise.all([
                 fetch("https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts"),
                 fetch("/cheaters-stats-proxy/loadInitialData")
