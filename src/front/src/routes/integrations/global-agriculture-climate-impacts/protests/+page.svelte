@@ -7,49 +7,46 @@
 
     async function loadData() {
         try {
-
-              // 1. Cargamos datos iniciales en la API de agricultura por si está vacía
+            // 1. Cargas iniciales
             await fetch("https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts/loadInitialData");
+            await fetch("https://sos2526-10.onrender.com/api/v2/protests/loadInitialData");
 
-
-            const [resAgri, resExp] = await Promise.all([
+            const [resAgri, resProtests] = await Promise.all([
                 fetch("https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts"),
-                fetch("http://sos2526-10.onrender.com/api/v2/protests")
+                fetch("https://sos2526-10.onrender.com/api/v2/protests")
             ]);
 
             const dataAgri = await resAgri.json();
-            const dataExp = await resExp.json();
+            const dataProtests = await resProtests.json();
 
             const merger = {};
 
-            // 1. Insertamos TODOS los datos de Agricultura
+            // 2. Procesar Agricultura
             dataAgri.forEach(d => {
-                const year = String(d.year);
-                merger[year] = { 
-                    year: year, 
-                    temp: parseFloat(d.average_temperature_c || 0), 
-                    tiv: 0 
-                };
+                const y = String(d.year);
+                if (!merger[y]) merger[y] = { year: y, temp: 0, totalProtests: 0 };
+                merger[y].temp = parseFloat(d.average_temperature_c || 0);
             });
 
-            // 2. Insertamos TODOS los datos de Exportaciones (sin filtrar años comunes)
-            dataExp.forEach(d => {
-                const year = String(d.year_of_order || d.year);
-                if (!merger[year]) {
-                    merger[year] = { year: year, temp: 0, tiv: 0 };
-                }
-                merger[year].tiv += parseFloat(d.tiv_total_order || 0);
+            // 3. Procesar Protestas usando el campo "protest" de tu JSON
+            dataProtests.forEach(d => {
+                const y = String(d.year);
+                if (!merger[y]) merger[y] = { year: y, temp: 0, totalProtests: 0 };
+                
+                // Sumamos el valor del campo 'protest' (que es 1 según tu ejemplo)
+                const val = parseInt(d.protest);
+                merger[y].totalProtests += isNaN(val) ? 0 : val;
             });
 
-            // 3. Ordenamos y quitamos solo los años que estén totalmente vacíos
+            // 4. Ordenar y limpiar
             stats = Object.values(merger)
-                .filter(s => s.temp !== 0 || s.tiv !== 0)
-                .sort((a, b) => parseInt(a.year) - parseInt(b.year));
+                .sort((a, b) => parseInt(a.year) - parseInt(b.year))
+                .filter(s => s.temp > 0 || s.totalProtests > 0);
 
             loading = false;
             setTimeout(renderChart, 500); 
         } catch (e) {
-            console.error("Error en las APIs:", e);
+            console.error("Error en integración:", e);
             loading = false;
         }
     }
@@ -64,25 +61,24 @@
                 x: 'x',
                 columns: [
                     ['x', ...stats.map(s => s.year)],
-                    ['Temperatura (API Agricultura)', ...stats.map(s => s.temp)],
-                    ['Exportaciones (API Comercio)', ...stats.map(s => s.tiv)]
+                    ['Temperatura Media (°C)', ...stats.map(s => s.temp)],
+                    ['Número de Protestas', ...stats.map(s => s.totalProtests)]
                 ],
-                type: 'area-step', // Estilo no lineal (escalonado)
-                axes: {
-                    'Exportaciones (API Comercio)': 'y2' // Eje derecho para exportaciones
-                }
+                type: 'area-step',
+                axes: { 'Número de Protestas': 'y2' }
             },
             axis: {
-                x: { type: 'category', label: 'Evolución por Años' },
-                y: { label: 'Temperatura ºC', tick: { format: d => d + "º" } },
-                y2: { show: true, label: 'Volumen TIV (Comercio)' }
+                x: { type: 'category', label: 'Evolución Anual' },
+                y: { label: 'Temperatura', tick: { format: d => d + "°" } },
+                y2: { show: true, label: 'Cantidad de Protestas' }
             },
-            color: { pattern: ['#e74c3c', '#2980b9'] },
+            color: { pattern: ['#ff4d4d', '#2c3e50'] },
             grid: { y: { show: true } }
         });
     }
 
     onMount(() => {
+        // Carga de estilos y scripts de C3/D3
         const link = document.createElement('link');
         link.rel = 'stylesheet';
         link.href = 'https://cdnjs.cloudflare.com/ajax/libs/c3/0.7.20/c3.min.css';
@@ -100,33 +96,37 @@
     });
 </script>
 
-<main style="padding: 20px; font-family: sans-serif;">
-    <h1 style="text-align: center;">Integración Total: Evolución Clima y Comercio</h1>
+<main style="padding: 20px; font-family: 'Segoe UI', Tahoma, sans-serif;">
+    <h1 style="text-align: center; color: #2c3e50;">Dashboard: Clima vs Protestas</h1>
 
-    <div style="background: white; border-radius: 12px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+    <div style="background: white; border-radius: 15px; padding: 25px; box-shadow: 0 8px 30px rgba(0,0,0,0.08);">
         {#if loading}
-            <p style="text-align: center;">Cargando y uniendo datos de ambas fuentes...</p>
+            <div style="text-align: center; padding: 50px;">
+                <strong>Procesando datos</strong>
+            </div>
         {:else}
             <div bind:this={chartContainer} style="height: 450px;"></div>
 
-            <table style="width: 100%; border-collapse: collapse; margin-top: 25px; font-size: 0.9em;">
-                <thead>
-                    <tr style="background: #2c3e50; color: white;">
-                        <th style="padding: 10px;">Año</th>
-                        <th>Temp (Agricultura)</th>
-                        <th>TIV (Exportaciones)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {#each stats as s}
-                        <tr style="border-bottom: 1px solid #eee; text-align: center;">
-                            <td style="padding: 8px; font-weight: bold;">{s.year}</td>
-                            <td style="color: #e74c3c;">{s.temp > 0 ? s.temp + ' ºC' : 'Sin datos'}</td>
-                            <td style="color: #2980b9;">{s.tiv > 0 ? s.tiv.toLocaleString() : 'Sin datos'}</td>
+            <div style="margin-top: 30px; overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                            <th style="padding: 12px;">Año</th>
+                            <th>Temperatura (°C)</th>
+                            <th>Total Protestas (Suma)</th>
                         </tr>
-                    {/each}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {#each stats as s}
+                            <tr style="border-bottom: 1px solid #eee; text-align: center;">
+                                <td style="padding: 10px; font-weight: bold;">{s.year}</td>
+                                <td style="color: #ff4d4d;">{s.temp.toFixed(2)} °C</td>
+                                <td style="color: #2c3e50; font-weight: bold;">{s.totalProtests}</td>
+                            </tr>
+                        {/each}
+                    </tbody>
+                </table>
+            </div>
         {/if}
     </div>
 </main>

@@ -18,8 +18,9 @@
         try {
             // 1. CARGA INICIAL
             const resLoad = await fetch("https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts/loadInitialData");
+            const resLoad2 = await fetch("https://sos2526-13.onrender.com/api/v1/exportations-stats/loadInitialData");
             
-            if (!resLoad.ok && resLoad.status !== 409) {
+            if ((!resLoad.ok && resLoad.status !== 409)  || (!resLoad2.ok && resLoad2.status !== 409)) {
                 console.warn("La precarga de agricultura no devolvió el estado esperado.");
             }
 

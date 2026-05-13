@@ -72,6 +72,8 @@
 
     onMount(async () => {
         try {
+            await fetch("https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts/loadInitialData")
+            
             const [resAgri, resSpx] = await Promise.all([
                 fetch("https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts"),
                 fetch("https://api.spacexdata.com/v4/launches")

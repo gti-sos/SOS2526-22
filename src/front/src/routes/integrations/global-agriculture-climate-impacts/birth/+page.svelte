@@ -20,11 +20,12 @@
         
         // 1. Carga inicial de agricultura
         await fetch("https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts/loadInitialData");
+        await fetch("https://sos2526-12.onrender.com/api/v2/birth-death-growth-rates/loadInitialData");
 
         try {
             // 2. Fetch de ambas APIs
             const [resBirth, resAgri] = await Promise.all([
-                fetch("https://sos2526-12.onrender.com/api/v2/birth-death-growth-rates/loadInitialData"),
+                fetch("https://sos2526-12.onrender.com/api/v2/birth-death-growth-rates"),
                 fetch("https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts")
             ]);
 
