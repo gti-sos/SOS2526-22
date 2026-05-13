@@ -16,7 +16,7 @@
 
             // Usamos allSettled para que si una API cae, la otra no bloquee todo
             const results = await Promise.allSettled([
-                fetch("https://sos2526-13.onrender.com/api/v1/exportations-stats").then(r => r.json()),
+                fetch("https://sos2526-24.onrender.com/api/v2/recreation-culture-expenditure").then(r => r.json()),
                 fetch("https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts").then(r => r.json())
             ]);
 

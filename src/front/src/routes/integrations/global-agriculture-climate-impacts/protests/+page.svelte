@@ -14,7 +14,7 @@
 
             const [resAgri, resExp] = await Promise.all([
                 fetch("https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts"),
-                fetch("https://sos2526-13.onrender.com/api/v1/exportations-stats")
+                fetch("http://sos2526-10.onrender.com/api/v2/protests")
             ]);
 
             const dataAgri = await resAgri.json();

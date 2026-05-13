@@ -8,40 +8,37 @@
 
     async function load() {
         try {
-            // Intentamos cargar las APIs
-
-            // 1. Cargamos datos iniciales en la API de agricultura por si está vacía
+            // 1. Cargamos datos iniciales en tu API por si acaso
             await fetch("https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts/loadInitialData");
 
-            const [res1, res2] = await Promise.all([
+            // 2. Llamada a tus dos APIs originales: Agricultura y Adobe
+            const [resAgri, resAdobe] = await Promise.all([
                 fetch("https://sos2526-22.onrender.com/api/v1/global-agriculture-climate-impacts"),
-                fetch("https://sos2526-13.onrender.com/api/v1/exportations-stats")
+                fetch("https://api.apis.guru/v2/specs/adobe.com/aem/3.7.1-pre.0/openapi.json")
             ]);
 
-            const agri = await res1.json();
-            const exp = await res2.json();
+            const agriData = await resAgri.json();
+            const adobeData = await resAdobe.json();
 
-            // Procesamiento ultra-seguro
-            stats = agri.slice(0, 10).map((a, i) => {
-                const e = exp[i] || {};
-                // Forzamos conversión a número. Si falla, ponemos un valor por defecto (p.ej. 5)
-                const t = parseFloat(a.average_temperature_c);
-                const ex = parseFloat(e.tiv_total_order || e.exports);
+            // Calculamos la complejidad de Adobe (número de rutas/endpoints)
+            const adobeComplexity = Object.keys(adobeData.paths || {}).length;
+
+            // 3. Procesamiento y Limpieza (para evitar el error de "String")
+            stats = agriData.map((a) => {
+                // Convertimos la temperatura a número. Si es "N/D" o texto, usamos 0 para que la gráfica no falle.
+                const tempNum = parseFloat(a.average_temperature_c);
                 
                 return {
-                    label: (a.country || "País") + " " + (a.year || ""),
-                    temp: isNaN(t) ? 10 : t, // Valor de seguridad para que se pinte el círculo
-                    export: isNaN(ex) ? 5 : ex / 5,
-                    original: a.average_temperature_c
+                    label: `${a.country || "País"} (${a.year || ""})`,
+                    temp: isNaN(tempNum) ? 0 : tempNum, 
+                    adobeValue: adobeComplexity / 10, // Valor escalado para la comparativa
+                    originalTemp: a.average_temperature_c // Guardamos el original para la tabla
                 };
             });
+
         } catch (e) {
-            console.error("Fallo de carga, usando datos de emergencia", e);
-            // Datos de emergencia para que NUNCA salga en blanco
-            stats = [
-                { label: "Error API 1", temp: 20, export: 10 },
-                { label: "Error API 2", temp: 15, export: 8 }
-            ];
+            console.error("Error cargando APIs:", e);
+            stats = [{ label: "Error de carga", temp: 0, adobeValue: 0, originalTemp: "Error" }];
         }
 
         await tick();
@@ -53,25 +50,20 @@
         if (chartInstance) chartInstance.destroy();
 
         chartInstance = new Chart(canvas, {
-            type: 'polarArea', // El estilo de círculo que pediste
+            type: 'polarArea',
             data: {
                 labels: stats.map(s => s.label),
                 datasets: [
                     {
-                        label: 'Temperatura (°C)',
+                        label: 'Temperatura Media (°C)',
                         data: stats.map(s => s.temp),
-                        backgroundColor: [
-                            'rgba(255, 99, 132, 0.7)',
-                            'rgba(54, 162, 235, 0.7)',
-                            'rgba(255, 206, 86, 0.7)',
-                            'rgba(75, 192, 192, 0.7)',
-                            'rgba(153, 102, 255, 0.7)'
-                        ]
+                        backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                        borderWidth: 1
                     },
                     {
-                        label: 'Exportación (Integrada)',
-                        data: stats.map(s => s.export),
-                        backgroundColor: 'rgba(0, 0, 0, 0.1)',
+                        label: 'Complejidad Adobe (Escalada)',
+                        data: stats.map(s => s.adobeValue),
+                        backgroundColor: 'rgba(54, 162, 235, 0.4)',
                         borderWidth: 1
                     }
                 ]
@@ -81,6 +73,9 @@
                 maintainAspectRatio: false,
                 scales: {
                     r: { beginAtZero: true }
+                },
+                plugins: {
+                    legend: { position: 'bottom' }
                 }
             }
         });
@@ -89,27 +84,27 @@
     onMount(load);
 </script>
 
-<div style="padding: 20px; font-family: sans-serif;">
-    <h2 style="text-align: center;">Integración Polar (Agricultura + Exportación)</h2>
+<div style="padding: 20px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+    <h2 style="text-align: center; color: #333;">Integración Polar: Clima vs API Adobe</h2>
 
     <div style="height: 500px; background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
         <canvas bind:this={canvas}></canvas>
     </div>
 
-    <table style="width: 100%; margin-top: 20px; border-collapse: collapse;">
+    <table style="width: 100%; margin-top: 30px; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
         <thead>
-            <tr style="background: #333; color: white;">
-                <th style="padding: 10px;">País / Año</th>
-                <th>Temp. API</th>
-                <th>Dato Export</th>
+            <tr style="background: #2d3748; color: white;">
+                <th style="padding: 15px;">Localización</th>
+                <th>Temp. API (Original)</th>
+                <th>Complejidad Adobe</th>
             </tr>
         </thead>
         <tbody>
             {#each stats as s}
-                <tr style="border-bottom: 1px solid #eee; text-align: center;">
-                    <td style="padding: 10px;">{s.label}</td>
-                    <td style="color: red; font-weight: bold;">{s.temp} °C</td>
-                    <td style="color: blue;">{s.export.toFixed(1)}</td>
+                <tr style="border-bottom: 1px solid #edf2f7; text-align: center;">
+                    <td style="padding: 12px;">{s.label}</td>
+                    <td style="color: #e53e3e; font-weight: bold;">{s.originalTemp}</td>
+                    <td style="color: #3182ce;">{s.adobeValue.toFixed(1)} pts</td>
                 </tr>
             {/each}
         </tbody>
