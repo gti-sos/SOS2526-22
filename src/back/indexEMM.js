@@ -1,3 +1,5 @@
+//Importaciones
+import { get } from 'http';
 import dataStore from 'nedb';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -15,8 +17,7 @@ const db = new dataStore({
 });
 
 export function loadBackEnd(app) {
-
-    // ------------- PROXY GITHUB (con autenticación) -------------
+    // ------------- PROXY GITHUB -------------
     app.get('/api/proxy/github', async (req, res) => {
         try {
             const { language } = req.query;
@@ -24,9 +25,9 @@ export function loadBackEnd(app) {
             
             const TOKEN = process.env.GITHUB_TOKEN_EMM;
             console.log('Token EMM:', process.env.GITHUB_TOKEN_EMM ? '✅ Presente' : '❌ No encontrado');
-            const url = `https://api.github.com/search/repositories?q=language:${language}&per_page=1`;
+            const url = `https://api.github.com/search/repositories?q=language:${language}&per_page=1`; //per_page=1 porque solo nos interesa el contador total
             
-            const response = await fetch(url, {
+            const response = await fetch(url, { //El fetch hace una petición HTTP a una URL específica
                 headers: {
                     'Authorization': `Bearer ${TOKEN}`,
                     'Accept': 'application/vnd.github.v3+json'
@@ -35,13 +36,15 @@ export function loadBackEnd(app) {
             
             if (!response.ok) throw new Error(`GitHub error: ${response.status}`);
             const data = await response.json();
-            res.json({ total_count: data.total_count });
+            res.json({ total_count: data.total_count }); //envía solo el nº total de repositorios
             
         } catch (error) {
             console.error('GitHub proxy error:', error);
             res.status(500).json({ error: error.message });
         }
     });
+
+
     // ------------- DOCS (ambas versiones) -------------
     app.get(BASE_URL_API + "/ozone-depleting-substance-consumptions/docs", (req, res) => {
         res.redirect("https://documenter.getpostman.com/view/52404851/2sBXiertqM"); 
@@ -73,6 +76,7 @@ export function loadBackEnd(app) {
 
     // ------------- FUNCIONES AUXILIARES -------------
     function loadInitialDataHandler(req, res) {
+        //obtiene los datos iniciales 
         db.find({}, (err, docs) => {
             if (err) return res.status(500).json({ error: "Error en la base de datos" });
             if (docs.length === 0) {
@@ -89,6 +93,7 @@ export function loadBackEnd(app) {
     }
 
     function getAllHandler(req, res) {
+        //Para todas las peticiones get que van a la colección base (sin especificar ruta concreta) o con filtros
         const query = {};
         if (req.query.country) query.country = req.query.country.toLowerCase();
         if (req.query.code) query.code = req.query.code.toLowerCase();
@@ -100,12 +105,13 @@ export function loadBackEnd(app) {
         if (req.query.halon) query.halon = Number(req.query.halon);
         if (req.query.cfc) query.cfc = Number(req.query.cfc);
 
+        
         const page = parseInt(req.query.page);
         const items = parseInt(req.query.items);
         const from = req.query.from ? parseInt(req.query.from) : null;
         const to = req.query.to ? parseInt(req.query.to) : null;
 
-        db.find(query, (err, docs) => {
+        db.find(query, (err, docs) => { 
             if (err) return res.status(500).json({ error: "Error en la base de datos" });
 
             let filtered = docs;
@@ -114,6 +120,7 @@ export function loadBackEnd(app) {
 
             const results = filtered.map(({ _id, ...rest }) => rest);
 
+            //paginación
             if (isNaN(page) || isNaN(items)) {
                 res.status(200).json(results);
             } else {
@@ -122,7 +129,7 @@ export function loadBackEnd(app) {
                 const skipNum = (pageNum - 1) * limitNum;
                 const paginated = results.slice(skipNum, skipNum + limitNum);
                 res.status(200).json({
-                    data: paginated,
+                    data: paginated,  //datos de la página actual
                     total_items: results.length,
                     pagina_actual: pageNum,
                     items_por_pagina: limitNum,
@@ -133,6 +140,7 @@ export function loadBackEnd(app) {
     }
 
     function getOneHandler(req, res) {
+        //Para las peticiones get que especifican un país Y  año concretos
         const { country, year } = req.params;
         db.find({ country: country, year: parseInt(year) }, (err, docs) => {
             if (err) return res.status(500).json({ error: "Error en la base de datos" });
@@ -147,12 +155,14 @@ export function loadBackEnd(app) {
     }
 
     function getByCountryHandler(req, res) {
+        //Para las peticiones get que especifican un país pero no un año concreto pero sí rangos de años
         const country = req.params.country.toLowerCase();
         const from = req.query.from ? parseInt(req.query.from) : null;
         const to = req.query.to ? parseInt(req.query.to) : null;
 
         db.find({ country: country }, (err, docs) => {
             if (err) return res.status(500).json({ error: "Error en la base de datos" });
+            if (docs.length === 0) return res.status(404).json({ error: ` '${country}' no encontrado` });
 
             let filtered = docs;
             if (from !== null) filtered = filtered.filter(d => d.year >= from);
@@ -163,27 +173,11 @@ export function loadBackEnd(app) {
         });
     }
 
-    function getFiltersHandler(req, res) {
-        const { country, year, from, to } = req.query;
-        let query = {};
-        if (country) query.country = country.toLowerCase();
-        if (year) query.year = parseInt(year);
-
-        db.find(query, (err, docs) => {
-            if (err) return res.status(500).json({ error: "Error en la base de datos" });
-            let results = docs;
-            if (from) results = results.filter(d => d.year >= parseInt(from));
-            if (to) results = results.filter(d => d.year <= parseInt(to));
-            const result = results.map(({ _id, ...rest }) => rest);
-            res.status(200).json(result);
-        });
-    }
-
     function getFieldHandler(req, res) {
+        //Para las peticiones get que especifican un campo concreto (sin país ni año)
         const field = req.params.field;
         db.find({}, (err, docs) => {
             if (err) return res.status(500).json({ error: "Error en la base de datos" });
-            if (docs.length === 0) return res.status(200).json([]);
             if (!docs[0].hasOwnProperty(field)) {
                 return res.status(404).json({ error: "NOT FOUND: Field not found" });
             }
@@ -193,12 +187,12 @@ export function loadBackEnd(app) {
     }
 
     // ------------- RUTAS PARA V1 (solo lectura) -------------
+    //estas lineas asocian cada URL con la función que debe ejecutarse cuando se recibe una petición.
+
     const v1Base = BASE_URL_API + "/ozone-depleting-substance-consumptions";
 
     app.get(v1Base + "/loadInitialData", loadInitialDataHandler);
     app.get(v1Base, getAllHandler);
-    app.get(v1Base + "/filters", getFiltersHandler);
-    app.get(v1Base + "/:country/:year", getOneHandler);
 
     app.get(v1Base + "/:field", (req, res, next) => {
         if (campos.includes(req.params.field)) {
@@ -208,17 +202,11 @@ export function loadBackEnd(app) {
         }
     });
 
+    app.get(v1Base + "/:country/:year", getOneHandler);
     app.get(v1Base + "/:country", getByCountryHandler);
 
-    app.post(v1Base, (req, res) => res.status(405).json({ error: "Method Not Allowed: v1 es solo lectura" }));
-    app.put(v1Base, (req, res) => res.status(405).json({ error: "Method Not Allowed: v1 es solo lectura" }));  // NUEVA
-    app.post(v1Base + "/:country/:year", (req, res) => res.status(405).json({ error: "Method Not Allowed: v1 es solo lectura" }));  // NUEVA
-    app.put(v1Base + "/:country/:year", (req, res) => res.status(405).json({ error: "Method Not Allowed: v1 es solo lectura" }));
-    app.delete(v1Base + "/:country/:year", (req, res) => res.status(405).json({ error: "Method Not Allowed: v1 es solo lectura" }));
-    app.delete(v1Base, (req, res) => res.status(405).json({ error: "Method Not Allowed: v1 es solo lectura" }));
 
-
-    // Control de métodos (solo GET)
+    // -----Control de métodos (si llegan métodos no permitidos a las rutas de v1, se responde con un error 405)
     app.all(v1Base, (req, res, next) => {
         if (!['GET'].includes(req.method)) {
             return res.status(405).json({ error: "Method Not Allowed (solo GET en v1)" });
@@ -231,7 +219,7 @@ export function loadBackEnd(app) {
         }
         next();
     });
-    app.all(v1Base + "/:country", (req, res, next) => {
+    app.all(v1Base + "/:x", (req, res, next) => { // /:x representa cualquier ruta que no sea las anteriores (country, loadinitialdata,field,etc)
         if (!['GET'].includes(req.method)) {
             return res.status(405).json({ error: "Method Not Allowed (solo GET en v1)" });
         }
@@ -241,13 +229,10 @@ export function loadBackEnd(app) {
     // ------------- RUTAS PARA V2 (lectura/escritura) -------------
     const v2Base = BASE_URL_API_V2 + "/ozone-depleting-substance-consumptions";
 
-    // Las rutas GET de v2 son iguales que las de v1 pero apuntan a la misma base de datos
+    // -----Las rutas GET de v2 son iguales que las de v1 pero apuntan a la misma base de datos
     app.get(v2Base + "/loadInitialData", loadInitialDataHandler);
     app.get(v2Base, getAllHandler);
-    app.get(v2Base + "/filters", getFiltersHandler);
-    app.get(v2Base + "/:country/:year", getOneHandler);
 
-    // Ruta de campo para v2
     app.get(v2Base + "/:field", (req, res, next) => {
         if (campos.includes(req.params.field)) {
             return getFieldHandler(req, res);
@@ -256,12 +241,13 @@ export function loadBackEnd(app) {
         }
     });
 
-    // Ruta de país para v2
+    app.get(v2Base + "/:country/:year", getOneHandler);
     app.get(v2Base + "/:country", getByCountryHandler);
+
 
     // POST crear (v2)
     app.post(v2Base, (req, res) => {
-        const newData = req.body;
+        const newData = req.body; //datos que vienen en el cuerpo de la petición
         const requestKeys = Object.keys(newData);
         const hasRequiredKeys = campos.every(key => requestKeys.includes(key));
         const hasSameLength = requestKeys.length === campos.length;
