@@ -141,7 +141,6 @@
                 credits: { enabled: false }
             });
 
-            // Leyenda manual
             const leyenda = document.getElementById('leyenda');
             if (leyenda) {
                 sustancias.forEach(s => {

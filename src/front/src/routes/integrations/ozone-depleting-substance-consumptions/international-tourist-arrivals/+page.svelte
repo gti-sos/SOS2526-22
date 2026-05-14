@@ -15,21 +15,21 @@
     const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
     async function fetchTouristData() {
-        console.log('🚀 fetchTouristData: iniciando');
+        console.log(' fetchTouristData: iniciando');
         const dataUrl = 'https://sos2526-25.onrender.com/api/v2/international-tourist-arrivals';
         let res = await fetch(dataUrl);
         let data = null;
         if (res.ok) {
             data = await res.json();
             if (Array.isArray(data) && data.length > 0) {
-                console.log(`✅ Turismo: ${data.length} registros obtenidos directamente`);
+                console.log(` Turismo: ${data.length} registros obtenidos directamente`);
                 return data;
             } else if (data && data.data && data.data.length > 0) {
-                console.log(`✅ Turismo: ${data.data.length} registros (envoltura.data)`);
+                console.log(`Turismo: ${data.data.length} registros (envoltura.data)`);
                 return data.data;
             }
         }
-        console.log('⚠️ No se encontraron datos de turismo en el primer intento. Inicializando...');
+        console.log('No se encontraron datos de turismo en el primer intento. Inicializando...');
         const initUrl = dataUrl + '/loadInitialData';
         let initRes = await fetch(initUrl, { method: 'POST' });
         console.log(`   POST /loadInitialData → ${initRes.status}`);
@@ -46,18 +46,17 @@
         data = await res.json();
         const finalData = Array.isArray(data) ? data : (data.data || []);
         if (!finalData.length) throw new Error('No hay datos de turismo después de inicializar');
-        console.log(`✅ Turismo: ${finalData.length} registros obtenidos tras inicialización`);
+        console.log(` Turismo: ${finalData.length} registros obtenidos tras inicialización`);
         return finalData;
     }
 
     async function fetchData() {
-        console.log('🚀 fetchData: inicio');
+        console.log(' fetchData: inicio');
         try {
             loading = true;
             error = null;
 
-            // 1. HCFC
-            console.log('📡 Solicitando HCFC...');
+            console.log(' Solicitando HCFC...');
             const resOzone = await fetch('/api/v1/ozone-depleting-substance-consumptions/loadInitialData');
             if (!resOzone.ok) throw new Error(`HTTP ${resOzone.status} - Ozono`);
             const ozone = await resOzone.json();
@@ -72,8 +71,7 @@
             });
             console.log(`   HCFC: ${Object.keys(hcfcByYear).length} años con datos`, hcfcByYear);
 
-            // 2. Turismo
-            console.log('📡 Solicitando turismo...');
+            console.log('Solicitando turismo...');
             const touristArray = await fetchTouristData();
             const touristByYear = {};
             // @ts-ignore
@@ -85,12 +83,12 @@
             });
             console.log(`   Turismo: ${Object.keys(touristByYear).length} años con datos`, touristByYear);
 
-            // 3. Unión de años
+            // Unión de años
             const allYearsSet = new Set([...Object.keys(hcfcByYear), ...Object.keys(touristByYear)]);
             const allYears = Array.from(allYearsSet).map(Number).sort((a,b) => a-b);
-            console.log(`📅 Años combinados: ${allYears.length}`, allYears);
+            console.log(`Años combinados: ${allYears.length}`, allYears);
             
-            // 4. Transformación logarítmica
+            // Transformación logarítmica
             const dataForAreas = allYears.map(year => {
                 // @ts-ignore
                 const hcfc = hcfcByYear[year] || 0;
@@ -100,9 +98,9 @@
                 const logTourist = Math.log10(tourist + 1);
                 return { year, hcfc: logHcfc, tourist: logTourist, rawHcfc: hcfc, rawTourist: tourist };
             });
-            console.log(`📊 Datos transformados (log):`, dataForAreas.slice(0,3));
+            console.log(`Datos transformados (log):`, dataForAreas.slice(0,3));
 
-            // 5. Tabla
+            // Tabla
             tableData = dataForAreas.map(d => ({
                 year: d.year,
                 hcfc: d.rawHcfc,
@@ -113,12 +111,12 @@
             console.log(`📋 Tabla generada con ${tableData.length} filas`);
 
             if (!container) throw new Error('Contenedor no disponible');
-            console.log('🖌️ Llamando a renderStackedArea');
+            console.log(' Llamando a renderStackedArea');
             await renderStackedArea(dataForAreas);
-            console.log('✅ fetchData completado exitosamente');
+            console.log('fetchData completado exitosamente');
             loading = false;
         } catch (err) {
-            console.error('❌ fetchData error:', err);
+            console.error(' fetchData error:', err);
             // @ts-ignore
             error = err.message;
             loading = false;
@@ -127,7 +125,7 @@
 
     // @ts-ignore
     async function renderStackedArea(data) {
-        console.log('🎨 renderStackedArea: inicio');
+        console.log('renderStackedArea: inicio');
         // @ts-ignore
         const width = container.clientWidth || 900;
         const height = 500;
@@ -267,14 +265,14 @@
     }
 
     onMount(async () => {
-        console.log('🟢 Componente montado, esperando contenedor');
+        console.log(' Componente montado, esperando contenedor');
         await tick();
         await wait(50);
         console.log(`   container = ${container ? 'disponible' : 'null'}`);
         if (container) {
             fetchData();
         } else {
-            console.error('❌ Contenedor no encontrado');
+            console.error(' Contenedor no encontrado');
         }
     });
 </script>

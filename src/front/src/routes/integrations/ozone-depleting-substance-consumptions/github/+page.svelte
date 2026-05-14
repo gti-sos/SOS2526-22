@@ -33,20 +33,20 @@
 
 
 
-    // Escala logarítmica (base 10) con desplazamiento para evitar log(0)
+    // Escala logarítmica 
     // @ts-ignore
     function applyLog(value) {
         return Math.log10(value + 1);
     }
 
     async function fetchData() {
-        console.log('🚀 Iniciando fetchData...');
+        console.log('Iniciando fetchData...');
         try {
             loading = true;
             error = null;
 
-            // 1. Cargar HCFC (tu API)
-            console.log('📡 Solicitando HCFC...');
+            // Cargar HCFC 
+            console.log(' Solicitando HCFC...');
             const resOzone = await fetch('/api/v1/ozone-depleting-substance-consumptions/loadInitialData');
             if (!resOzone.ok) throw new Error(`HTTP ${resOzone.status} - Ozono`);
             const ozoneData = await resOzone.json();
@@ -54,7 +54,7 @@
             const ozoneValidos = ozoneData.filter(d => countryToLanguage[d.country]);
             console.log(`   HCFC válidos: ${ozoneValidos.length} registros`);
 
-            // 2. Sumar HCFC por país
+            // Sumar HCFC por país
             const sumByCountry = {};
             // @ts-ignore
             ozoneValidos.forEach(oz => {
@@ -65,10 +65,10 @@
                 // @ts-ignore
                 sumByCountry[country] += value;
             });
-            console.log('   Suma por país:', sumByCountry);
+            console.log('  Suma por país:', sumByCountry);
 
-            // 3. Cargar datos de GitHub por lenguaje (solo proxy, sin fallback)
-            console.log('🐙 Cargando datos de GitHub vía proxy...');
+            // Cargar datos de GitHub por lenguaje (solo proxy, sin fallback)
+            console.log('Cargando datos de GitHub vía proxy...');
             const reposMap = {};
 
             for (const country of Object.keys(countryToLanguage)) {
@@ -78,7 +78,7 @@
                 if (reposMap[language] !== undefined) continue;
                 
                 let success = false;
-                let retries = 7;  // aumentado a 7 reintentos
+                let retries = 7;  
                 let lastError = null;
                 
                 while (retries >= 0 && !success) {
@@ -89,7 +89,7 @@
                             // @ts-ignore
                             reposMap[language] = data.total_count || 0;
                             // @ts-ignore
-                            console.log(`   ✅ ${language}: ${reposMap[language].toLocaleString()} repos (proxy)`);
+                            console.log(`   ${language}: ${reposMap[language].toLocaleString()} repos (proxy)`);
                             success = true;
                         } else {
                             throw new Error(`HTTP ${res.status}`);
@@ -98,19 +98,19 @@
                         // eslint-disable-next-line no-unused-vars
                         lastError = e;
                         // @ts-ignore
-                        console.warn(`   ⚠️ Error con ${language} (intento ${7-retries}/7):`, e.message);
+                        console.warn(`    Error con ${language} (intento ${7-retries}/7):`, e.message);
                         retries--;
                         if (retries < 0) {
                             throw new Error(`No se pudo obtener datos de GitHub para ${language} después de 7 intentos. Proxy no disponible.`);
                         } else {
-                            await new Promise(r => setTimeout(r, 2000)); // espera 2 segundos
+                            await new Promise(r => setTimeout(r, 2000)); 
                         }
                     }
                 }
                 await new Promise(r => setTimeout(r, 800));
             }
 
-            // 4. Preparar datos combinados
+            // Preparar datos combinados
             const raw = Object.entries(sumByCountry).map(([country, hcfcRaw]) => ({
                 key: country,
                 // @ts-ignore
@@ -123,14 +123,14 @@
             }));
             console.log('   Datos raw:', raw);
 
-            // 5. Escala logarítmica
+            // Escala logarítmica
             const logHcfc = raw.map(d => applyLog(d.hcfcRaw));
             const logRepos = raw.map(d => applyLog(d.reposRaw));
             const maxLogHcfc = Math.max(...logHcfc);
             const maxLogRepos = Math.max(...logRepos);
             console.log('   Máximos log: HCFC=', maxLogHcfc, 'Repos=', maxLogRepos);
 
-            // 6. Normalizar a 0-100
+            // Normalizar a 0-100
             const normalizedHcfc = logHcfc.map(v => (v / maxLogHcfc) * 100);
             const normalizedRepos = logRepos.map(v => (v / maxLogRepos) * 100);
             console.log('   Normalizados HCFC:', normalizedHcfc);
@@ -144,7 +144,7 @@
                 reposNorm: normalizedRepos[idx]
             }));
 
-            // 7. Ordenar para el radar
+            // Ordenar para el radar
             const sorted = [...combinedData].sort((a, b) => a.label.localeCompare(b.label));
             const categories = sorted.map(c => `${c.label} (${c.language})`);
             const hcfcValues = sorted.map(c => c.hcfcNorm);
@@ -153,7 +153,7 @@
             console.log('   Valores HCFC radar:', hcfcValues);
             console.log('   Valores Repos radar:', reposValues);
 
-            // 8. Renderizar gráfico radar con ECharts
+            // Renderizar gráfico radar con ECharts
             if (!chartContainer) throw new Error('Contenedor no disponible');
             // @ts-ignore
             if (chart) chart.dispose();
@@ -179,9 +179,9 @@
             });
 
             loading = false;
-            console.log('✅ Gráfico renderizado correctamente (escala logarítmica con proxy)');
+            console.log('Gráfico renderizado correctamente (escala logarítmica con proxy)');
         } catch (err) {
-            console.error('❌ Error en fetchData:', err);
+            console.error('Error en fetchData:', err);
             // @ts-ignore
             error = err.message;
             loading = false;
@@ -189,7 +189,7 @@
     }
 
     onMount(async () => {
-        console.log('🟢 Componente montado, esperando contenedor...');
+        console.log('Componente montado, esperando contenedor...');
         await tick();
         await new Promise(resolve => setTimeout(resolve, 100));
         console.log('   chartContainer =', chartContainer);
@@ -197,7 +197,7 @@
             console.log('➡️ Contenedor listo, ejecutando fetchData');
             fetchData();
         } else {
-            console.error('❌ Contenedor no encontrado después de esperar');
+            console.error('Contenedor no encontrado después de esperar');
             loading = false;
             // @ts-ignore
             error = 'No se pudo encontrar el contenedor del gráfico';
@@ -219,7 +219,6 @@
         <p><strong>Integración:</strong> A cada país de la API de ozono se le asocia un lenguaje de programación. Se obtiene el HCFC total del país y el número de repositorios GitHub en ese lenguaje. Ambos valores se normalizan con escala logarítmica a 0-100% para compararlos en el radar.</p>
     </div>
 
-    <!-- Contenedor siempre presente con overlay de carga -->
     <div class="chart-card" style="position: relative;">
         <div bind:this={chartContainer} style="width:100%; height:550px;"></div>
         {#if loading}

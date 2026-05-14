@@ -53,7 +53,7 @@
                 // @ts-ignore
                 hcfcByCountry[c] = (hcfcByCountry[c] || 0) + value;
             });
-            console.log('✅ HCFC por país:', hcfcByCountry);
+            console.log('HCFC por país:', hcfcByCountry);
 
             console.log('📡 Cargando salarios...');
             const resWages = await fetch('https://sos2526-24.onrender.com/api/v1/average-monthly-wages/');
@@ -67,17 +67,17 @@
                 let c = item.country;
                 if (!c) return;
                 c = normalizeCountry(c);
-                // Guardamos el registro con el año más reciente (aunque no mostremos el año)
+                // Guardamos el registro con el año más reciente 
                 // @ts-ignore
                 if (!wagesByCountry[c] || wagesByCountry[c].year < item.year) {
                     // @ts-ignore
                     wagesByCountry[c] = { ...item, country: c };
                 }
             });
-            console.log('✅ Salarios por país:', Object.keys(wagesByCountry).length);
+            console.log('Salarios por país:', Object.keys(wagesByCountry).length);
 
             const allCountries = new Set([...Object.keys(hcfcByCountry), ...Object.keys(wagesByCountry)]);
-            console.log('🌍 Total países únicos:', allCountries.size);
+            console.log('Total países únicos:', allCountries.size);
 
             const nodes = [];
             const MIN_RAW_HCFC = 20;
@@ -113,12 +113,12 @@
             }
 
             nodes.sort((a,b) => b.size - a.size);
-            console.log('📊 Datos transformados (primeros 5):', nodes.slice(0,5).map(n => ({ name: n.name, size: n.size, hcfc: n.hcfc })));
+            console.log('Datos transformados (primeros 5):', nodes.slice(0,5).map(n => ({ name: n.name, size: n.size, hcfc: n.hcfc })));
             // @ts-ignore
             chartData = nodes;
             loading = false;
         } catch (err) {
-            console.error('❌ Error:', err);
+            console.error('Error:', err);
             // @ts-ignore
             error = err.message;
             loading = false;
@@ -135,7 +135,7 @@
             return;
         }
         const height = 600;
-        console.log(`🎨 Renderizando Circle Packing con ${data.length} países, ancho=${width}`);
+        console.log(`Renderizando Circle Packing con ${data.length} países, ancho=${width}`);
 
         const d3 = await import('d3');
         const existingSvg = d3.select(container).select('svg');
@@ -187,12 +187,12 @@
             .attr('r', d => d.r)
             .attr('fill', d => {
                 if (d.data.hasSalary) {
-                    return getSalaryColor(d.data.salary);   // rojo, naranja o azul oscuro
+                    return getSalaryColor(d.data.salary);  
                 }
                 if (d.data.hasHcfc) {
-                    return '#3a6ea5';   // azul medio para solo HCFC
+                    return '#3a6ea5';   
                 }
-                return '#f5f5f5';       // gris muy claro: !hasSalary && !hasHcfc
+                return '#f5f5f5';       
             })
             .attr('stroke', 'white')
             .attr('stroke-width', 2)
@@ -228,7 +228,7 @@
             .text(d => d.r > 24 ? d.data.name : '');
 
         rendered = true;
-        console.log('✅ Circle Packing renderizado sin años');
+        console.log('Circle Packing renderizado sin años');
     }
 
     $effect(() => {
@@ -263,7 +263,7 @@
             <p>Cargando datos de ambas APIs...</p>
         </div>
     {:else if error}
-        <div class="error-box">❌ Error: {error}</div>
+        <div class="error-box">Error: {error}</div>
     {:else}
         <div class="legend">
             <div><span class="legend-color salary-high"></span> Salario &gt; $5000</div>

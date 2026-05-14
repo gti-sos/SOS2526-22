@@ -21,6 +21,25 @@
             </ul>
         </div>
 
+        <!-- SECCIÓN VÍDEO ELENA MARTÍNEZ-->
+        <div class="info-block video-box">
+            <h3>🎥 Presentación Entregable D03 Elena Martínez</h3>
+            <p>A continuación, se presenta el vídeo narrado donde se explican detalladamente todas las funcionalidades y aspectos técnicos de la API desarrollados para esta entrega.</p>
+            
+            <div class="video-action">
+                <a href="https://youtu.be/y8RBBBC4jHs" target="_blank" class="btn-video-elena">
+                    <span>🎬</span> Vídeo de Elena Martínez: Funcionalidades de la API (D03)
+                </a>
+            </div>
+            
+            <ul class="video-requirements">
+                <li>✅ Duración: Menos de 5 minutos.</li>
+                <li>✅ Formato: Narrado y comentado directamente.</li>
+                <li>✅ Acceso: Visualización directa desde el navegador (sin descarga).</li>
+            </ul>
+        </div>
+
+
         <div class="info-block">
             <h3>📝 Project Description</h3>
             <p>Our sources of information are aimed at analyzing the relationship that exists between the consumption of substances that deplete the ozone layer, the impact of climate change on agriculture and CO2 emissions in the agri-food sector.</p>

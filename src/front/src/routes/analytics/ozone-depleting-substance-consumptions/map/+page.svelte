@@ -34,11 +34,10 @@
         const minYear = Math.min(...years);
         const maxYear = Math.max(...years);
 
-        // Función para interpolar color según año (azul claro = antiguo, azul oscuro = reciente)
+        // Función para interpolar color según año 
         // @ts-ignore
         function getColorByYear(year) {
             const t = (year - minYear) / (maxYear - minYear || 1);
-            // De #AED6F1 (azul claro) a #1a237e (azul muy oscuro)
             const r = Math.round(174 + (26 - 174) * t);
             const g = Math.round(214 + (35 - 214) * t);
             const b = Math.round(241 + (126 - 241) * t);
@@ -90,7 +89,6 @@
             circulo.addTo(map);
         });
 
-        // Leyenda
         const leyenda = L.control({ position: 'bottomright' });
         leyenda.onAdd = () => {
             const div = L.DomUtil.create('div');

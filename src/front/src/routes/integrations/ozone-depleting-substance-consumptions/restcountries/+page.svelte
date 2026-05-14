@@ -23,11 +23,11 @@
         try {
             loading = true;
             
-            // 1. Obtener datos de Ozone
+            // Obtener datos de Ozone
             const ozoneRes = await fetch('https://sos2526-22.onrender.com/api/v1/ozone-depleting-substance-consumptions/loadInitialData');
             const ozoneData = await ozoneRes.json();
             
-            // 2. Agrupar HCFC por país
+            // Agrupar HCFC por país
             const countryHCFC = {};
             // @ts-ignore
             ozoneData.forEach(item => {
@@ -39,13 +39,13 @@
                 }
             });
             
-            // 3. Top 8 países
+            // Seleccionar 8 países con mayor consumo de HCFC
             const topCountries = Object.entries(countryHCFC)
                 .sort((a, b) => b[1] - a[1])
                 .slice(0, 8)
                 .map(([country, value]) => ({ country, hcfc: value }));
             
-            // 4. Obtener datos de REST Countries
+            // Obtener datos de REST Countries
             const countriesData = [];
             
             for (const item of topCountries) {
@@ -80,7 +80,7 @@
                 countriesData.push({
                     name: country,
                     hcfc: hcfc,
-                    hcfcScaled: hcfcScaled,  // ← Valor escalado para el Sankey
+                    hcfcScaled: hcfcScaled,  
                     population: population,
                     area: area,
                     gini: gini,
@@ -94,12 +94,10 @@
             
             countryDetails = countriesData;
             
-            // Preparar datos para Sankey con ESCALA LOGARÍTMICA
             const nodes = [];
             // @ts-ignore
             const links = [];
             
-            // Nodo raíz
             nodes.push({ name: 'Consumo HCFC Mundial', itemStyle: { color: '#1e3a8a' } });
             
             // Nodos de países (con su consumo escalado)
@@ -107,7 +105,7 @@
                 nodes.push({ 
                     name: c.name, 
                     itemStyle: { color: c.hcfc > 10000 ? '#dc2626' : c.hcfc > 1000 ? '#f97316' : '#10b981' },
-                    value: c.hcfcScaled  // ← Usamos valor escalado
+                    value: c.hcfcScaled  
                 });
             });
             
@@ -117,21 +115,19 @@
                 nodes.push({ name: `Población: ${cat}`, itemStyle: { color: '#8b5cf6' } });
             });
             
-            // Links: Mundo -> País (usando valor escalado)
             countriesData.forEach(c => {
                 links.push({
                     source: 'Consumo HCFC Mundial',
                     target: c.name,
-                    value: c.hcfcScaled  // ← Usamos valor escalado
+                    value: c.hcfcScaled  
                 });
             });
             
-            // Links: País -> Categoría de población (usando valor escalado)
             countriesData.forEach(c => {
                 links.push({
                     source: c.name,
                     target: `Población: ${c.populationGroup}`,
-                    value: c.hcfcScaled  // ← Usamos valor escalado
+                    value: c.hcfcScaled 
                 });
             });
             
