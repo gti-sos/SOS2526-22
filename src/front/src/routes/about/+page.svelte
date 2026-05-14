@@ -27,7 +27,7 @@
             <p>A continuación, se presenta el vídeo narrado donde se explican detalladamente todas las funcionalidades y aspectos técnicos de la API desarrollados para esta entrega.</p>
             
             <div class="video-action">
-                <a href="https://youtu.be/y8RBBBC4jHs" target="_blank" class="btn-video-elena">
+                <a href="https://youtu.be/1rKKXJ-yPAc" target="_blank" class="btn-video-elena">
                     <span>🎬</span> Vídeo de Elena Martínez: Funcionalidades de la API (D03)
                 </a>
             </div>
