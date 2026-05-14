@@ -14,50 +14,51 @@
     const FACTOR_NAME = 'Contaminación del aire (muertes)';
 
     // @ts-ignore
+    //formato estandar para nombre de países
     function normalizeCountryName(name) {
         return name.toLowerCase().replace(/[\s_]+/g, '-');
     }
 
     async function fetchRiskData() {
-        console.log('🔄 Obteniendo datos de factores de riesgo...');
+        console.log(' Obteniendo datos de factores de riesgo...');
         const dataUrl = 'https://sos2526-10.onrender.com/api/v2/deaths-by-risk-factors';
         
         // Primer intento: obtener datos directamente
         let res = await fetch(dataUrl);
-        console.log(`📡 Primer intento GET ${dataUrl}: ${res.status} ${res.statusText}`);
+        console.log(`Primer intento GET ${dataUrl}: ${res.status} ${res.statusText}`);
         
         // Si es 404 (no inicializado), llamamos a loadInitialData y reintentamos
         if (res.status === 404) {
-            console.log('⚠️ Datos no encontrados (404). Inicializando con /loadInitialData...');
+            console.log('Datos no encontrados (404). Inicializando con /loadInitialData...');
             const initUrl = 'https://sos2526-10.onrender.com/api/v2/deaths-by-risk-factors/loadInitialData';
             const initRes = await fetch(initUrl);
-            console.log(`📡 Inicialización: ${initRes.status} ${initRes.statusText}`);
+            console.log(` Inicialización: ${initRes.status} ${initRes.statusText}`);
             if (!initRes.ok && initRes.status !== 409) {
                 throw new Error(`Error al inicializar: ${initRes.status}`);
             }
             // Reintentamos obtener los datos
-            console.log('🔄 Reintentando GET después de inicialización...');
+            console.log('Reintentando GET después de inicialización...');
             res = await fetch(dataUrl);
-            console.log(`📡 Segundo intento GET: ${res.status} ${res.statusText}`);
+            console.log(`Segundo intento GET: ${res.status} ${res.statusText}`);
         }
         
         if (!res.ok) throw new Error(`HTTP ${res.status} - Risk factors`);
         
         const riskData = await res.json();
         const riskArray = Array.isArray(riskData) ? riskData : (riskData.data || []);
-        console.log(`✅ Datos de riesgo cargados: ${riskArray.length} registros`);
+        console.log(`Datos de riesgo cargados: ${riskArray.length} registros`);
         return riskArray;
     }
 
     async function loadDataAndRender() {
-        console.log('🚀 Iniciando carga de datos y renderizado...');
+        console.log('Iniciando carga de datos y renderizado...');
         try {
-            // 1. Datos HCFC (API propia)
-            console.log('📡 Solicitando HCFC desde API propia...');
+            // Datos HCFC (API propia)
+            console.log('Solicitando HCFC desde API propia...');
             const resOzone = await fetch('/api/v1/ozone-depleting-substance-consumptions/loadInitialData');
             if (!resOzone.ok) throw new Error(`HTTP ${resOzone.status} - Ozono`);
             const ozoneData = await resOzone.json();
-            console.log(`✅ HCFC recibidos: ${ozoneData.length} registros`);
+            console.log(`HCFC recibidos: ${ozoneData.length} registros`);
             
             const hcfcByCountry = {};
             // @ts-ignore
@@ -68,9 +69,9 @@
                 // @ts-ignore
                 hcfcByCountry[country] = (hcfcByCountry[country] || 0) + value;
             });
-            console.log(`📊 HCFC agregados por país: ${Object.keys(hcfcByCountry).length} países`);
+            console.log(`HCFC agregados por país: ${Object.keys(hcfcByCountry).length} países`);
 
-            // 2. Datos riesgos (con inicialización automática)
+            // Datos contaminación del aire  
             const riskArray = await fetchRiskData();
 
             const riskByCountry = {};
@@ -81,15 +82,14 @@
                 const year = item.year;
                 const normalized = normalizeCountryName(entity);
                 // @ts-ignore
-                if (!riskByCountry[normalized] || riskByCountry[normalized].year < year) {
+                if (!riskByCountry[normalized] || riskByCountry[normalized].year < year) {  //Guarda el país si es nuevo, o si el nuevo año es más reciente que el que tenemos.          //Guarda el país si es nuevo, o si el nuevo año es más reciente que el que tenemos.
                     // @ts-ignore
                     riskByCountry[normalized] = {
                         year: year,
-                        [RISK_FACTOR]: Number(item[RISK_FACTOR]) || 0
-                    };
+                        [RISK_FACTOR]: Number(item[RISK_FACTOR]) || 0};
                 }
             });
-            console.log(`📊 Riesgo por país: ${Object.keys(riskByCountry).length} países`);
+            console.log(`Riesgo por país: ${Object.keys(riskByCountry).length} países`);
 
             // 3. Combinar países con ambas métricas positivas
             const countries = [];
@@ -108,10 +108,10 @@
                     riskValues.push(risk);
                 }
             }
-            console.log(`🔗 Países con ambas métricas: ${countries.length}`);
+            console.log(`Países con ambas métricas: ${countries.length}`);
             if (countries.length === 0) throw new Error('No hay países con datos en ambas APIs');
 
-            // 4. Top 10 por HCFC
+            // Top 10 por HCFC
             // @ts-ignore
             const combined = countries.map((c, i) => ({ country: c, hcfc: hcfcValues[i], risk: riskValues[i] }));
             combined.sort((a, b) => b.hcfc - a.hcfc);
@@ -119,21 +119,21 @@
             const topCountries = top10.map(item => item.country);
             const topHcfc = top10.map(item => item.hcfc);
             const topRisk = top10.map(item => item.risk);
-            console.log(`🏆 Top 10 países por HCFC:`, topCountries);
+            console.log(`🏆Top 10 países por HCFC:`, topCountries);
 
-            // 5. Rankings
+            // Rankings
             const rankHcfc = [...topHcfc].sort((a, b) => b - a);
             const rankRisk = [...topRisk].sort((a, b) => b - a);
             const hcfcRank = topHcfc.map(v => rankHcfc.indexOf(v) + 1);
             const riskRank = topRisk.map(v => rankRisk.indexOf(v) + 1);
             const maxRank = 10;
-            const hcfcBar = hcfcRank.map(r => (maxRank + 1 - r) / maxRank * 100);
+            const hcfcBar = hcfcRank.map(r => (maxRank + 1 - r) / maxRank * 100); //convertimos a porcentaje
             const riskBar = riskRank.map(r => (maxRank + 1 - r) / maxRank * 100);
-            console.log('📈 Rankings y valores de barra calculados');
+            console.log('Rankings y valores de barra calculados');
 
             if (!container) throw new Error('Contenedor no disponible');
             // @ts-ignore
-            if (chart) chart.dispose();
+            if (chart) chart.dispose(); //destruimos graficas antiguas
             chart = echarts.init(container);
             chart.setOption({
                 tooltip: {
@@ -153,7 +153,7 @@
                     data: ['Ranking HCFC', `Ranking ${FACTOR_NAME}`],
                     orient: 'vertical',
                     left: 'left',
-                    top: 'center'
+                    top: 'bottom'
                 },
                 polar: {
                     radius: [0, '70%'],
@@ -200,9 +200,9 @@
             window.addEventListener('resize', resizeHandler);
 
             loading = false;
-            console.log('🎉 Gráfico renderizado correctamente');
+            console.log('Gráfico renderizado correctamente');
         } catch (err) {
-            console.error('❌ Error en loadDataAndRender:', err);
+            console.error('Error en loadDataAndRender:', err);
             // @ts-ignore
             error = err.message;
             loading = false;
@@ -210,7 +210,7 @@
     }
 
     onMount(() => {
-        console.log('🚀 Componente montado, iniciando carga...');
+        console.log('Componente montado, iniciando carga...');
         if (container) {
             loadDataAndRender();
         } else {
@@ -253,8 +253,8 @@
         <ul>
             <li><strong>Biblioteca:</strong> ECharts | <strong>Tipo:</strong> Radial bar (barras polares)</li>
             <li><strong>Ejes:</strong> Eje angular (circular) = países ; Eje radial = posición relativa (0-100%)</li>
-            <li><strong>🔵 Azul:</strong> Ranking de consumo de HCFC (toneladas)</li>
-            <li><strong>🟠 Naranja:</strong> Ranking de muertes por contaminación del aire</li>
+            <li><strong>🔵 Azul:</strong> Ranking de consumo total de HCFC (toneladas)</li>
+            <li><strong>🟠 Naranja:</strong> Ranking de muertes por contaminación del aire(en el año más reciente registrado)</li>
             <li><strong>Escala:</strong> Ranking normalizado a porcentaje </li>
             <li><strong>Tooltip:</strong> Muestra el ranking y el valor real original (toneladas/muertes)</li>
         </ul>
@@ -262,7 +262,6 @@
 </div>
 
 <style>
-    /* Estilos iguales a los que ya tenías */
     .container {
         max-width: 1200px;
         margin: 0 auto;

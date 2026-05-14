@@ -5,7 +5,7 @@
     let Plotly;
 
     // svelte-ignore non_reactive_update
-        let error = null;
+    let error = null;
     let loading = $state(true);
     let chartCreated = false;
 
@@ -33,9 +33,9 @@
         
         try {
             // 1. Obtener datos de tu API (ozono - HCFC)
-            console.log('📡 Cargando datos de Elena (HCFC)...');
+            console.log('Cargando datos de Elena (HCFC)...');
             const resElena = await fetch('/api/v1/ozone-depleting-substance-consumptions/loadInitialData');
-            if (!resElena.ok) throw new Error(`HTTP ${resElena.status} - Elena`);
+            if (!resElena.ok) throw new Error(`HTTP ${resElena.status} - Ozono API`);
             const elenaData = await resElena.json();
             const ozonoData = Array.isArray(elenaData) ? elenaData : [];
             console.log('   Datos Elena:', ozonoData.length);
@@ -58,15 +58,25 @@
                 aniosHCFCporPais[country].push(year);
             });
             
-            console.log(`   HCFC - valores: ${Object.values(hcfcPorPais).map(v => v.toFixed(0)).join(', ')}`);
+            console.log(`   HCFC - valores listos`);
 
             // 2. Obtener datos de Military Stats
-            console.log('📡 Cargando Military Stats (grupo 13)...');
+            console.log('Cargando Military Stats (grupo 13)...');
             let militaryPorPais = {};
             let aniosMilitaryPorPais = {};
             
             try {
-                const resMilitary = await fetch('https://sos2526-13.onrender.com/api/v2/military-stats');
+                let resMilitary = await fetch('https://sos2526-13.onrender.com/api/v2/military-stats');
+                if (resMilitary.status === 404) {
+                    console.log('Military Stats no inicializado (404). Inicializando...');
+                    const initRes = await fetch('https://sos2526-13.onrender.com/api/v2/military-stats/loadInitialData');
+                    console.log(`   Inicialización: ${initRes.status}`);
+                    if (!initRes.ok && initRes.status !== 409) {
+                        throw new Error(`Error al inicializar: ${initRes.status}`);
+                    }
+                    // Reintentamos obtener los datos
+                    resMilitary = await fetch('https://sos2526-13.onrender.com/api/v2/military-stats');
+                }
                 if (resMilitary.ok) {
                     const militaryData = await resMilitary.json();
                     const militaryStats = Array.isArray(militaryData) ? militaryData : (militaryData.data || []);
@@ -93,6 +103,7 @@
                         aniosMilitaryPorPais[country].push(year);
                     });
                     
+                    //Calcula la media para que países con más de un añode datos no tengan ventaja en el gráfico 
                     for (const country in militaryPorPais) {
                         const count = militaryPorPais[country].count;
                         militaryPorPais[country].milex_gdp_avg = militaryPorPais[country].milex_gdp / count;
@@ -105,7 +116,7 @@
 
             // 3. Preparar puntos
             const puntos = [];
-            
+            // Recorre países con datos de HCFC, tengan o no datos de Military Stats
             for (const [pais, hcfcTotal] of Object.entries(hcfcPorPais)) {
                 const mil = militaryPorPais[pais];
                 const aniosHCFC = aniosHCFCporPais[pais] || [];
@@ -114,15 +125,16 @@
                 const x = mil ? mil.milex_per_capita_avg : 0;
                 const yOriginal = hcfcTotal;
                 const yTransformed = transformY(yOriginal);
-                const size = mil ? Math.max(Math.abs(mil.milex_total) / 1000, 8) : 8;
+                const size = mil ? Math.max(Math.abs(mil.milex_total) / 1000, 8) : 8; //Si el gasto total es muy pequeño, usa 8 (tamaño mínimo) para que sea visible
                 const allYears = [...new Set([...aniosHCFC, ...aniosMil])].sort((a,b) => a-b);
                 
-                puntos.push({
+                //guarda toda la información de un país para dibujar el punto y mostrarla en el tooltip
+                puntos.push({ 
                     country: pais.charAt(0).toUpperCase() + pais.slice(1),
                     x: x,
                     y: yTransformed,
                     yOriginal: yOriginal,
-                    size: Math.min(size, 50),
+                    size: Math.min(size, 50), //Tamaño de la burbuja (máx 50)
                     gastoTotal: mil ? mil.milex_total : 0,
                     perCapita: x,
                     pibPorcentaje: mil ? mil.milex_gdp_avg : 0,
@@ -134,6 +146,7 @@
                 });
             }
             
+            //Países que tienen datos militares pero no HCFC
             for (const [pais, mil] of Object.entries(militaryPorPais)) {
                 if (!hcfcPorPais[pais]) {
                     const aniosMil = aniosMilitaryPorPais[pais] || [];
@@ -156,7 +169,7 @@
                 }
             }
             
-            console.log(`📊 Puntos totales: ${puntos.length}`);
+            console.log(`Puntos totales: ${puntos.length}`);
             
             // Ticks personalizados
             const tickValues = [-1000000, -100000, -10000, -1000, -100, -10, 0, 10, 100, 1000, 10000, 100000, 1000000];
@@ -186,14 +199,13 @@
                 throw new Error('Contenedor #scatter-chart no encontrado después de 10 intentos');
             }
             
-            // Limpiar contenedor
+            // Borra cualquier gráfico viejo antes de dibujar el nuevo.
             while (chartContainer.firstChild) {
                 chartContainer.removeChild(chartContainer.firstChild);
             }
             
-            // ✅ Plotly ya está importado, no necesitas importarlo de nuevo
             if (!chartCreated) {
-                console.log('✅ Usando Plotly (importado globalmente)');
+                console.log('Usando Plotly');
                 
                 const trace = {
                     x: puntos.map(p => p.x),
@@ -268,10 +280,9 @@
                     staticPlot: false
                 };
 
-                // ✅ Usar Plotly directamente (ya importado)
                 await Plotly.newPlot('scatter-chart', [trace], layout, config);
                 chartCreated = true;
-                console.log('✅ Gráfico creado con Plotly');
+                console.log('Gráfico creado con Plotly');
             }
             
             loading = false;

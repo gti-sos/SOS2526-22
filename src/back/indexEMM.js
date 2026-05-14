@@ -345,10 +345,10 @@ export function loadBackEnd(app) {
         }
         next();
     });
-    app.all(v2Base + "/:country", (req, res, next) => {
+    app.all(v2Base + "/:x", (req, res, next) => {
         const allowed = ["GET"];
         if (!allowed.includes(req.method)) {
-            return res.status(405).json({ error: "Method Not Allowed (solo GET en /:country)" });
+            return res.status(405).json({ error: "Method Not Allowed (solo GET en /:x)" });
         }
         next();
     });

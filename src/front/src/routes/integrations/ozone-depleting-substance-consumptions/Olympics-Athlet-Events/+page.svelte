@@ -13,7 +13,7 @@
             // 1. Obtener datos de ozono 
             console.log('2. Cargando datos de Elena (methyl_bromide)...');
             const resElena = await fetch('/api/v1/ozone-depleting-substance-consumptions/loadInitialData');
-            if (!resElena.ok) throw new Error(`HTTP ${resElena.status} - Elena`);
+            if (!resElena.ok) throw new Error(`HTTP ${resElena.status} - Ozono`);
             const elenaData = await resElena.json();
             const ozonoData = Array.isArray(elenaData) ? elenaData : [];
 
@@ -93,7 +93,7 @@
                     },
                     y: {
                         label: { text: 'Valor', position: 'outer-middle' },
-                        type: 'log',
+                        type: 'log', //escala logarítmica para mejor visualización
                         tick: {
                             format: v => {
                                 if (v === 0) return '0';
@@ -144,15 +144,16 @@
 
             console.log('Gráfico generado correctamente');
             
-            // ✅ Ocultar loading después de que el gráfico esté listo
+            // Ocultar loading después de que el gráfico esté listo
             loading = false;
 
         } catch (err) {
             console.error('ERROR:', err);
             error = err.message;
-            loading = false;  // ✅ Ocultar loading también en caso de error
+            loading = false;  // Ocultar loading también en caso de error
         }
     });
+
 </script>
 
 <svelte:head>
@@ -282,11 +283,6 @@
         margin: 0.25rem 0;
         color: #555;
         font-size: 1rem;
-    }
-
-    .loading-note {
-        font-size: 0.8rem;
-        color: #999;
     }
 
     .error-box {
