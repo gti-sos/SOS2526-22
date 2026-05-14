@@ -2,6 +2,7 @@
     <div class="brand">🌍 Grupo 22</div>
     <nav>
         <a href="/" rel="external">🏠 Inicio</a>
+        <a href="/about" rel="external">ℹ️ Sobre nosotros</a>
         <a href="/global-agriculture-climate-impacts" rel="external">🌱 Agricultura</a>
         <a href="/ozone-depleting-substance-consumptions" rel="external">🛡️ Ozono</a>
         <a href="/co2-emissions-stats" rel="external">💨 Emisiones CO2</a>
